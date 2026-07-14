@@ -3036,29 +3036,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tbody = document.querySelector('#examReportTable tbody');
         tbody.innerHTML = '';
 
+        // KPI Calculations
+        const totalAttempts = attempts.length;
+        const uniqueStudents = new Set(attempts.map(a => a.register_number)).size;
+        const retakes = totalAttempts > uniqueStudents ? totalAttempts - uniqueStudents : 0;
+
+        document.getElementById('kpiTotalAttempts').textContent = totalAttempts;
+        document.getElementById('kpiUniqueStudents').textContent = uniqueStudents;
+        document.getElementById('kpiRetakes').textContent = retakes;
+
+        let deptCounts = {};
+
         const rows = targetedStudents.map(s => {
             const attempt = attempts.find(a => a.register_number === s.registerNumber);
             const done = attempt != null;
-            const score = done ? attempt.score : null;
-            const passed = done ? attempt.passed : false;
-            const dateStr = done ? new Date(attempt.submitted_at).toLocaleString() : '—';
+            if (!done) return null; // Only show students who attended
 
-            let status = 'Not Attempted';
-            let statusClass = 'bg-secondary text-white';
-            if (done) {
-                status = passed ? 'Passed' : 'Failed';
-                statusClass = passed ? 'bg-success text-white' : 'bg-danger text-white';
-            }
+            const score = attempt.score;
+            const passed = attempt.passed;
+            const dateStr = new Date(attempt.submitted_at).toLocaleString();
+
+            let status = passed ? 'Passed' : 'Failed';
+            let statusClass = passed ? 'bg-success text-white' : 'bg-danger text-white';
 
             // Filters
             if (courseVal && s.course !== courseVal) return null;
             if (searchVal && !s.name.toLowerCase().includes(searchVal) && !s.registerNumber.toLowerCase().includes(searchVal)) return null;
             if (statusVal) {
-                if (statusVal === 'attempted' && !done) return null;
-                if (statusVal === 'not_attempted' && done) return null;
-                if (statusVal === 'passed' && (!done || !passed)) return null;
-                if (statusVal === 'failed' && (!done || passed)) return null;
+                if (statusVal === 'passed' && !passed) return null;
+                if (statusVal === 'failed' && passed) return null;
             }
+
+            // Track department attendance for chart
+            const dept = s.department || 'Unknown';
+            deptCounts[dept] = (deptCounts[dept] || 0) + 1;
 
             return `<tr>
                 <td><strong>${s.name}</strong></td>
@@ -3066,12 +3077,48 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${s.course || '—'}</td>
                 <td>${s.class || '—'}</td>
                 <td><span class="badge ${statusClass}" style="padding:4px 8px; border-radius:6px; font-weight:700;">${status}</span></td>
-                <td>${done ? `${score} / ${totalMarks}` : '—'}</td>
+                <td>${score} / ${totalMarks}</td>
                 <td>${dateStr}</td>
             </tr>`;
         }).filter(Boolean).join('');
 
         tbody.innerHTML = rows || '<tr><td colspan="7" class="text-center text-muted">No students found matching filters.</td></tr>';
+
+        // Update Chart
+        const ctx = document.getElementById('reportDeptChart');
+        if (window.reportDeptChartInst) {
+            window.reportDeptChartInst.destroy();
+        }
+        
+        if (Object.keys(deptCounts).length > 0) {
+            window.reportDeptChartInst = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(deptCounts),
+                    datasets: [{
+                        label: 'Students Attended',
+                        data: Object.values(deptCounts),
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        borderColor: 'rgba(37, 99, 235, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
     };
 
     // --- Initialization ---

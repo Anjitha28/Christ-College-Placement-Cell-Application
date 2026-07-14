@@ -523,26 +523,27 @@
                         <button class="btn btn-secondary btn-sm" onclick="closeExamReport()">← Back to Exams</button>
                     </div>
                     
-                    <div class="d-flex align-items-end gap-2 mb-4" style="flex-wrap:wrap;">
-                        <div class="form-group mb-0" style="width:200px;">
-                            <label class="form-label">Course Filter</label>
-                            <select id="reportCourseFilter" class="form-control" onchange="filterExamReport()">
-                                <option value="">All Courses</option>
-                            </select>
+                    <!-- KPI Cards -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                        <div class="glass-card" style="padding: 1rem; text-align: center; border-left: 4px solid #3b82f6;">
+                            <div style="font-size: 0.85rem; color: #6b7280; font-weight: 600; text-transform: uppercase;">Total Exam Attempts</div>
+                            <div style="font-size: 1.5rem; color: #1e3a8a; font-weight: 700; margin-top: 0.5rem;" id="kpiTotalAttempts">0</div>
                         </div>
-                        <div class="form-group mb-0" style="width:200px;">
-                            <label class="form-label">Status Filter</label>
-                            <select id="reportStatusFilter" class="form-control" onchange="filterExamReport()">
-                                <option value="">All Statuses</option>
-                                <option value="attempted">Attempted</option>
-                                <option value="not_attempted">Not Attempted</option>
-                                <option value="passed">Passed</option>
-                                <option value="failed">Failed</option>
-                            </select>
+                        <div class="glass-card" style="padding: 1rem; text-align: center; border-left: 4px solid #10b981;">
+                            <div style="font-size: 0.85rem; color: #6b7280; font-weight: 600; text-transform: uppercase;">Unique Students</div>
+                            <div style="font-size: 1.5rem; color: #065f46; font-weight: 700; margin-top: 0.5rem;" id="kpiUniqueStudents">0</div>
                         </div>
-                        <div class="form-group mb-0" style="flex:1; min-width:200px;">
-                            <label class="form-label">Search Student</label>
-                            <input type="text" id="reportSearchStudent" class="form-control" placeholder="Search by name or register number..." oninput="filterExamReport()">
+                        <div class="glass-card" style="padding: 1rem; text-align: center; border-left: 4px solid #f59e0b;">
+                            <div style="font-size: 0.85rem; color: #6b7280; font-weight: 600; text-transform: uppercase;">Exam Retakes</div>
+                            <div style="font-size: 1.5rem; color: #92400e; font-weight: 700; margin-top: 0.5rem;" id="kpiRetakes">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Department Chart -->
+                    <div class="glass-card mb-4" style="padding: 1.5rem;">
+                        <h4 style="font-size: 1rem; font-weight: 600; color: #374151; margin-bottom: 1rem;">Students Attended by Department</h4>
+                        <div style="height: 250px; position: relative;">
+                            <canvas id="reportDeptChart"></canvas>
                         </div>
                     </div>
 
@@ -550,13 +551,28 @@
                         <table class="table" id="examReportTable">
                             <thead>
                                 <tr>
-                                    <th>Student Name</th>
-                                    <th>Register Number</th>
-                                    <th>Course</th>
-                                    <th>Class</th>
-                                    <th>Status</th>
-                                    <th>Score</th>
-                                    <th>Submitted At</th>
+                                    <th>
+                                        Student Name
+                                        <input type="text" id="reportSearchStudent" class="form-control form-control-sm mt-1" placeholder="Search..." oninput="filterExamReport()" style="font-weight: normal; min-width: 120px;">
+                                    </th>
+                                    <th style="vertical-align: top;">Register Number</th>
+                                    <th>
+                                        Course
+                                        <select id="reportCourseFilter" class="form-control form-control-sm mt-1" onchange="filterExamReport()" style="font-weight: normal; min-width: 100px;">
+                                            <option value="">All Courses</option>
+                                        </select>
+                                    </th>
+                                    <th style="vertical-align: top;">Class</th>
+                                    <th>
+                                        Status
+                                        <select id="reportStatusFilter" class="form-control form-control-sm mt-1" onchange="filterExamReport()" style="font-weight: normal; min-width: 100px;">
+                                            <option value="">All Statuses</option>
+                                            <option value="passed">Passed</option>
+                                            <option value="failed">Failed</option>
+                                        </select>
+                                    </th>
+                                    <th style="vertical-align: top;">Score</th>
+                                    <th style="vertical-align: top;">Submitted At</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
