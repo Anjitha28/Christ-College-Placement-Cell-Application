@@ -1322,21 +1322,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             html += `
-                <div style="background: #fff; min-height: 100px; padding: 5px; border: 0.5px solid #f3f4f6;">
-                    <div style="font-size: 0.75rem; font-weight: 600; color: #6b7280; margin-bottom: 5px;">${day}</div>
-                    <div class="d-flex flex-column gap-1">
+                <div style="background: #fff; min-height: 100px; padding: 8px; border: 0.5px solid #f3f4f6; cursor: pointer; transition: background 0.2s;" onclick="viewDateEvents('${dateStr}')" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#fff'">
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #6b7280; margin-bottom: 8px;">${day}</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
                         <!-- Training Programs (Blue) -->
                         ${dayPrograms.map(p => `
-                            <div style="background: #0D6EFC; color: white; font-size: 9px; padding: 2px 4px; border-radius: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer;" title="Training: ${p.name}" onclick="window.location.href='manage-training.html?id=${p.id}'">
-                                📚 ${p.name}
-                            </div>
+                            <div style="width: 14px; height: 14px; background: #0D6EFC; border-radius: 4px;" title="Training: ${p.name}"></div>
                         `).join('')}
                         
                         <!-- Placement/Recruitment Activities -->
                         ${dayPlacements.map(a => `
-                            <div style="background: ${a.type === 'recruitment' ? '#6366f1' : '#10b981'}; color: white; font-size: 9px; padding: 2px 4px; border-radius: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer;" title="${a.type === 'recruitment' ? 'Recruitment' : 'Placement'}: ${a.name}" onclick="location.href='manage-placement.html?id=${a.id}'">
-                                ${a.type === 'recruitment' ? '🎯' : '💼'} ${a.name} ${a.lastDate === dateStr ? '(Deadline)' : ''}
-                            </div>
+                            <div style="width: 14px; height: 14px; background: ${a.type === 'recruitment' ? '#6366f1' : '#10b981'}; border-radius: 4px;" title="${a.type === 'recruitment' ? 'Recruiter Program' : 'Placement Program'}: ${a.name}"></div>
                         `).join('')}
                     </div>
                 </div>
@@ -1346,6 +1342,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         html += `</div>`;
         container.innerHTML = html;
     }
+
+    window.viewDateEvents = function(dateStr) {
+        const header = document.getElementById('calSelectedDateHeader');
+        const list = document.getElementById('calSelectedEventsList');
+        if(!header || !list) return;
+
+        const dateObj = new Date(dateStr);
+        const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        header.textContent = `Programs on ${formattedDate}`;
+
+        const programs = db.getTrainingPrograms();
+        const dayPrograms = programs.filter(p => {
+            const start = p.date;
+            const end = p.endDate || p.date;
+            return dateStr >= start && dateStr <= end;
+        });
+
+        const placements = db.getPlacementActivities();
+        const dayPlacements = placements.filter(a => {
+            return a.date === dateStr || a.lastDate === dateStr;
+        });
+
+        if (dayPrograms.length === 0 && dayPlacements.length === 0) {
+            list.innerHTML = `<p class="text-muted small">No programs scheduled for this day.</p>`;
+            return;
+        }
+
+        let html = '';
+        dayPrograms.forEach(p => {
+            html += `
+                <div style="background: #fff; border-left: 4px solid #0D6EFC; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #0D6EFC; text-transform: uppercase; margin-bottom: 4px;">Training Program</div>
+                    <h5 style="margin: 0 0 4px 0; font-size: 1rem; color: #111827;">${p.name}</h5>
+                    ${p.description ? `<div style="margin: 0 0 8px 0; font-size: 0.85rem; color: #4b5563; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${p.description}</div>` : ''}
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="window.location.href='manage-training.html?id=${p.id}'">View Training</button>
+                </div>
+            `;
+        });
+
+        dayPlacements.forEach(a => {
+            const color = a.type === 'recruitment' ? '#6366f1' : '#10b981';
+            const label = a.type === 'recruitment' ? 'Recruiter Program' : 'Placement Program';
+            html += `
+                <div style="background: #fff; border-left: 4px solid ${color}; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <div style="font-size: 0.75rem; font-weight: 600; color: ${color}; text-transform: uppercase; margin-bottom: 4px;">${label} ${a.lastDate === dateStr ? '(Deadline)' : ''}</div>
+                    <h5 style="margin: 0 0 4px 0; font-size: 1rem; color: #111827;">${a.name}</h5>
+                    ${a.description ? `<div style="margin: 0 0 8px 0; font-size: 0.85rem; color: #4b5563; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${a.description}</div>` : ''}
+                    <button class="btn btn-sm mt-2" style="border: 1px solid ${color}; color: ${color}; background: transparent;" onclick="window.location.href='manage-placement.html?id=${a.id}'">View Program</button>
+                </div>
+            `;
+        });
+
+        list.innerHTML = html;
+    };
 
     // --- Placement Management ---
     const toggleAddPlacementBtn = document.getElementById('toggleAddPlacementBtn');
