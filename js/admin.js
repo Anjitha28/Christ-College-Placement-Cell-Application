@@ -1317,8 +1317,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Get Placement Activities for this day
             const placements = db.getPlacementActivities();
             const dayPlacements = placements.filter(a => {
-                // Show if it's the start date OR the deadline
-                return a.date === dateStr || a.lastDate === dateStr;
+                const start = a.date;
+                const end = a.lastDate || a.date;
+                return dateStr >= start && dateStr <= end;
             });
 
             html += `
@@ -1361,7 +1362,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const placements = db.getPlacementActivities();
         const dayPlacements = placements.filter(a => {
-            return a.date === dateStr || a.lastDate === dateStr;
+            const start = a.date;
+            const end = a.lastDate || a.date;
+            return dateStr >= start && dateStr <= end;
         });
 
         if (dayPrograms.length === 0 && dayPlacements.length === 0) {
