@@ -3001,6 +3001,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         activeReportExamId = null;
     };
 
+    window.toggleFilter = function(containerId) {
+        // Close others
+        ['searchFilterContainer', 'courseFilterContainer', 'statusFilterContainer'].forEach(id => {
+            if (id !== containerId) {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            }
+        });
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+            if (container.style.display === 'block') {
+                const input = container.querySelector('input, select');
+                if (input) input.focus();
+            }
+        }
+    };
+
+    // Close filters when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('th')) {
+            ['searchFilterContainer', 'courseFilterContainer', 'statusFilterContainer'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+        }
+    });
+
     window.filterExamReport = function () {
         if (!activeReportExamId) return;
         const exam = db.getExams().find(e => e.id === activeReportExamId);

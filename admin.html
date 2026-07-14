@@ -551,25 +551,31 @@
                         <table class="table" id="examReportTable">
                             <thead>
                                 <tr>
-                                    <th>
-                                        Student Name
-                                        <input type="text" id="reportSearchStudent" class="form-control form-control-sm mt-1" placeholder="Search..." oninput="filterExamReport()" style="font-weight: normal; min-width: 120px;">
+                                    <th style="cursor: pointer; position: relative;" onclick="toggleFilter('searchFilterContainer')">
+                                        <div class="d-flex align-items-center gap-1">Student Name <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg></div>
+                                        <div id="searchFilterContainer" style="display: none; position: absolute; top: 100%; left: 0; z-index: 10; background: white; padding: 5px; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                                            <input type="text" id="reportSearchStudent" class="form-control form-control-sm" placeholder="Search..." oninput="filterExamReport()" onclick="event.stopPropagation()" style="font-weight: normal; min-width: 150px;">
+                                        </div>
                                     </th>
                                     <th style="vertical-align: top;">Register Number</th>
-                                    <th>
-                                        Course
-                                        <select id="reportCourseFilter" class="form-control form-control-sm mt-1" onchange="filterExamReport()" style="font-weight: normal; min-width: 100px;">
-                                            <option value="">All Courses</option>
-                                        </select>
+                                    <th style="cursor: pointer; position: relative;" onclick="toggleFilter('courseFilterContainer')">
+                                        <div class="d-flex align-items-center gap-1">Course <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg></div>
+                                        <div id="courseFilterContainer" style="display: none; position: absolute; top: 100%; left: 0; z-index: 10; background: white; padding: 5px; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                                            <select id="reportCourseFilter" class="form-control form-control-sm" onchange="filterExamReport()" onclick="event.stopPropagation()" style="font-weight: normal; min-width: 130px;">
+                                                <option value="">All Courses</option>
+                                            </select>
+                                        </div>
                                     </th>
                                     <th style="vertical-align: top;">Class</th>
-                                    <th>
-                                        Status
-                                        <select id="reportStatusFilter" class="form-control form-control-sm mt-1" onchange="filterExamReport()" style="font-weight: normal; min-width: 100px;">
-                                            <option value="">All Statuses</option>
-                                            <option value="passed">Passed</option>
-                                            <option value="failed">Failed</option>
-                                        </select>
+                                    <th style="cursor: pointer; position: relative;" onclick="toggleFilter('statusFilterContainer')">
+                                        <div class="d-flex align-items-center gap-1">Status <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg></div>
+                                        <div id="statusFilterContainer" style="display: none; position: absolute; top: 100%; left: 0; z-index: 10; background: white; padding: 5px; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                                            <select id="reportStatusFilter" class="form-control form-control-sm" onchange="filterExamReport()" onclick="event.stopPropagation()" style="font-weight: normal; min-width: 130px;">
+                                                <option value="">All Statuses</option>
+                                                <option value="passed">Passed</option>
+                                                <option value="failed">Failed</option>
+                                            </select>
+                                        </div>
                                     </th>
                                     <th style="vertical-align: top;">Score</th>
                                     <th style="vertical-align: top;">Submitted At</th>
