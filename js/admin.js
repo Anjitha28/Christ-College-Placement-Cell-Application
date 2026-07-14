@@ -1504,7 +1504,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     name: document.getElementById('pName').value.trim(),
                     venue: document.getElementById('pVenue').value.trim(),
                     date: document.getElementById('pDate').value,
-                    lastDate: document.getElementById('pLastDate').value,
+                    lastDate: document.getElementById('pDate').value,
                     description: document.getElementById('pDesc').innerHTML.trim(),
                     type: currentPlacementType,
                     target: { type: targetType, courses, depts, students: selectedStudents }
@@ -1570,7 +1570,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     <div class="small text-muted" style="max-height: 40px; overflow: hidden;">${a.description}</div>
                 </td>
-                <td>Start: ${a.date}<br>Apply by: <span class="text-danger">${a.lastDate}</span></td>
+                <td><span class="text-danger">${a.date}</span></td>
                 <td>${a.venue}</td>
                 <td>${a.target.type === 'all' ? 'All Students' : (a.target.type === 'course' ? (a.target.courses || []).length + ' Courses' : (a.target.type === 'dept' ? (a.target.depts || []).length + ' Depts' : (a.target.students || []).length + ' Students'))}</td>
                 <td><strong class="text-primary">${(a.registrations || []).length}</strong></td>
@@ -1617,7 +1617,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('pName').value = a.name;
             document.getElementById('pVenue').value = a.venue;
             document.getElementById('pDate').value = a.date;
-            document.getElementById('pLastDate').value = a.lastDate;
             document.getElementById('pDesc').innerHTML = a.description;
             
             // Set Target
