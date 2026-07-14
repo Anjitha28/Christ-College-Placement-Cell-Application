@@ -988,6 +988,23 @@ h3 {
    UI/UX UPGRADE LAYER  (2026 refresh)
    Refines existing components without renaming classes.
    ============================================================ */
+
+/* Rich text styles */
+[contenteditable="true"] ul, .rich-text ul, .text-muted ul, div[id$="Desc"] ul {
+    list-style-type: disc !important;
+    padding-left: 1.5rem !important;
+    margin-bottom: 1rem !important;
+}
+[contenteditable="true"] ol, .rich-text ol, .text-muted ol, div[id$="Desc"] ol {
+    list-style-type: decimal !important;
+    padding-left: 1.5rem !important;
+    margin-bottom: 1rem !important;
+}
+[contenteditable="true"] li, .rich-text li, .text-muted li, div[id$="Desc"] li {
+    margin-bottom: 0.25rem !important;
+    display: list-item !important;
+}
+
 :root {
     /* Palette */
     --primary-color: #0f172a;        /* Deep Slate/Navy */

@@ -998,18 +998,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td class="text-center"><span style="color:#0891b2;font-weight:700;">${st.completed}</span></td>
                 <td style="white-space:nowrap; width:1%;">
                     <div class="d-flex gap-1">
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.href='manage-training.html?id=${p.id}'" title="Manage Sessions">Manage</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.href='manage-training.html?id=${p.id}'" title="Manage">Manage</button>
                         ${Permissions.can(userRole, 'edit_training_drives') ? `
-                        <button class="btn btn-secondary btn-sm" onclick="editTrainingProgram('${p.id}')" title="Edit Info">
+                        <button class="btn btn-secondary btn-sm" onclick="editTrainingProgram('${p.id}')" title="Edit">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                         </button>
-                        <button class="btn btn-secondary btn-sm" onclick="toggleTrnReg('${p.id}')" title="${p.isRegistrationOpen ? 'Close Registration' : 'Open Registration'}">
+                        <button class="btn btn-secondary btn-sm" onclick="toggleTrnReg('${p.id}')" title="Registration">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="${p.isRegistrationOpen ? 'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z' : 'M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6z'}"/></svg>
                         </button>
-                        <button class="btn ${p.isFeedbackOpen ? 'btn-success' : 'btn-secondary'} btn-sm" onclick="toggleFeedback('${p.id}')" title="${p.isFeedbackOpen ? 'Disable Feedback' : 'Enable Feedback'}">
+                        <button class="btn ${p.isFeedbackOpen ? 'btn-success' : 'btn-secondary'} btn-sm" onclick="toggleFeedback('${p.id}')" title="Feedback">
                             💬
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteTrainingProgram('${p.id}')" title="Delete Program">
+                        <button class="btn btn-danger btn-sm" onclick="deleteTrainingProgram('${p.id}')" title="Delete">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                         </button>
                         ` : ''}
