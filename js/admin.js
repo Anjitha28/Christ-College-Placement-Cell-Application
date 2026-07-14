@@ -274,6 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             course: document.getElementById('sCourse').value.trim(),
             department: document.getElementById('sDept').value.trim(),
             class: document.getElementById('sClass') ? document.getElementById('sClass').value.trim() : '',
+            admissionYear: document.getElementById('sAdmnYear') ? document.getElementById('sAdmnYear').value.trim() : '',
             gender: document.getElementById('sGender').value,
             password: (document.getElementById('sPass').value || 'password').trim(),
             isCoordinator: document.getElementById('sIsCoordinator') ? document.getElementById('sIsCoordinator').checked : false
@@ -330,6 +331,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const filterCourse = document.getElementById('filterCourse').value;
         const filterDept = document.getElementById('filterDept').value;
+        const filterAdmnYearEl = document.getElementById('filterAdmnYear');
+        const filterAdmnYear = filterAdmnYearEl ? filterAdmnYearEl.value : '';
 
         let filteredStudents = students;
         if (filterCourse) {
@@ -338,12 +341,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (filterDept) {
             filteredStudents = filteredStudents.filter(s => s.department === filterDept);
         }
+        if (filterAdmnYear) {
+            filteredStudents = filteredStudents.filter(s => s.admissionYear === filterAdmnYear);
+        }
 
         const searchQuery = document.getElementById('searchStudent').value.toLowerCase();
         if (searchQuery) {
             filteredStudents = filteredStudents.filter(s => 
                 s.name.toLowerCase().includes(searchQuery) || 
-                s.registerNumber.toLowerCase().includes(searchQuery)
+                s.registerNumber.toLowerCase().includes(searchQuery) ||
+                (s.admissionYear && s.admissionYear.toLowerCase().includes(searchQuery))
             );
         }
 
@@ -411,6 +418,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('sCourse').value = s.course;
             document.getElementById('sDept').value = s.department;
             if (document.getElementById('sClass')) document.getElementById('sClass').value = s.class || '';
+            if (document.getElementById('sAdmnYear')) document.getElementById('sAdmnYear').value = s.admissionYear || '';
             document.getElementById('sGender').value = s.gender;
             document.getElementById('sPass').value = s.password;
 
@@ -435,6 +443,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div><label class="small text-muted">Register No</label><p><strong>${s.registerNumber}</strong></p></div>
                 <div><label class="small text-muted">Course</label><p><strong>${s.course}</strong></p></div>
                 <div><label class="small text-muted">Department</label><p><strong>${s.department}</strong></p></div>
+                <div><label class="small text-muted">Admission Year</label><p><strong>${s.admissionYear || '—'}</strong></p></div>
                 <div><label class="small text-muted">Phone</label><p><strong>${s.phoneNumber}</strong></p></div>
                 <div><label class="small text-muted">Email</label><p><strong>${s.mailId}</strong></p></div>
                 <div><label class="small text-muted">Gender</label><p><strong>${s.gender}</strong></p></div>
@@ -503,12 +512,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const filterCourseEl = document.getElementById('filterCourse');
     const filterDeptEl = document.getElementById('filterDept');
+    const filterAdmnYearEl = document.getElementById('filterAdmnYear');
     const searchStudentEl = document.getElementById('searchStudent');
     const searchTeacherEl = document.getElementById('searchTeacher');
     const resetFiltersBtn = document.getElementById('resetFiltersBtn');
 
     if(filterCourseEl) filterCourseEl.addEventListener('change', renderStudents);
     if(filterDeptEl) filterDeptEl.addEventListener('change', renderStudents);
+    if(filterAdmnYearEl) filterAdmnYearEl.addEventListener('change', renderStudents);
     if(searchStudentEl) searchStudentEl.addEventListener('input', renderStudents);
     if(searchTeacherEl) searchTeacherEl.addEventListener('input', renderTeachers);
     
@@ -516,23 +527,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         resetFiltersBtn.addEventListener('click', () => {
             filterCourseEl.value = '';
             filterDeptEl.value = '';
+            if(filterAdmnYearEl) filterAdmnYearEl.value = '';
             searchStudentEl.value = '';
             renderStudents();
         });
     }
 
     function populateFilters(students) {
-        const courses = [...new Set(students.map(s => s.course))].sort();
-        const depts = [...new Set(students.map(s => s.department))].sort();
+        const courses = [...new Set(students.map(s => s.course))].filter(Boolean).sort();
+        const depts = [...new Set(students.map(s => s.department))].filter(Boolean).sort();
+        const years = [...new Set(students.map(s => s.admissionYear))].filter(Boolean).sort();
 
         const currentCourse = filterCourseEl.value;
         const currentDept = filterDeptEl.value;
+        const currentYear = filterAdmnYearEl ? filterAdmnYearEl.value : '';
 
         filterCourseEl.innerHTML = '<option value="">All Courses</option>' + 
             courses.map(c => `<option value="${c}" ${c === currentCourse ? 'selected' : ''}>${c}</option>`).join('');
         
         filterDeptEl.innerHTML = '<option value="">All Departments</option>' + 
             depts.map(d => `<option value="${d}" ${d === currentDept ? 'selected' : ''}>${d}</option>`).join('');
+            
+        if(filterAdmnYearEl) {
+            filterAdmnYearEl.innerHTML = '<option value="">All Years</option>' + 
+                years.map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`).join('');
+        }
     }
 
     // --- Excel Upload & Template (SheetJS) ---
@@ -551,8 +570,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     downloadTemplateBtn.addEventListener('click', () => {
         // Create an empty worksheet with headers
         const wsData = [
-            ["Name", "Phone Number", "Mail ID", "Register Number", "Course", "Department", "Class", "Gender", "Password"],
-            ["John Doe", "9876543210", "john@example.com", "REG001", "BSc Computer Science", "Science", "1 BCA A", "Male", "pass123"]
+            ["Name", "Phone Number", "Mail ID", "Register Number", "Course", "Department", "Class", "Admission Year", "Gender", "Password"],
+            ["John Doe", "9876543210", "john@example.com", "REG001", "BSc Computer Science", "Science", "1 BCA A", "2024", "Male", "pass123"]
         ];
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         const wb = XLSX.utils.book_new();
@@ -587,7 +606,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 // Map JSON headers to our object properties
-                // Expected headers from Template: Name, Phone Number, Mail ID, Register Number, Course, Department, Gender, Password
+                // Expected headers from Template: Name, Phone Number, Mail ID, Register Number, Course, Department, Class, Admission Year, Gender, Password
                 const newStudents = jsonData.map(row => ({
                     name: row['Name'] ? String(row['Name']).trim() : '',
                     phoneNumber: row['Phone Number'] ? String(row['Phone Number']).trim() : '',
@@ -596,6 +615,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     course: row['Course'] ? String(row['Course']).trim() : '',
                     department: row['Department'] ? String(row['Department']).trim() : '',
                     class: row['Class'] ? String(row['Class']).trim() : '',
+                    admissionYear: row['Admission Year'] ? String(row['Admission Year']).trim() : '',
                     gender: row['Gender'] ? String(row['Gender']).trim() : '',
                     password: row['Password'] ? String(row['Password']).trim() : 'password'
                 })).filter(s => s.registerNumber && s.name); // Removed password requirement from filter
@@ -621,6 +641,54 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         reader.readAsArrayBuffer(file);
     });
+
+    const exportStudentsBtn = document.getElementById('exportStudentsBtn');
+    if (exportStudentsBtn) {
+        exportStudentsBtn.addEventListener('click', () => {
+            const students = db.getStudents();
+            const filterCourse = document.getElementById('filterCourse').value;
+            const filterDept = document.getElementById('filterDept').value;
+            const filterAdmnYearEl = document.getElementById('filterAdmnYear');
+            const filterAdmnYear = filterAdmnYearEl ? filterAdmnYearEl.value : '';
+            const searchQuery = document.getElementById('searchStudent').value.toLowerCase();
+            
+            let filteredStudents = students;
+            if (filterCourse) filteredStudents = filteredStudents.filter(s => s.course === filterCourse);
+            if (filterDept) filteredStudents = filteredStudents.filter(s => s.department === filterDept);
+            if (filterAdmnYear) filteredStudents = filteredStudents.filter(s => s.admissionYear === filterAdmnYear);
+            if (searchQuery) {
+                filteredStudents = filteredStudents.filter(s => 
+                    s.name.toLowerCase().includes(searchQuery) || 
+                    s.registerNumber.toLowerCase().includes(searchQuery) ||
+                    (s.admissionYear && s.admissionYear.toLowerCase().includes(searchQuery))
+                );
+            }
+            
+            if (filteredStudents.length === 0) {
+                showAdminAlert('No students to export based on current filters.', 'danger');
+                return;
+            }
+            
+            const wsData = filteredStudents.map(s => ({
+                "Register Number": s.registerNumber,
+                "Name": s.name,
+                "Phone Number": s.phoneNumber,
+                "Mail ID": s.mailId,
+                "Course": s.course,
+                "Department": s.department,
+                "Class": s.class || '',
+                "Admission Year": s.admissionYear || '',
+                "Gender": s.gender,
+                "Is Coordinator": s.isCoordinator ? 'Yes' : 'No'
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(wsData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Students");
+            
+            XLSX.writeFile(wb, "Student_Export.xlsx");
+        });
+    }
 
     function showAdminAlert(message, type) {
         adminAlert.textContent = message;

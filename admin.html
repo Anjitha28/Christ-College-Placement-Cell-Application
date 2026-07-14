@@ -263,6 +263,10 @@
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
                             Upload via Excel
                         </button>
+                        <button class="btn btn-success btn-sm" id="exportStudentsBtn">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                            Export to Excel
+                        </button>
                         <button class="btn btn-primary btn-sm" id="toggleAddStudentBtn">
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
                             Add Student Record
@@ -284,6 +288,12 @@
                         <label class="form-label" style="font-size: 0.75rem;">Filter by Department</label>
                         <select id="filterDept" class="form-control">
                             <option value="">All Departments</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1; max-width: 250px;">
+                        <label class="form-label" style="font-size: 0.75rem;">Filter by Admission Year</label>
+                        <select id="filterAdmnYear" class="form-control">
+                            <option value="">All Years</option>
                         </select>
                     </div>
                     <div style="flex: 1; max-width: 300px;">
@@ -936,6 +946,10 @@
                                     <div class="form-group mb-0">
                                         <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">CLASS / SECTION</label>
                                         <input type="text" id="sClass" class="form-control" placeholder="e.g. 1 BCA A" style="background: #f9fafb; border-color: #e5e7eb;">
+                                    </div>
+                                    <div class="form-group mb-0">
+                                        <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">ADMISSION YEAR</label>
+                                        <input type="number" id="sAdmnYear" class="form-control" placeholder="e.g. 2024" style="background: #f9fafb; border-color: #e5e7eb;">
                                     </div>
                                     <div class="form-group mb-0">
                                         <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">GENDER</label>
