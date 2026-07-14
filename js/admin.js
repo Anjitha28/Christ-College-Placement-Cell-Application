@@ -370,6 +370,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${s.course}</td>
                 <td>${s.department}</td>
                 <td>${s.class || '—'}</td>
+                <td>${s.admissionYear || '—'}</td>
                 <td>${s.gender}</td>
                 <td>
                     <div class="d-flex gap-2">
