@@ -928,39 +928,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (addTrainingForm) {
         addTrainingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const targetType = document.querySelector('input[name="targetType"]:checked').value;
-            const selectedCourses = Array.from(document.querySelectorAll('input[name="targetCourses"]:checked')).map(cb => cb.value);
-            const selectedDepts = Array.from(document.querySelectorAll('input[name="targetDepts"]:checked')).map(cb => cb.value);
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+            try {
+                const targetType = document.querySelector('input[name="targetType"]:checked').value;
+                const selectedCourses = Array.from(document.querySelectorAll('input[name="targetCourses"]:checked')).map(cb => cb.value);
+                const selectedDepts = Array.from(document.querySelectorAll('input[name="targetDepts"]:checked')).map(cb => cb.value);
 
-            const program = {
-                name: document.getElementById('trnName').value.trim(),
-                venue: document.getElementById('trnVenue').value.trim(),
-                date: document.getElementById('trnDate').value,
-                days: parseInt(document.getElementById('trnDays').value),
-                description: document.getElementById('trnDesc').innerHTML.trim(),
-                target: {
-                    type: targetType,
-                    courses: targetType === 'course' ? selectedCourses : [],
-                    depts: targetType === 'dept' ? selectedDepts : []
-                },
-                endDate: document.getElementById('trnEndDate').value
-            };
+                const program = {
+                    name: document.getElementById('trnName').value.trim(),
+                    venue: document.getElementById('trnVenue').value.trim(),
+                    date: document.getElementById('trnDate').value,
+                    days: parseInt(document.getElementById('trnDays').value),
+                    description: document.getElementById('trnDesc').innerHTML.trim(),
+                    target: {
+                        type: targetType,
+                        courses: targetType === 'course' ? selectedCourses : [],
+                        depts: targetType === 'dept' ? selectedDepts : []
+                    },
+                    endDate: document.getElementById('trnEndDate').value
+                };
 
-            let result;
-            if (editingProgramId) {
-                result = await db.updateTrainingProgram(editingProgramId, program);
-                showTrainingAlert(result.message, result.success ? 'success' : 'danger');
-                if (result.success) editingProgramId = null;
-            } else {
-                result = await db.addTrainingProgram(program);
-                showTrainingAlert(result.message, result.success ? 'success' : 'danger');
-            }
-            
-            if (result.success) {
-                addTrainingForm.reset();
-                document.getElementById('trnDesc').innerHTML = '';
-                closeModal(trainingModal);
-                renderTrainingPrograms();
+                let result;
+                if (editingProgramId) {
+                    result = await db.updateTrainingProgram(editingProgramId, program);
+                    showTrainingAlert(result.message, result.success ? 'success' : 'danger');
+                    if (result.success) editingProgramId = null;
+                } else {
+                    result = await db.addTrainingProgram(program);
+                    showTrainingAlert(result.message, result.success ? 'success' : 'danger');
+                }
+                
+                if (result.success) {
+                    addTrainingForm.reset();
+                    document.getElementById('trnDesc').innerHTML = '';
+                    closeModal(trainingModal);
+                    renderTrainingPrograms();
+                }
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
             }
         });
     }
@@ -980,7 +986,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const tr = document.createElement('tr');
             const st = programAttendanceStats(p);
             tr.innerHTML = `
-                <td style="min-width:180px;"><strong>${p.name}</strong><br><div class="small text-muted" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:240px;">${(p.description || '').replace(/<[^>]*>/g, '')}</div></td>
+                <td style="min-width:180px;"><strong>${p.name}</strong></td>
                 <td style="white-space:nowrap;">${p.date}${p.endDate && p.endDate !== p.date ? '<br>to ' + p.endDate : ''}<br><small>${programDays(p)} Days</small></td>
                 <td>
                     <small class="${p.isRegistrationOpen ? 'text-success' : 'text-danger'}">${p.isRegistrationOpen ? 'Registration Open' : 'Registration Closed'}</small><br>
@@ -992,7 +998,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td class="text-center"><span style="color:#0891b2;font-weight:700;">${st.completed}</span></td>
                 <td style="white-space:nowrap; width:1%;">
                     <div class="d-flex gap-1">
-                        <button class="btn btn-secondary btn-sm" onclick="location.href='manage-training.html?id=${p.id}'" title="Manage Sessions">Manage</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.href='manage-training.html?id=${p.id}'" title="Manage Sessions">Manage</button>
                         ${Permissions.can(userRole, 'edit_training_drives') ? `
                         <button class="btn btn-secondary btn-sm" onclick="editTrainingProgram('${p.id}')" title="Edit Info">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
@@ -1252,7 +1258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="d-flex flex-column gap-1">
                         <!-- Training Programs (Blue) -->
                         ${dayPrograms.map(p => `
-                            <div style="background: #0D6EFC; color: white; font-size: 9px; padding: 2px 4px; border-radius: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer;" title="Training: ${p.name}" onclick="location.href='manage-training.html?id=${p.id}'">
+                            <div style="background: #0D6EFC; color: white; font-size: 9px; padding: 2px 4px; border-radius: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer;" title="Training: ${p.name}" onclick="window.location.href='manage-training.html?id=${p.id}'">
                                 📚 ${p.name}
                             </div>
                         `).join('')}
@@ -1388,36 +1394,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(addPlacementForm) {
         addPlacementForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const targetType = document.querySelector('input[name="pTargetType"]:checked').value;
-            const courses = Array.from(document.querySelectorAll('input[name="pCourses"]:checked')).map(c => c.value);
-            const depts = Array.from(document.querySelectorAll('input[name="pDepts"]:checked')).map(d => d.value);
-            const selectedStudents = Array.from(document.querySelectorAll('input[name="pStudentSelect"]:checked')).map(s => s.value);
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+            try {
+                const targetType = document.querySelector('input[name="pTargetType"]:checked').value;
+                const courses = Array.from(document.querySelectorAll('input[name="pCourses"]:checked')).map(c => c.value);
+                const depts = Array.from(document.querySelectorAll('input[name="pDepts"]:checked')).map(d => d.value);
+                const selectedStudents = Array.from(document.querySelectorAll('input[name="pStudentSelect"]:checked')).map(s => s.value);
 
-            const activity = {
-                name: document.getElementById('pName').value.trim(),
-                venue: document.getElementById('pVenue').value.trim(),
-                date: document.getElementById('pDate').value,
-                lastDate: document.getElementById('pLastDate').value,
-                description: document.getElementById('pDesc').innerHTML.trim(),
-                type: currentPlacementType,
-                target: { type: targetType, courses, depts, students: selectedStudents }
-            };
+                const activity = {
+                    name: document.getElementById('pName').value.trim(),
+                    venue: document.getElementById('pVenue').value.trim(),
+                    date: document.getElementById('pDate').value,
+                    lastDate: document.getElementById('pLastDate').value,
+                    description: document.getElementById('pDesc').innerHTML.trim(),
+                    type: currentPlacementType,
+                    target: { type: targetType, courses, depts, students: selectedStudents }
+                };
 
-            let result;
-            if (editingPlacementId) {
-                result = await db.updatePlacementActivity(editingPlacementId, activity);
-                showPlacementAlert(result.message, result.success ? 'success' : 'danger');
-                if (result.success) editingPlacementId = null;
-            } else {
-                result = await db.addPlacementActivity(activity);
-                showPlacementAlert(result.message, result.success ? 'success' : 'danger');
-            }
-            
-            if (result.success) {
-                addPlacementForm.reset();
-                document.getElementById('pDesc').innerHTML = '';
-                closeModal(placementModal);
-                renderPlacementActivities();
+                let result;
+                if (editingPlacementId) {
+                    result = await db.updatePlacementActivity(editingPlacementId, activity);
+                    showPlacementAlert(result.message, result.success ? 'success' : 'danger');
+                    if (result.success) editingPlacementId = null;
+                } else {
+                    result = await db.addPlacementActivity(activity);
+                    showPlacementAlert(result.message, result.success ? 'success' : 'danger');
+                }
+                
+                if (result.success) {
+                    addPlacementForm.reset();
+                    document.getElementById('pDesc').innerHTML = '';
+                    closeModal(placementModal);
+                    renderPlacementActivities();
+                }
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
             }
         });
     }
