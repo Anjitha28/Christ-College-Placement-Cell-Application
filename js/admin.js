@@ -2624,25 +2624,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tbody = document.querySelector('#examTable tbody');
         if (!tbody) return;
         if (exams.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No exams yet. Click “Create Exam”.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No exams yet. Click “Create Exam”.</td></tr>';
             return;
         }
         tbody.innerHTML = exams.map(e => {
             const total = (e.questions || []).reduce((a, q) => a + (Number(q.marks) || 0), 0);
-            const targetLabel = getTargetLabel(e.target);
             return `<tr>
-                <td><strong>${e.title}</strong></td>
-                <td>${targetLabel}</td>
-                <td>${(e.questions || []).length}</td>
-                <td>${total}</td>
-                <td>${e.passMark}%</td>
-                <td>${e.duration ? `${e.duration} min` : 'Untimed'}</td>
-                <td>
+                <td class="align-middle"><strong>${e.title}</strong></td>
+                <td class="align-middle">${(e.questions || []).length}</td>
+                <td class="align-middle">${total}</td>
+                <td class="align-middle">${e.passMark}%</td>
+                <td class="align-middle">${e.duration ? `${e.duration} min` : 'Untimed'}</td>
+                <td class="align-middle">
                     ${canAuthorExams ? `
-                        <div class="d-flex gap-1">
-                            <button class="btn btn-secondary btn-sm" onclick="editExam('${e.id}')">Edit</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteExam('${e.id}')">Delete</button>
-                            <button class="btn btn-primary btn-sm" onclick="viewExamReport('${e.id}')">Report</button>
+                        <div class="d-flex gap-2 align-items-center justify-content-start">
+                            <button class="btn btn-secondary btn-sm" style="min-width: 65px;" onclick="editExam('${e.id}')">Edit</button>
+                            <button class="btn btn-danger btn-sm" style="min-width: 65px;" onclick="deleteExam('${e.id}')">Delete</button>
+                            <button class="btn btn-primary btn-sm" style="min-width: 65px;" onclick="viewExamReport('${e.id}')">Report</button>
                         </div>
                     ` : '<span class="text-muted small">view only</span>'}
                 </td>
@@ -2657,6 +2655,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('exDuration').value = 20;
         document.getElementById('exPass').value = 40;
         document.getElementById('exNeg').value = 0;
+        if(document.getElementById('exShuffleQuestions')) document.getElementById('exShuffleQuestions').checked = false;
+        if(document.getElementById('exShuffleOptions')) document.getElementById('exShuffleOptions').checked = false;
 
         // Populate course and class checkboxes
         const students = db.getStudents();
@@ -2825,6 +2825,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             duration: Number(document.getElementById('exDuration').value) || 0,
             passMark: Number(document.getElementById('exPass').value) || 40,
             negative: Number(document.getElementById('exNeg').value) || 0,
+            shuffleQuestions: document.getElementById('exShuffleQuestions') ? document.getElementById('exShuffleQuestions').checked : false,
+            shuffleOptions: document.getElementById('exShuffleOptions') ? document.getElementById('exShuffleOptions').checked : false,
             questions,
             target
         };
@@ -2853,6 +2855,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('exDuration').value = exam.duration || 0;
         document.getElementById('exPass').value = exam.passMark || 40;
         document.getElementById('exNeg').value = exam.negative || 0;
+        if(document.getElementById('exShuffleQuestions')) document.getElementById('exShuffleQuestions').checked = !!exam.shuffleQuestions;
+        if(document.getElementById('exShuffleOptions')) document.getElementById('exShuffleOptions').checked = !!exam.shuffleOptions;
 
         // Populate Courses and Classes Checkboxes
         const students = db.getStudents();
