@@ -793,6 +793,10 @@
                 } else {
                     targetedPrograms.forEach(p => {
                         const isRegistered = p.registrations.includes(user.registerNumber);
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = p.description;
+                        const strippedDesc = tempDiv.textContent || tempDiv.innerText || "";
+
                         const card = document.createElement('div');
                         card.className = `glass-card w-100 ${isRegistered ? 'registered-card' : ''}`;
                         card.style.padding = '1rem 1.5rem';
@@ -805,19 +809,19 @@
                                         <h5 class="mb-0" style="color: #111827; font-weight: 700; font-size: 1rem;">${p.name}</h5>
                                         <span class="badge bg-info" style="font-size: 9px; color: white; padding: 2px 6px; border-radius: 4px;">Training</span>
                                     </div>
-                                    <p class="text-muted small mb-0 text-truncate" style="max-width: 350px;">${p.description}</p>
+                                    <p class="text-muted small mb-0 text-truncate" style="max-width: 350px;">${strippedDesc}</p>
                                 </div>
                                 
-                                <div style="flex: 1.5; text-align: center;">
-                                    <div class="d-flex align-items-center justify-content-center gap-1 text-muted small mb-1">
+                                <div style="flex: 1.5; text-align: left; padding-left: 1rem;">
+                                    <div class="d-flex align-items-center justify-content-start gap-2 text-muted small mb-1">
                                         <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"/></svg>
                                         <span style="font-weight: 600;">${p.date}</span>
                                     </div>
-                                    <div class="text-muted" style="font-size: 11px; opacity: 0.8;">${p.days} Days Duration</div>
+                                    <div class="text-muted ms-4" style="font-size: 11px; opacity: 0.8;">${p.days} Days Duration</div>
                                 </div>
 
-                                <div style="flex: 1.5; text-align: center;">
-                                    <div class="d-flex align-items-center justify-content-center gap-1 text-muted small">
+                                <div style="flex: 1.5; text-align: left; padding-left: 1rem;">
+                                    <div class="d-flex align-items-center justify-content-start gap-2 text-muted small">
                                         <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                                         <span class="text-truncate" style="max-width: 150px; font-weight: 500;">${p.venue}</span>
                                     </div>
@@ -891,7 +895,7 @@
                 if(!p) return;
 
                 document.getElementById('modalName').textContent = p.name;
-                document.getElementById('modalDesc').textContent = p.description;
+                document.getElementById('modalDesc').innerHTML = p.description;
                 document.getElementById('modalVenue').textContent = p.venue;
                 document.getElementById('modalDate').textContent = p.date;
                 document.getElementById('modalDays').textContent = p.days;
