@@ -399,7 +399,8 @@ class Database {
     }
 
     async addStudent(student) {
-        if (this.cache.students.find(s => s.registerNumber === student.registerNumber)) {
+        const checkRegNo = String(student.registerNumber || '').trim().toLowerCase();
+        if (this.cache.students.find(s => String(s.registerNumber || '').trim().toLowerCase() === checkRegNo)) {
             return { success: false, message: 'Student already exists.' };
         }
         student.password = (student.password || 'password').trim();
@@ -433,7 +434,8 @@ class Database {
         let duplicateCount = 0;
 
         newStudents.forEach(student => {
-            if (this.cache.students.find(s => s.registerNumber === student.registerNumber)) {
+            const checkRegNo = String(student.registerNumber || '').trim().toLowerCase();
+            if (this.cache.students.find(s => String(s.registerNumber || '').trim().toLowerCase() === checkRegNo)) {
                 duplicateCount++;
             } else {
                 student.password = (student.password || 'password').trim();
