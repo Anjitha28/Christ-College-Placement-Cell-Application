@@ -14,6 +14,10 @@ const SUPABASE_KEY = "sb_publishable__scO4pQv-Xft14X53GiO0Q_XoD4VwNz";
 
 function toSQLStudent(s) {
     if (!s) return null;
+    const scoresObj = s.scores || {};
+    if (s.admissionYear) {
+        scoresObj._admission_year = s.admissionYear;
+    }
     return {
         name: s.name,
         register_number: s.registerNumber,
@@ -26,8 +30,7 @@ function toSQLStudent(s) {
         password: s.password || 'password',
         is_coordinator: s.isCoordinator === true || s.isCoordinator === 'true',
         force_password_reset: s.forcePasswordReset === true || s.forcePasswordReset === 'true',
-        admission_year: s.admissionYear,
-        scores: s.scores || {}
+        scores: scoresObj
     };
 }
 
@@ -46,7 +49,7 @@ function toJSStudent(row) {
         password: row.password || 'password',
         isCoordinator: row.is_coordinator,
         forcePasswordReset: row.force_password_reset,
-        admissionYear: row.admission_year,
+        admissionYear: row.admission_year || (row.scores && row.scores._admission_year) || null,
         scores: row.scores || {}
     };
 }
