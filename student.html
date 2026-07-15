@@ -19,7 +19,7 @@
                 <li><a class="sidebar-link tab" data-tab="placement">Placement Activities</a></li>
 
                 <li><a class="sidebar-link tab" data-tab="attendance">Program Details</a></li>
-                <li><a class="sidebar-link tab" data-tab="exams">My Exams</a></li>
+                <li><a class="sidebar-link tab" data-tab="exams">MCQ Exams</a></li>
                 <li id="coordPortalLink" class="hidden mt-3"><a href="coordinator.html" class="sidebar-link" style="color: #60a5fa; font-weight: 600; padding: 10px 15px; border-radius: 10px; background: rgba(96,165,250,0.1); display: flex; align-items: center; justify-content: center;">🛠️ Coordinator Portal</a></li>
                 <li class="mt-4"><a href="#" onclick="openStudentProfile()" class="sidebar-link" style="background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; align-items: center; padding: 10px 15px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="margin-right: 10px;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> My Profile</a></li>
             </ul>
@@ -56,6 +56,16 @@
                             <p id="pModalRegNo" style="opacity: 0.8; font-size: 0.9rem; margin-top: 0.25rem;"></p>
                         </div>
                         <div style="padding: 1.5rem;">
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="small text-muted fw-bold" style="font-size: 10px;">COURSE</label>
+                                    <div id="pModalCourse" style="font-weight: 600; color: #111827;"></div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="small text-muted fw-bold" style="font-size: 10px;">CLASS</label>
+                                    <div id="pModalClass" style="font-weight: 600; color: #111827;"></div>
+                                </div>
+                            </div>
                             <div class="mb-3">
                                 <label class="small text-muted fw-bold" style="font-size: 10px;">DEPARTMENT</label>
                                 <div id="pModalDept" style="font-weight: 600; color: #111827;"></div>
@@ -101,9 +111,9 @@
                         <!-- Populated by JS -->
                     </div>
                 </div>
-                <!-- My Exams Tab -->
+                <!-- MCQ Exams Tab -->
                 <div id="examsTab" class="tab-content">
-                    <h4 class="mb-4">My Exams</h4>
+                    <h4 class="mb-4">MCQ Exams</h4>
                     <div id="examsList"></div>
                 </div>
                 <!-- Placement Tab -->
@@ -348,6 +358,8 @@
                 // Populate Profile Modal
                 document.getElementById('pModalStudentName').textContent = user.name;
                 document.getElementById('pModalRegNo').textContent = user.registerNumber;
+                document.getElementById('pModalCourse').textContent = user.course || 'N/A';
+                document.getElementById('pModalClass').textContent = user.class || 'N/A';
                 document.getElementById('pModalDept').textContent = user.department;
                 document.getElementById('pModalPhone').textContent = user.phoneNumber;
                 document.getElementById('pModalEmail').textContent = user.mailId;
@@ -383,20 +395,14 @@
                     const t = e.target || { type: 'all' };
                     if (!t || t.type === 'all') return true;
                     
-                    const studentCourse = (user.course || '').trim().toLowerCase();
-                    const studentClass = (user.class || '').trim().toLowerCase();
-
-                    const matchesCourse = t.courses && t.courses.length > 0 && t.courses.map(x => x.trim().toLowerCase()).includes(studentCourse);
-                    const matchesClass = t.classes && t.classes.length > 0 && t.classes.map(x => x.trim().toLowerCase()).includes(studentClass);
+                    const safeIncludes = (arr, val) => (arr || []).map(x => String(x).trim().toLowerCase()).includes(String(val).trim().toLowerCase());
                     
-                    if (t.courses && t.courses.length > 0 && t.classes && t.classes.length > 0) {
-                        return matchesCourse || matchesClass;
-                    } else if (t.courses && t.courses.length > 0) {
-                        return matchesCourse;
-                    } else if (t.classes && t.classes.length > 0) {
-                        return matchesClass;
-                    }
-                    return true;
+                    if (t.type === 'course' && safeIncludes(t.courses, user.course)) return true;
+                    if (t.type === 'dept' && safeIncludes(t.depts, user.department)) return true;
+                    if (t.type === 'student' && safeIncludes(t.students, user.registerNumber)) return true;
+                    if (safeIncludes(t.classes, user.class)) return true;
+                    
+                    return false;
                 }).map(e => {
                     const attempt = attempts.find(a => a.exam_id === e.id);
                     return { ...e, attempt: attempt || null };
@@ -961,12 +967,13 @@
                     } else {
                         feedbackSection.classList.add('hidden');
                     }
-                } else if(!p.isRegistrationOpen) {
-                    actionArea.innerHTML = '<div class="alert alert-danger text-center py-3 mb-0" style="border-radius: 12px; background: #fff1f2; color: #9f1239; border: 1px dashed #fb7185; font-weight: 600;">Registration is currently closed for this program.</div>';
-                    feedbackSection.classList.add('hidden');
                 } else {
-                    actionArea.innerHTML = `<button class="btn btn-primary w-100" onclick="registerForTraining('${p.id}')" style="padding: 1rem; border-radius: 12px; font-weight: 700; font-size: 1rem; background: #4f46e5; border: none; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);">Register for Program</button>`;
                     feedbackSection.classList.add('hidden');
+                    if (!p.isRegistrationOpen) {
+                        actionArea.innerHTML = '<div class="alert alert-warning text-center py-3 mb-0" style="background: rgba(245, 158, 11, 0.1); color: #b45309; border: 1px dashed #f59e0b; border-radius: 12px; font-weight: 600;">Registration Closed</div>';
+                    } else {
+                        actionArea.innerHTML = `<button class="btn btn-primary w-100" onclick="registerForTraining('${p.id}')" style="padding: 1rem; border-radius: 12px; font-weight: 700; font-size: 1rem; background: #4f46e5; border: none; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);">Register for Program</button>`;
+                    }
                 }
 
                 document.getElementById('detailsModal').classList.remove('hidden');
