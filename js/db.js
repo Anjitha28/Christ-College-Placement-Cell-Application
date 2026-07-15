@@ -62,8 +62,7 @@ function toSQLTeacher(t) {
         email: t.mailId || t.email,
         department: t.department,
         password: t.password || 'password',
-        is_coordinator: t.isCoordinator === true || t.isCoordinator === 'true',
-        force_password_reset: t.forcePasswordReset === true || t.forcePasswordReset === 'true'
+        is_coordinator: t.isCoordinator === true || t.isCoordinator === 'true'
     };
 }
 
@@ -76,8 +75,7 @@ function toJSTeacher(row) {
         mailId: row.email,
         department: row.department,
         password: row.password || 'password',
-        isCoordinator: row.is_coordinator,
-        forcePasswordReset: row.force_password_reset
+        isCoordinator: row.is_coordinator
     };
 }
 
