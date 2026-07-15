@@ -277,6 +277,62 @@
         </div>
     </div>
 
+    <!-- Exam Fullscreen Container -->
+    <div id="examFullscreenContainer" class="hidden" style="position: fixed; inset: 0; background: #f8fafc; z-index: 9999; display: flex; flex-direction: column; overflow: hidden;">
+        <div style="background: #fff; border-bottom: 1px solid #e2e8f0; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div>
+                <h4 id="fsExamTitle" style="margin: 0; font-weight: 800; color: #0f172a;">Exam Title</h4>
+                <p id="fsExamSubtitle" style="margin: 0; font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">0 Questions</p>
+            </div>
+            <div style="display: flex; gap: 2rem; align-items: center;">
+                <div class="d-flex gap-3 text-center">
+                    <div>
+                        <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Attempted</div>
+                        <div id="fsCountAttempted" style="font-weight: 800; color: #10b981; font-size: 1.25rem;">0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Reviewed</div>
+                        <div id="fsCountReviewed" style="font-weight: 800; color: #3b82f6; font-size: 1.25rem;">0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Unattempted</div>
+                        <div id="fsCountUnattempted" style="font-weight: 800; color: #94a3b8; font-size: 1.25rem;">0</div>
+                    </div>
+                </div>
+                <div style="background: #f1f5f9; padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 0.15rem;">Time Remaining</div>
+                    <div id="fsExamTimer" style="font-weight: 800; color: #0f172a; font-size: 1.25rem; font-family: monospace;">00:00</div>
+                </div>
+                <button class="btn btn-success" style="font-weight: 700; padding: 0.5rem 1.5rem;" onclick="submitFsExam()">Submit Exam</button>
+            </div>
+        </div>
+
+        <div style="display: flex; flex: 1; overflow: hidden;">
+            <!-- Left Grid -->
+            <div style="width: 320px; background: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column;">
+                <div style="padding: 1rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+                    <h6 style="margin: 0; font-weight: 700; color: #475569;">Question Navigator</h6>
+                </div>
+                <div id="fsQuestionGrid" style="padding: 1.5rem; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; overflow-y: auto; flex: 1; align-content: start;">
+                    <!-- Grid items injected by JS -->
+                </div>
+            </div>
+
+            <!-- Main Question Area -->
+            <div style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: #f8fafc; padding: 2rem;">
+                <div id="fsQuestionArea" class="glass-card" style="max-width: 800px; margin: 0 auto; width: 100%; padding: 2.5rem; border-radius: 16px;">
+                    <!-- Question Content injected by JS -->
+                </div>
+                
+                <div style="max-width: 800px; margin: 1.5rem auto 0; width: 100%; display: flex; justify-content: space-between; gap: 1rem;">
+                    <button class="btn btn-secondary" id="btnFsPrev" style="font-weight: 600; padding: 0.75rem 1.5rem;" onclick="navigateFsQuestion(-1)">← Previous</button>
+                    <button class="btn btn-warning text-white" id="btnFsReview" style="font-weight: 600; padding: 0.75rem 1.5rem; background: #eab308; border-color: #ca8a04;" onclick="toggleFsReview()">★ Mark for Review</button>
+                    <button class="btn btn-primary" id="btnFsNext" style="font-weight: 600; padding: 0.75rem 1.5rem;" onclick="navigateFsQuestion(1)">Next →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/db.js"></script>
@@ -411,13 +467,21 @@
 
             window.renderExams = function () {
                 const list = document.getElementById('examsList');
-                const exams = studentExams();
+                let exams = studentExams();
                 if (exams.length === 0) {
                     list.innerHTML = '<div class="glass-card text-center py-5"><p class="text-muted">No exams assigned to your Course/Class yet.</p></div>';
                     return;
                 }
+                
+                // Sort recently attempted exams to the top
+                exams.sort((a, b) => {
+                    if (a.attempt && !b.attempt) return -1;
+                    if (!a.attempt && b.attempt) return 1;
+                    return 0;
+                });
+
                 list.innerHTML = exams.map(e => {
-                    const total = (e.questions || []).reduce((a, q) => a + (Number(q.marks) || 0), 0);
+                    const total = (e.questions || []).reduce((acc, q) => acc + (Number(q.marks) || 0), 0);
                     const done = e.attempt != null;
                     const prevScore = done ? e.attempt.score : null;
                     return `<div class="glass-card mb-3">
@@ -430,6 +494,7 @@
                                 ? `<div class="d-flex gap-2 align-items-center">
                                      <span class="badge" style="background:${e.attempt.passed ? '#ecfdf5' : '#fef2f2'};color:${e.attempt.passed ? '#059669' : '#dc2626'};padding:6px 14px;border-radius:10px;">Score: ${prevScore} / ${total} · ${e.attempt.passed ? 'Passed' : 'Failed'}</span>
                                      <button class="btn btn-secondary btn-sm" onclick="viewExplanations('${e.id}')">Review Answers</button>
+                                     <button class="btn btn-outline-primary btn-sm" onclick="retakeExam('${e.id}')">Retake Exam</button>
                                    </div>`
                                 : `<button class="btn btn-primary btn-sm" onclick="startExam('${e.id}')">Start Exam</button>`}
                         </div>
@@ -437,71 +502,202 @@
                 }).join('');
             };
 
-            window.startExam = function (examId) {
-                const exam = db.getExams().find(e => e.id === examId);
-                if (!exam) return;
-                const qHtml = (exam.questions || []).map((q, i) => {
-                    let opts = '';
-                    if (q.type === 'truefalse') {
-                        opts = ['True', 'False'].map(o => `<label class="d-flex align-items-center gap-2 mb-1"><input type="radio" name="q${i}" value="${o}"> ${o}</label>`).join('');
+            window.retakeExam = async function(examId) {
+                if(confirm("Are you sure you want to retake this exam? Your previous score will be replaced.")) {
+                    const res = await db.deleteExamAttempt(examId, user.registerNumber);
+                    if(res.success) {
+                        startExam(examId);
                     } else {
-                        const t = q.type === 'multiple' ? 'checkbox' : 'radio';
-                        opts = (q.options || []).map(o => `<label class="d-flex align-items-center gap-2 mb-1"><input type="${t}" name="q${i}" value="${o.replace(/"/g, '&quot;')}"> ${o}</label>`).join('');
+                        alert("Failed to clear previous attempt. " + res.message);
                     }
-                    return `<div class="glass-card mb-3"><strong>Q${i + 1}. ${q.text}</strong> <span class="text-muted small">(${q.marks} mark${q.marks > 1 ? 's' : ''})</span><div class="mt-2">${opts}</div></div>`;
-                }).join('');
-                const list = document.getElementById('examsList');
-                list.innerHTML = `
-                    <div class="glass-card mb-3 d-flex justify-content-between align-items-center">
-                        <h4 style="margin:0;">${exam.title}</h4>
-                        <span class="badge bg-primary" id="examTimer">${exam.duration ? `${exam.duration}:00` : 'Untimed'}</span>
-                    </div>
-                    <form id="examForm">${qHtml}</form>
-                    <button class="btn btn-success mt-3" onclick="submitExam('${exam.id}')">Submit Exam</button>`;
-                
-                if (exam.duration && exam.duration > 0) {
-                    startExamTimer(exam.duration, () => submitExam(exam.id));
                 }
             };
 
-            let examTimerInt = null;
-            function startExamTimer(minutes, onEnd) {
+            // FS State
+            let fsCurrentExam = null;
+            let fsCurrentIndex = 0;
+            let fsStudentAnswers = {};
+            let fsReviewStatus = {};
+            let fsTimerInt = null;
+
+            window.startExam = function (examId) {
+                const exam = db.getExams().find(e => e.id === examId);
+                if (!exam) return;
+                
+                fsCurrentExam = exam;
+                fsCurrentIndex = 0;
+                fsStudentAnswers = {};
+                fsReviewStatus = {};
+                
+                document.getElementById('fsExamTitle').textContent = exam.title;
+                document.getElementById('fsExamSubtitle').textContent = `${exam.questions.length} Questions`;
+                
+                document.getElementById('examFullscreenContainer').classList.remove('hidden');
+                
+                renderFsGrid();
+                renderFsQuestion();
+                updateFsStats();
+
+                if (exam.duration && exam.duration > 0) {
+                    startFsTimer(exam.duration, () => submitFsExam());
+                } else {
+                    document.getElementById('fsExamTimer').textContent = 'Untimed';
+                    clearInterval(fsTimerInt);
+                }
+            };
+
+            function startFsTimer(minutes, onEnd) {
                 let total = minutes * 60;
-                const el = document.getElementById('examTimer');
-                clearInterval(examTimerInt);
-                examTimerInt = setInterval(() => {
+                const el = document.getElementById('fsExamTimer');
+                clearInterval(fsTimerInt);
+                fsTimerInt = setInterval(() => {
                     total--;
-                    if (el) el.textContent = `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
-                    if (total <= 0) { clearInterval(examTimerInt); onEnd(); }
+                    if (el) el.textContent = `${Math.floor(total / 60).toString().padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+                    if (total <= 0) { clearInterval(fsTimerInt); onEnd(); }
                 }, 1000);
             }
 
-            window.submitExam = async function (examId) {
-                const exam = db.getExams().find(e => e.id === examId);
-                if (!exam) return;
-                clearInterval(examTimerInt);
+            function updateFsStats() {
+                const total = fsCurrentExam.questions.length;
+                let attempted = 0;
+                let reviewed = 0;
+                
+                for(let i = 0; i < total; i++) {
+                    if(fsStudentAnswers[i] && fsStudentAnswers[i].length > 0) attempted++;
+                    if(fsReviewStatus[i]) reviewed++;
+                }
+                
+                document.getElementById('fsCountAttempted').textContent = attempted;
+                document.getElementById('fsCountReviewed').textContent = reviewed;
+                document.getElementById('fsCountUnattempted').textContent = total - attempted;
+                
+                // Update Grid Colors
+                for(let i = 0; i < total; i++) {
+                    const btn = document.getElementById(`gridBtn_${i}`);
+                    if(btn) {
+                        btn.style.background = fsReviewStatus[i] ? '#eff6ff' : (fsStudentAnswers[i] && fsStudentAnswers[i].length > 0 ? '#ecfdf5' : '#f1f5f9');
+                        btn.style.color = fsReviewStatus[i] ? '#2563eb' : (fsStudentAnswers[i] && fsStudentAnswers[i].length > 0 ? '#10b981' : '#64748b');
+                        btn.style.borderColor = fsReviewStatus[i] ? '#bfdbfe' : (fsStudentAnswers[i] && fsStudentAnswers[i].length > 0 ? '#a7f3d0' : '#e2e8f0');
+                        
+                        if(i === fsCurrentIndex) {
+                            btn.style.boxShadow = '0 0 0 2px #0f172a';
+                        } else {
+                            btn.style.boxShadow = 'none';
+                        }
+                    }
+                }
+            }
+
+            function renderFsGrid() {
+                const grid = document.getElementById('fsQuestionGrid');
+                grid.innerHTML = fsCurrentExam.questions.map((_, i) => {
+                    return `<button id="gridBtn_${i}" onclick="jumpToFsQuestion(${i})" style="aspect-ratio: 1; border-radius: 8px; border: 1px solid #e2e8f0; font-weight: 700; background: #f1f5f9; color: #64748b; font-size: 0.9rem; transition: all 0.2s;">${i + 1}</button>`;
+                }).join('');
+            }
+
+            window.jumpToFsQuestion = function(index) {
+                fsCurrentIndex = index;
+                renderFsQuestion();
+                updateFsStats();
+            };
+
+            window.navigateFsQuestion = function(dir) {
+                const newIdx = fsCurrentIndex + dir;
+                if(newIdx >= 0 && newIdx < fsCurrentExam.questions.length) {
+                    fsCurrentIndex = newIdx;
+                    renderFsQuestion();
+                    updateFsStats();
+                }
+            };
+
+            window.toggleFsReview = function() {
+                fsReviewStatus[fsCurrentIndex] = !fsReviewStatus[fsCurrentIndex];
+                updateFsStats();
+                renderFsQuestion(); // update button style
+            };
+
+            window.handleFsOptionSelect = function() {
+                const inputs = Array.from(document.querySelectorAll('#fsOptionsContainer input:checked'));
+                fsStudentAnswers[fsCurrentIndex] = inputs.map(el => el.value);
+                updateFsStats();
+            };
+
+            function renderFsQuestion() {
+                const q = fsCurrentExam.questions[fsCurrentIndex];
+                const area = document.getElementById('fsQuestionArea');
+                
+                let opts = '';
+                const picked = fsStudentAnswers[fsCurrentIndex] || [];
+                
+                if (q.type === 'truefalse') {
+                    opts = ['True', 'False'].map(o => {
+                        const isChecked = picked.includes(o) ? 'checked' : '';
+                        return `<label style="display: block; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 0.75rem; cursor: pointer; background: ${isChecked ? '#f8fafc' : 'white'}; font-weight: 500; font-size: 1.05rem;">
+                            <input type="radio" name="fs_q" value="${o}" ${isChecked} onchange="handleFsOptionSelect()" style="margin-right: 10px; transform: scale(1.2);"> ${o}
+                        </label>`;
+                    }).join('');
+                } else {
+                    const t = q.type === 'multiple' ? 'checkbox' : 'radio';
+                    opts = (q.options || []).map(o => {
+                        const isChecked = picked.includes(o) ? 'checked' : '';
+                        return `<label style="display: block; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 0.75rem; cursor: pointer; background: ${isChecked ? '#f8fafc' : 'white'}; font-weight: 500; font-size: 1.05rem;">
+                            <input type="${t}" name="fs_q" value="${o.replace(/"/g, '&quot;')}" ${isChecked} onchange="handleFsOptionSelect()" style="margin-right: 10px; transform: scale(1.2);"> ${o}
+                        </label>`;
+                    }).join('');
+                }
+
+                area.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="badge bg-light text-dark border" style="font-size: 0.9rem; padding: 6px 12px;">Question ${fsCurrentIndex + 1} of ${fsCurrentExam.questions.length}</span>
+                        <span class="badge" style="background: #eef2f7; color: #475569; font-size: 0.85rem;">Marks: ${q.marks}</span>
+                    </div>
+                    <h3 style="font-weight: 700; color: #0f172a; margin-bottom: 2rem; line-height: 1.4;">${q.text}</h3>
+                    <div id="fsOptionsContainer">${opts}</div>
+                `;
+
+                // Update nav buttons
+                document.getElementById('btnFsPrev').disabled = fsCurrentIndex === 0;
+                document.getElementById('btnFsNext').disabled = fsCurrentIndex === fsCurrentExam.questions.length - 1;
+                
+                const btnReview = document.getElementById('btnFsReview');
+                if (fsReviewStatus[fsCurrentIndex]) {
+                    btnReview.style.background = '#2563eb';
+                    btnReview.style.borderColor = '#1d4ed8';
+                    btnReview.style.color = 'white';
+                    btnReview.innerHTML = '★ Marked for Review';
+                } else {
+                    btnReview.style.background = 'white';
+                    btnReview.style.borderColor = '#e2e8f0';
+                    btnReview.style.color = '#475569';
+                    btnReview.innerHTML = '☆ Mark for Review';
+                }
+            }
+
+            window.submitFsExam = async function () {
+                if(!confirm('Are you sure you want to submit the exam?')) return;
+                
+                clearInterval(fsTimerInt);
+                document.getElementById('examFullscreenContainer').classList.add('hidden');
                 
                 let score = 0, totalMarks = 0;
-                const studentAnswers = {};
                 
-                (exam.questions || []).forEach((q, i) => {
+                (fsCurrentExam.questions || []).forEach((q, i) => {
                     totalMarks += Number(q.marks) || 0;
-                    const picked = Array.from(document.querySelectorAll(`[name="q${i}"]:checked`)).map(x => x.value);
-                    studentAnswers[i] = picked;
+                    const picked = fsStudentAnswers[i] || [];
                     
                     const correct = q.correct || [];
                     const isRight = picked.length === correct.length && picked.every(v => correct.includes(v));
                     if (isRight) score += Number(q.marks) || 0;
-                    else if (picked.length && exam.negative) score -= Number(exam.negative) || 0;
+                    else if (picked.length && fsCurrentExam.negative) score -= Number(fsCurrentExam.negative) || 0;
                 });
                 
                 if (score < 0) score = 0;
-                const passed = score >= ((exam.passMark / 100) * totalMarks);
+                const passed = score >= ((fsCurrentExam.passMark / 100) * totalMarks);
                 
                 const attempt = {
-                    exam_id: exam.id,
+                    exam_id: fsCurrentExam.id,
                     register_number: user.registerNumber,
-                    answers: studentAnswers,
+                    answers: fsStudentAnswers,
                     score: score,
                     passed: passed
                 };
@@ -509,9 +705,11 @@
                 const res = await db.addExamAttempt(attempt);
                 if (res.success) {
                     alert(`Exam submitted! Your score: ${score} / ${totalMarks} (${passed ? 'Passed' : 'Failed'})`);
-                    showExamReview(exam, studentAnswers);
+                    renderExams();
+                    showExamReview(fsCurrentExam, fsStudentAnswers);
                 } else {
                     alert(res.message || 'Error submitting exam. Please check your connection and try again.');
+                    renderExams();
                 }
             };
 
