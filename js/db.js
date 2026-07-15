@@ -26,6 +26,7 @@ function toSQLStudent(s) {
         password: s.password || 'password',
         is_coordinator: s.isCoordinator === true || s.isCoordinator === 'true',
         force_password_reset: s.forcePasswordReset === true || s.forcePasswordReset === 'true',
+        admission_year: s.admissionYear,
         scores: s.scores || {}
     };
 }
@@ -45,6 +46,7 @@ function toJSStudent(row) {
         password: row.password || 'password',
         isCoordinator: row.is_coordinator,
         forcePasswordReset: row.force_password_reset,
+        admissionYear: row.admission_year,
         scores: row.scores || {}
     };
 }
