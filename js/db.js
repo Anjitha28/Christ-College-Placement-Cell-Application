@@ -1225,13 +1225,15 @@ class Database {
             }
             return { success: false, message: 'Invalid register number or password.' };
         } else {
-            const teacher = this.cache.teachers.find(t => t.phoneNumber === username);
+            const teacher = this.cache.teachers.find(t => String(t.phoneNumber || t.phone || '').trim() === String(username).trim());
             if (teacher) {
                 if (checkPass(teacher, password)) {
                     return { success: true, user: teacher };
+                } else {
+                    return { success: false, message: 'Invalid password for teacher.' };
                 }
             }
-            return { success: false, message: 'Invalid credentials.' };
+            return { success: false, message: 'Teacher phone number not found.' };
         }
     }
 
