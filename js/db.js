@@ -946,9 +946,9 @@ class Database {
         if (index === -1) return { success: false, message: 'Program not found.' };
         const program = this.cache.trainingPrograms[index];
         program.feedbacks = program.feedbacks || [];
-        program.feedbacks = program.feedbacks.filter(f => f.studentId !== regNo);
+        program.feedbacks = program.feedbacks.filter(f => f.regNo !== regNo);
         program.feedbacks.push({
-            studentId: regNo,
+            regNo: regNo,
             rating: Number(feedback.rating),
             comment: feedback.comment,
             date: new Date().toISOString().split('T')[0]

@@ -1115,10 +1115,12 @@
                     actionArea.innerHTML = '<div class="alert alert-success text-center py-3 mb-0" style="background: rgba(16, 185, 129, 0.1); color: #065f46; border: 1px dashed #10b981; border-radius: 12px; font-weight: 600;">✓ You are already registered for this program.</div>';
                     
                     // Fetch and display attendance
+                    let hasAttended = false;
                     try {
                         const allAttendance = db.getStudentAttendance(user.registerNumber) || [];
                         const programAttn = allAttendance.find(a => a.id === p.id);
                         if (programAttn && programAttn.sessions && programAttn.sessions.length > 0) {
+                            hasAttended = programAttn.sessions.some(s => s.present);
                             let attnHtml = '<h6 class="small text-muted mb-2 text-uppercase" style="letter-spacing: 1px; font-size: 10px; font-weight: 700; margin-top: 1rem;">YOUR ATTENDANCE RECORD</h6>';
                             programAttn.sessions.forEach((s, idx) => {
                                 attnHtml += `
@@ -1143,25 +1145,59 @@
 
                     const hasSubmitted = (p.feedbacks || []).some(f => f.regNo === user.registerNumber);
 
-                    if (p.isFeedbackOpen && !hasSubmitted) {
-                        feedbackSection.classList.remove('hidden');
-                        
-                        // Initialize Stars
-                        let selectedRating = 5;
-                        const stars = document.querySelectorAll('.star');
-                        stars.forEach(s => {
-                            s.onclick = () => {
-                                selectedRating = s.dataset.value;
-                                stars.forEach(st => {
-                                    st.classList.toggle('active', st.dataset.value <= selectedRating);
-                                });
-                            };
-                        });
+                    feedbackSection.innerHTML = `
+                        <h5 class="mb-3" style="font-weight: 700; color: #111827;">Your Feedback</h5>
+                        <div id="feedbackFormArea">
+                            <div class="form-group mb-3">
+                                <label class="form-label small text-muted">HOW WAS YOUR EXPERIENCE?</label>
+                                <div class="star-rating" id="starRating">
+                                    <span class="star" data-value="5">★</span>
+                                    <span class="star" data-value="4">★</span>
+                                    <span class="star" data-value="3">★</span>
+                                    <span class="star" data-value="2">★</span>
+                                    <span class="star" data-value="1">★</span>
+                                </div>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label small text-muted">COMMENTS</label>
+                                <textarea id="fbComment" class="form-control" rows="3" placeholder="Tell us about your experience..." style="background: #f9fafb; border-radius: 10px; border-color: #e5e7eb;"></textarea>
+                            </div>
+                            <button class="btn btn-primary w-100" id="submitFeedbackBtn" style="padding: 0.75rem; border-radius: 10px; font-weight: 600; background: #4f46e5; border: none; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);">Submit Feedback</button>
+                        </div>
+                        <div id="feedbackMessageArea"></div>
+                    `;
+                    
+                    const formArea = document.getElementById('feedbackFormArea');
+                    const msgArea = document.getElementById('feedbackMessageArea');
 
-                        document.getElementById('submitFeedbackBtn').onclick = () => submitFeedback(p.id, selectedRating);
-                    } else if (hasSubmitted) {
-                        feedbackSection.innerHTML = '<div class="alert alert-info text-center py-3 mb-0" style="border-radius: 12px; border: 1px dashed #3b82f6; background: #eff6ff; color: #1e40af; font-weight: 600;">Thank you for your feedback!</div>';
+                    if (hasSubmitted) {
                         feedbackSection.classList.remove('hidden');
+                        formArea.classList.add('hidden');
+                        msgArea.innerHTML = '<div class="alert alert-info text-center py-3 mb-0" style="border-radius: 12px; border: 1px dashed #3b82f6; background: #eff6ff; color: #1e40af; font-weight: 600;">Thank you for your feedback!</div>';
+                    } else if (p.isFeedbackOpen) {
+                        if (hasAttended) {
+                            feedbackSection.classList.remove('hidden');
+                            formArea.classList.remove('hidden');
+                            msgArea.innerHTML = '';
+                            
+                            // Initialize Stars
+                            let selectedRating = 5;
+                            const stars = document.querySelectorAll('.star');
+                            stars.forEach(s => {
+                                s.onclick = () => {
+                                    selectedRating = s.dataset.value;
+                                    stars.forEach(st => {
+                                        st.classList.toggle('active', st.dataset.value <= selectedRating);
+                                    });
+                                };
+                            });
+    
+                            document.getElementById('submitFeedbackBtn').onclick = () => submitFeedback(p.id, selectedRating);
+                        } else {
+                            feedbackSection.classList.remove('hidden');
+                            formArea.classList.add('hidden');
+                            msgArea.innerHTML = '<div class="alert alert-warning text-center py-3 mb-0" style="border-radius: 12px; border: 1px dashed #f59e0b; background: #fffbeb; color: #b45309; font-weight: 600;">You must attend this program to submit feedback.</div>';
+                        }
                     } else {
                         feedbackSection.classList.add('hidden');
                     }
