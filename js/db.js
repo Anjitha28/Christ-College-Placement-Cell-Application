@@ -307,11 +307,11 @@ class Database {
             let error = null;
             if (tableName === 'Students') {
                 const rows = Array.isArray(data) ? data.map(toSQLStudent) : [toSQLStudent(data)];
-                const res = await this.client.from('students').upsert(rows);
+                const res = await this.client.from('students').upsert(rows, { onConflict: 'register_number' });
                 error = res.error;
             } else if (tableName === 'Teacher') {
                 const rows = Array.isArray(data) ? data.map(toSQLTeacher) : [toSQLTeacher(data)];
-                const res = await this.client.from('teachers').upsert(rows);
+                const res = await this.client.from('teachers').upsert(rows, { onConflict: 'phone' });
                 error = res.error;
             } else if (tableName === 'Training Program') {
                 const rows = Array.isArray(data) ? data.map(toSQLTrainingProgram) : [toSQLTrainingProgram(data)];
@@ -827,8 +827,11 @@ class Database {
                 this.cache.students[index].password = newPassword;
                 delete this.cache.students[index].forcePasswordReset;
                 const res = await this.sync("Students", this.cache.students[index]);
-                if (res.success) showToast('Password updated!', 'success');
-                return { success: true, message: 'Password updated successfully.' };
+                if (res.success) {
+                    showToast('Password updated!', 'success');
+                    return { success: true, message: 'Password updated successfully.' };
+                }
+                return { success: false, message: 'Failed to sync new password.' };
             }
         } else if (role === 'teacher') {
             const index = this.cache.teachers.findIndex(t => t.phoneNumber === id);
@@ -836,8 +839,11 @@ class Database {
                 this.cache.teachers[index].password = newPassword;
                 delete this.cache.teachers[index].forcePasswordReset;
                 const res = await this.sync("Teacher", this.cache.teachers[index]);
-                if (res.success) showToast('Password updated!', 'success');
-                return { success: true, message: 'Password updated successfully.' };
+                if (res.success) {
+                    showToast('Password updated!', 'success');
+                    return { success: true, message: 'Password updated successfully.' };
+                }
+                return { success: false, message: 'Failed to sync new password.' };
             }
         }
         return { success: false, message: 'User not found.' };
