@@ -1258,6 +1258,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         trainingAlert.classList.remove('hidden');
         setTimeout(() => trainingAlert.classList.add('hidden'), 5000);
     }
+
+    function showPlacementAlert(message, type) {
+        if (!placementAlert) return;
+        placementAlert.textContent = message;
+        placementAlert.className = `alert alert-${type} mb-3`;
+        placementAlert.classList.remove('hidden');
+        setTimeout(() => placementAlert.classList.add('hidden'), 5000);
+    }
     const premiumColors = ['#0D6EFC', '#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#f43f5e', '#f97316', '#06b6d4'];
     function getProgramColor(id) {
         if (!id) return premiumColors[0];
