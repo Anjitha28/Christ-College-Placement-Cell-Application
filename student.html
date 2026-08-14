@@ -460,7 +460,7 @@
                     
                     return false;
                 }).map(e => {
-                    const attempt = attempts.find(a => a.exam_id === e.id);
+                    const attempt = [...attempts].reverse().find(a => a.exam_id === e.id);
                     return { ...e, attempt: attempt || null };
                 });
             }
@@ -503,13 +503,8 @@
             };
 
             window.retakeExam = async function(examId) {
-                if(confirm("Are you sure you want to retake this exam? Your previous score will be replaced.")) {
-                    const res = await db.deleteExamAttempt(examId, user.registerNumber);
-                    if(res.success) {
-                        startExam(examId);
-                    } else {
-                        alert("Failed to clear previous attempt. " + res.message);
-                    }
+                if(confirm("Are you sure you want to retake this exam? This will be recorded as a new attempt.")) {
+                    startExam(examId);
                 }
             };
 
