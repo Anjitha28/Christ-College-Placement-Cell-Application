@@ -260,54 +260,60 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     addStudentForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
         
-        if (!Permissions.can(userRole, 'edit_people')) {
-            alert("Permission denied.");
-            return;
-        }
+        try {
+            if (!Permissions.can(userRole, 'edit_people')) {
+                alert("Permission denied.");
+                return;
+            }
 
-        const student = {
-            name: document.getElementById('sName').value.trim(),
-            registerNumber: document.getElementById('sRegNo').value.trim(),
-            phoneNumber: document.getElementById('sPhone').value.trim(),
-            mailId: document.getElementById('sMail').value.trim(),
-            course: document.getElementById('sCourse').value.trim(),
-            department: document.getElementById('sDept').value.trim(),
-            class: document.getElementById('sClass') ? document.getElementById('sClass').value.trim() : '',
-            admissionYear: document.getElementById('sAdmnYear') ? document.getElementById('sAdmnYear').value.trim() : '',
-            gender: document.getElementById('sGender').value,
-            password: (document.getElementById('sPass').value || 'password').trim(),
-            isCoordinator: document.getElementById('sIsCoordinator') ? document.getElementById('sIsCoordinator').checked : false
-        };
+            const student = {
+                name: document.getElementById('sName').value.trim(),
+                registerNumber: document.getElementById('sRegNo').value.trim(),
+                phoneNumber: document.getElementById('sPhone').value.trim(),
+                mailId: document.getElementById('sMail').value.trim(),
+                course: document.getElementById('sCourse').value.trim(),
+                department: document.getElementById('sDept').value.trim(),
+                class: document.getElementById('sClass') ? document.getElementById('sClass').value.trim() : '',
+                admissionYear: document.getElementById('sAdmnYear') ? document.getElementById('sAdmnYear').value.trim() : '',
+                gender: document.getElementById('sGender').value,
+                password: (document.getElementById('sPass').value || 'password').trim(),
+                isCoordinator: document.getElementById('sIsCoordinator') ? document.getElementById('sIsCoordinator').checked : false
+            };
 
-        if (editingRegNo) {
-            let students = db.getStudents();
-            const index = students.findIndex(s => s.registerNumber === editingRegNo);
-            if (index !== -1) {
-                const originalStudent = students[index];
-                if (!Permissions.can(userRole, 'manage_users')) {
-                    student.isCoordinator = originalStudent.isCoordinator;
+            if (editingRegNo) {
+                let students = db.getStudents();
+                const index = students.findIndex(s => s.registerNumber === editingRegNo);
+                if (index !== -1) {
+                    const originalStudent = students[index];
+                    if (!Permissions.can(userRole, 'manage_users')) {
+                        student.isCoordinator = originalStudent.isCoordinator;
+                    }
+                    students[index] = { ...originalStudent, ...student };
+                    const result = await db.saveStudents(students);
+                    if (result.success) {
+                        showAdminAlert('Student updated successfully', 'success');
+                        addStudentForm.reset();
+                        closeModal(studentModal);
+                        renderStudents();
+                    } else {
+                        showAdminAlert(result.message || 'Error updating student', 'danger');
+                    }
                 }
-                students[index] = { ...originalStudent, ...student };
-                const result = await db.saveStudents(students);
+                editingRegNo = null;
+            } else {
+                const result = await db.addStudent(student);
+                showAdminAlert(result.message, result.success ? 'success' : 'danger');
                 if (result.success) {
-                    showAdminAlert('Student updated successfully', 'success');
                     addStudentForm.reset();
                     closeModal(studentModal);
                     renderStudents();
-                } else {
-                    showAdminAlert(result.message || 'Error updating student', 'danger');
                 }
             }
-            editingRegNo = null;
-        } else {
-            const result = await db.addStudent(student);
-            showAdminAlert(result.message, result.success ? 'success' : 'danger');
-            if (result.success) {
-                addStudentForm.reset();
-                closeModal(studentModal);
-                renderStudents();
-            }
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
         }
     });
 
@@ -733,49 +739,55 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     addTeacherForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
         
-        if (!Permissions.can(userRole, 'edit_teachers')) {
-            alert("Permission denied.");
-            return;
-        }
+        try {
+            if (!Permissions.can(userRole, 'edit_teachers')) {
+                alert("Permission denied.");
+                return;
+            }
 
-        const teacher = {
-            name: document.getElementById('tName').value.trim(),
-            phoneNumber: document.getElementById('tPhone').value.trim(),
-            mailId: document.getElementById('tMail').value.trim(),
-            department: document.getElementById('tDept').value.trim(),
-            password: (document.getElementById('tPass').value || 'password').trim(),
-            isCoordinator: document.getElementById('tIsCoordinator') ? document.getElementById('tIsCoordinator').checked : false
-        };
+            const teacher = {
+                name: document.getElementById('tName').value.trim(),
+                phoneNumber: document.getElementById('tPhone').value.trim(),
+                mailId: document.getElementById('tMail').value.trim(),
+                department: document.getElementById('tDept').value.trim(),
+                password: (document.getElementById('tPass').value || 'password').trim(),
+                isCoordinator: document.getElementById('tIsCoordinator') ? document.getElementById('tIsCoordinator').checked : false
+            };
 
-        if (editingTeacherPhone) {
-            let teachers = db.getTeachers();
-            const index = teachers.findIndex(t => t.phoneNumber === editingTeacherPhone);
-            if (index !== -1) {
-                const originalTeacher = teachers[index];
-                if (!Permissions.can(userRole, 'manage_users')) {
-                    teacher.isCoordinator = originalTeacher.isCoordinator;
+            if (editingTeacherPhone) {
+                let teachers = db.getTeachers();
+                const index = teachers.findIndex(t => t.phoneNumber === editingTeacherPhone);
+                if (index !== -1) {
+                    const originalTeacher = teachers[index];
+                    if (!Permissions.can(userRole, 'manage_users')) {
+                        teacher.isCoordinator = originalTeacher.isCoordinator;
+                    }
+                    teachers[index] = { ...originalTeacher, ...teacher };
+                    const result = await db.saveTeachers(teachers);
+                    if (result.success) {
+                        showTeacherAlert('Teacher updated successfully', 'success');
+                        addTeacherForm.reset();
+                        closeModal(teacherModal);
+                        renderTeachers();
+                    } else {
+                        showTeacherAlert(result.message || 'Error updating teacher', 'danger');
+                    }
                 }
-                teachers[index] = { ...originalTeacher, ...teacher };
-                const result = await db.saveTeachers(teachers);
+                editingTeacherPhone = null;
+            } else {
+                const result = await db.addTeacher(teacher);
+                showTeacherAlert(result.message, result.success ? 'success' : 'danger');
                 if (result.success) {
-                    showTeacherAlert('Teacher updated successfully', 'success');
                     addTeacherForm.reset();
                     closeModal(teacherModal);
                     renderTeachers();
-                } else {
-                    showTeacherAlert(result.message || 'Error updating teacher', 'danger');
                 }
             }
-            editingTeacherPhone = null;
-        } else {
-            const result = await db.addTeacher(teacher);
-            showTeacherAlert(result.message, result.success ? 'success' : 'danger');
-            if (result.success) {
-                addTeacherForm.reset();
-                closeModal(teacherModal);
-                renderTeachers();
-            }
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
         }
     });
 
@@ -2136,26 +2148,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(phaseForm) {
         phaseForm.onsubmit = async (e) => {
             e.preventDefault();
-            const phase = {
-                name: document.getElementById('phaseName').value,
-                description: document.getElementById('phaseDesc').innerHTML,
-                lastDate: document.getElementById('phaseLastDate').value,
-                mode: document.querySelector('input[name="phaseMode"]:checked').value
-            };
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+            
+            try {
+                const phase = {
+                    name: document.getElementById('phaseName').value,
+                    description: document.getElementById('phaseDesc').innerHTML,
+                    lastDate: document.getElementById('phaseLastDate').value,
+                    mode: document.querySelector('input[name="phaseMode"]:checked').value
+                };
 
-            let result;
-            if (editingPhaseId) {
-                result = await db.updatePlacementPhase(currentActivityId, editingPhaseId, phase);
-            } else {
-                result = await db.addPlacementPhase(currentActivityId, phase);
-            }
+                let result;
+                if (editingPhaseId) {
+                    result = await db.updatePlacementPhase(currentActivityId, editingPhaseId, phase);
+                } else {
+                    result = await db.addPlacementPhase(currentActivityId, phase);
+                }
 
-            if (result.success) {
-                closeModal(document.getElementById('phaseModal'));
-                currentActivity = db.getPlacementActivities().find(a => a.id === currentActivityId);
-                renderPhases();
-                renderFunnel();
-                renderStudentTracking();
+                if (result.success) {
+                    phaseForm.reset();
+                    document.getElementById('phaseDesc').innerHTML = '';
+                    closeModal(document.getElementById('phaseModal'));
+                    currentActivity = db.getPlacementActivities().find(a => a.id === currentActivityId);
+                    renderPhases();
+                    renderFunnel();
+                    renderStudentTracking();
+                }
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
             }
         };
     }
