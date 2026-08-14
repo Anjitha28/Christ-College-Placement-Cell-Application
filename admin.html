@@ -704,9 +704,8 @@
                         <table class="table" id="activityTable">
                             <thead>
                                 <tr>
-                                    <th>Company Name</th>
+                                    <th>Activity Name</th>
                                     <th>Due Date</th>
-                                    <th>Job Role</th>
                                     <th>Target</th>
                                     <th>Registered</th>
                                     <th>Status</th>
@@ -736,9 +735,8 @@
                         <table class="table" id="recruitmentTable">
                             <thead>
                                 <tr>
-                                    <th>Company Name</th>
+                                    <th>Activity Name</th>
                                     <th>Due Date</th>
-                                    <th>Job Role</th>
                                     <th>Target</th>
                                     <th>Registered</th>
                                     <th>Status</th>
@@ -862,7 +860,7 @@
                     <small class="text-muted" style="font-size: 10px;">Formatted view enabled.</small>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Last Date for Declaration</label>
+                    <label class="form-label">Due Date</label>
                     <input type="date" id="phaseLastDate" class="form-control" required>
                 </div>
                 <div class="form-group">
@@ -1086,10 +1084,7 @@
                                         <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">END DATE</label>
                                         <input type="date" id="trnEndDate" class="form-control" required style="background: #f9fafb; border-color: #e5e7eb;">
                                     </div>
-                                    <div class="form-group mb-0">
-                                        <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">NUMBER OF DAYS</label>
-                                        <input type="number" id="trnDays" class="form-control" readonly style="background: #f3f4f6; cursor: not-allowed; border-color: #e5e7eb;">
-                                    </div>
+
                                     <div class="form-group mb-0" style="grid-column: span 2;">
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <label class="form-label mb-0" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">DESCRIPTION</label>
@@ -1152,13 +1147,9 @@
                         <form id="addPlacementForm" class="premium-modal-form">
                             <div class="premium-modal-body">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                                    <div class="form-group mb-0">
-                                        <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">COMPANY NAME</label>
+                                    <div class="form-group mb-0" style="grid-column: span 2;">
+                                        <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">ACTIVITY NAME</label>
                                         <input type="text" id="pName" class="form-control" required placeholder="e.g. Google Recruitment Drive 2026" style="background: #f9fafb; border-color: #e5e7eb;">
-                                    </div>
-                                    <div class="form-group mb-0">
-                                        <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">JOB ROLE</label>
-                                        <input type="text" id="pVenue" class="form-control" required placeholder="e.g. Software Engineer" style="background: #f9fafb; border-color: #e5e7eb;">
                                     </div>
                                     <div class="form-group mb-0" style="grid-column: span 2;">
                                         <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">DUE DATE</label>

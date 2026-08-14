@@ -711,6 +711,37 @@ class Database {
         return res;
     }
 
+    async addPlacementPhase(activityId, phase) {
+        const index = this.cache.placementActivities.findIndex(a => a.id === activityId);
+        if (index === -1) return { success: false, message: 'Activity not found.' };
+        
+        phase.id = 'PHS' + Date.now();
+        phase.completions = [];
+        
+        const activity = this.cache.placementActivities[index];
+        activity.phases = activity.phases || [];
+        activity.phases.push(phase);
+        
+        const res = await this.sync("Activity", activity);
+        if (res.success) showToast('Phase added successfully!', 'success');
+        return res;
+    }
+
+    async updatePlacementPhase(activityId, phaseId, updatedData) {
+        const actIndex = this.cache.placementActivities.findIndex(a => a.id === activityId);
+        if (actIndex === -1) return { success: false, message: 'Activity not found.' };
+        
+        const activity = this.cache.placementActivities[actIndex];
+        const phIndex = activity.phases.findIndex(p => p.id === phaseId);
+        if (phIndex === -1) return { success: false, message: 'Phase not found.' };
+        
+        activity.phases[phIndex] = { ...activity.phases[phIndex], ...updatedData };
+        
+        const res = await this.sync("Activity", activity);
+        if (res.success) showToast('Phase updated successfully!', 'success');
+        return res;
+    }
+
     // --- Auth & Generic ---
     getAdmin() { return this.cache.admin; }
 

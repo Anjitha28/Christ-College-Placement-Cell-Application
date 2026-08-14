@@ -956,20 +956,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const trnDate = document.getElementById('trnDate');
     const trnEndDate = document.getElementById('trnEndDate');
-    const trnDays = document.getElementById('trnDays');
 
-    function calculateDays() {
-        if (trnDate.value && trnEndDate.value) {
-            const start = new Date(trnDate.value);
-            const end = new Date(trnEndDate.value);
-            const diffTime = end - start;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            trnDays.value = diffDays > 0 ? diffDays : 0;
-        }
-    }
-
-    if(trnDate) trnDate.addEventListener('change', calculateDays);
-    if(trnEndDate) trnEndDate.addEventListener('change', calculateDays);
+    if(trnDate) trnDate.addEventListener('change', () => {});
+    if(trnEndDate) trnEndDate.addEventListener('change', () => {});
 
     function populateTrainingFilters() {
         const students = db.getStudents();
@@ -1008,7 +997,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     name: document.getElementById('trnName').value.trim(),
                     venue: document.getElementById('trnVenue').value.trim(),
                     date: document.getElementById('trnDate').value,
-                    days: parseInt(document.getElementById('trnDays').value),
                     description: document.getElementById('trnDesc').innerHTML.trim(),
                     target: {
                         type: targetType,
@@ -1056,7 +1044,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const st = programAttendanceStats(p);
             tr.innerHTML = `
                 <td style="min-width:180px;"><strong>${p.name}</strong></td>
-                <td style="white-space:nowrap;">${p.date}${p.endDate && p.endDate !== p.date ? '<br>to ' + p.endDate : ''}<br><small>${programDays(p)} Days</small></td>
+                <td style="white-space:nowrap;">${p.date}${p.endDate && p.endDate !== p.date ? '<br>to ' + p.endDate : ''}</td>
                 <td>
                     <small class="${p.isRegistrationOpen ? 'text-success' : 'text-danger'}">${p.isRegistrationOpen ? 'Registration Open' : 'Registration Closed'}</small><br>
                     <small class="${p.isFeedbackOpen ? 'text-success' : 'text-danger'}">${p.isFeedbackOpen ? '💬 Feedback Enabled' : '💬 Feedback Disabled'}</small>
@@ -1098,8 +1086,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('trnName').value = p.name;
             document.getElementById('trnVenue').value = p.venue;
             document.getElementById('trnDate').value = p.date;
-            document.getElementById('trnEndDate').value = p.endDate || p.date;
-            document.getElementById('trnDays').value = programDays(p);
+            document.getElementById('trnEndDate').value = p.endDate || '';
             document.getElementById('trnDesc').innerHTML = p.description || '';
             
             // Set Target Audience
@@ -1571,7 +1558,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="small text-muted" style="max-height: 40px; overflow: hidden;">${a.description}</div>
                 </td>
                 <td><span class="text-danger">${a.date}</span></td>
-                <td>${a.venue}</td>
+
                 <td>${a.target.type === 'all' ? 'All Students' : (a.target.type === 'course' ? (a.target.courses || []).length + ' Courses' : (a.target.type === 'dept' ? (a.target.depts || []).length + ' Depts' : (a.target.students || []).length + ' Students'))}</td>
                 <td><strong class="text-primary">${(a.registrations || []).length}</strong></td>
                 <td><span class="badge ${statusBadge}" style="font-size: 11px; padding: 5px 10px;">${statusLabel}</span></td>
@@ -2129,7 +2116,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (result.success) {
                 closeModal(document.getElementById('phaseModal'));
-                openManagePlacementView(currentActivityId); // Refresh
+                currentActivity = db.getPlacementActivities().find(a => a.id === currentActivityId);
+                renderPhases();
+                renderFunnel();
+                renderStudentTracking();
             }
         };
     }
