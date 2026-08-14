@@ -248,7 +248,8 @@ class Database {
 
             if (sErr || tErr || pErr || aErr || eErr || attErr) {
                 console.error("Supabase load errors:", { sErr, tErr, pErr, aErr, eErr, attErr });
-                throw new Error("One or more tables failed to load from Supabase.");
+                // Do not throw error, just continue with available data
+                console.warn("Some tables failed to load, continuing with available data.");
             }
 
             if (iErr) {
@@ -296,9 +297,14 @@ class Database {
     loadLocalStorageBackup() {
         const backup = localStorage.getItem('db_cache');
         if (backup) {
-            this.cache = JSON.parse(backup);
-        } else {
-            console.log("No LocalStorage backup found. Seeding sample data...");
+            try {
+                this.cache = JSON.parse(backup);
+            } catch(e) {}
+        }
+        
+        // If cache is still empty after checking local storage, load sample data
+        if (!this.cache || !this.cache.students || this.cache.students.length === 0 || !this.cache.teachers || this.cache.teachers.length === 0) {
+            console.log("Cache is empty. Seeding sample data...");
             this.loadSampleData();
         }
     }
