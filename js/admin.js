@@ -1378,9 +1378,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentPlacementType = 'placement';
 
+    const toggleFormFields = (type) => {
+        const pNameLabel = document.getElementById('pNameLabel');
+        const pNameContainer = document.getElementById('pNameContainer');
+        const pVenueContainer = document.getElementById('pVenueContainer');
+        const pVenue = document.getElementById('pVenue');
+
+        if (pNameLabel && pNameContainer && pVenueContainer && pVenue) {
+            if (type === 'recruitment') {
+                pNameLabel.textContent = 'COMPANY NAME';
+                pNameContainer.style.gridColumn = 'span 1';
+                pVenueContainer.style.display = 'block';
+                pVenue.required = true;
+            } else {
+                pNameLabel.textContent = 'ACTIVITY NAME';
+                pNameContainer.style.gridColumn = 'span 2';
+                pVenueContainer.style.display = 'none';
+                pVenue.required = false;
+                pVenue.value = '';
+            }
+        }
+    };
+
     if(toggleAddPlacementBtn) {
         toggleAddPlacementBtn.addEventListener('click', () => {
             currentPlacementType = 'placement';
+            toggleFormFields('placement');
             editingPlacementId = null;
             addPlacementForm.reset();
             document.getElementById('pDesc').innerHTML = '';
@@ -1394,6 +1417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(toggleAddRecruitmentBtn) {
         toggleAddRecruitmentBtn.addEventListener('click', () => {
             currentPlacementType = 'recruitment';
+            toggleFormFields('recruitment');
             editingPlacementId = null;
             addPlacementForm.reset();
             document.getElementById('pDesc').innerHTML = '';
@@ -1489,7 +1513,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const activity = {
                     name: document.getElementById('pName').value.trim(),
-                    venue: document.getElementById('pVenue').value.trim(),
+                    venue: currentPlacementType === 'recruitment' ? document.getElementById('pVenue').value.trim() : '',
                     date: document.getElementById('pDate').value,
                     lastDate: document.getElementById('pDate').value,
                     description: document.getElementById('pDesc').innerHTML.trim(),
@@ -1558,7 +1582,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="small text-muted" style="max-height: 40px; overflow: hidden;">${a.description}</div>
                 </td>
                 <td><span class="text-danger">${a.date}</span></td>
-
+                ${a.type === 'recruitment' ? `<td>${a.venue || ''}</td>` : ''}
                 <td>${a.target.type === 'all' ? 'All Students' : (a.target.type === 'course' ? (a.target.courses || []).length + ' Courses' : (a.target.type === 'dept' ? (a.target.depts || []).length + ' Depts' : (a.target.students || []).length + ' Students'))}</td>
                 <td><strong class="text-primary">${(a.registrations || []).length}</strong></td>
                 <td><span class="badge ${statusBadge}" style="font-size: 11px; padding: 5px 10px;">${statusLabel}</span></td>
@@ -1601,8 +1625,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const a = activities.find(item => item.id === id);
         if(a) {
             editingPlacementId = id;
+            currentPlacementType = a.type || 'placement';
+            toggleFormFields(currentPlacementType);
             document.getElementById('pName').value = a.name;
-            document.getElementById('pVenue').value = a.venue;
+            if (currentPlacementType === 'recruitment') {
+                document.getElementById('pVenue').value = a.venue || '';
+            }
             document.getElementById('pDate').value = a.date;
             document.getElementById('pDesc').innerHTML = a.description;
             

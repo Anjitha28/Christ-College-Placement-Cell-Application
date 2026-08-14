@@ -735,9 +735,13 @@
                         <div style="padding: 2.5rem 2rem; max-height: 70vh; overflow-y: auto;">
                             <form id="addPlacementForm">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                                    <div class="form-group mb-0" style="grid-column: span 2;">
-                                        <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">ACTIVITY NAME</label>
+                                    <div class="form-group mb-0" id="pNameContainer" style="grid-column: span 2;">
+                                        <label class="form-label" id="pNameLabel" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">ACTIVITY NAME</label>
                                         <input type="text" id="pName" class="form-control" required placeholder="e.g. Google Recruitment Drive 2026" style="background: #f9fafb; border-color: #e5e7eb;">
+                                    </div>
+                                    <div class="form-group mb-0" id="pVenueContainer" style="display: none;">
+                                        <label class="form-label" id="pVenueLabel" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">JOB ROLE</label>
+                                        <input type="text" id="pVenue" class="form-control" placeholder="e.g. Software Engineer" style="background: #f9fafb; border-color: #e5e7eb;">
                                     </div>
                                     <div class="form-group mb-0">
                                         <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">START DATE</label>
