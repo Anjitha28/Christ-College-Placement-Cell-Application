@@ -276,6 +276,11 @@ class Database {
             this.cache.exams = (examsData || []).map(toJSExam);
             this.cache.examAttempts = attemptsData || [];
 
+            if (this.cache.students.length === 0 && this.cache.teachers.length === 0) {
+                console.warn("Supabase returned empty tables, loading sample data for testing.");
+                this.loadSampleData();
+            }
+
             console.log("Supabase initialization complete.");
             
             // Backup to LocalStorage
@@ -1223,17 +1228,17 @@ class Database {
                     return { success: true, user: student };
                 }
             }
-            return { success: false, message: 'Invalid register number or password.' };
+            return { success: false, message: `Invalid register number or password for '${username}'. Found: ${!!student}` };
         } else {
             const teacher = this.cache.teachers.find(t => String(t.phoneNumber || t.phone || '').trim() === String(username).trim());
             if (teacher) {
                 if (checkPass(teacher, password)) {
                     return { success: true, user: teacher };
                 } else {
-                    return { success: false, message: 'Invalid password for teacher.' };
+                    return { success: false, message: `Invalid password for teacher '${username}'.` };
                 }
             }
-            return { success: false, message: 'Teacher phone number not found.' };
+            return { success: false, message: `Teacher phone number not found for '${username}'. Total teachers: ${this.cache.teachers.length}` };
         }
     }
 
