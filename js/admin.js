@@ -166,21 +166,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             pageTitle.textContent = tabName;
         }
 
-        if(tabId === 'calendar') {
-            initCalendarSelectors();
-            renderCalendar();
-        }
-        if(tabId === 'placement') {
-            renderPlacementActivities();
-        }
-        if(tabId === 'dashboard') {
-            renderDashboard();
-        }
-        if(tabId === 'classView') {
-            renderClassView();
-        }
-        if(tabId === 'mcq') {
-            renderMCQ();
+        try {
+            if(tabId === 'calendar') {
+                initCalendarSelectors();
+                renderCalendar();
+            }
+            if(tabId === 'placement') {
+                renderPlacementActivities();
+            }
+            if(tabId === 'dashboard') {
+                renderDashboard();
+            }
+            if(tabId === 'classView') {
+                renderClassView();
+            }
+            if(tabId === 'mcq') {
+                renderMCQ();
+            }
+        } catch (e) {
+            console.warn(`Error rendering tab ${tabId}:`, e);
         }
     }
 
@@ -202,7 +206,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (mainTabId === 'placement') {
             if (parts[1] === 'manage' && parts[2]) {
-                openManagePlacementView(parts[2], parts[3] || 'funnel', false);
+                // Short delay ensures DOM and cache are ready if this fires very early
+                setTimeout(() => openManagePlacementView(parts[2], parts[3] || 'funnel', false), 50);
             } else {
                 if (typeof closeManagePlacementView === 'function') {
                     closeManagePlacementView(false);
@@ -2192,11 +2197,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (submitBtn) submitBtn.disabled = true;
             
             try {
+                const phaseModeInput = document.querySelector('input[name="phaseMode"]:checked');
                 const phase = {
                     name: document.getElementById('phaseName').value,
                     description: document.getElementById('phaseDesc').innerHTML,
                     lastDate: document.getElementById('phaseLastDate').value,
-                    mode: document.querySelector('input[name="phaseMode"]:checked').value
+                    mode: phaseModeInput ? phaseModeInput.value : 'admin'
                 };
 
                 let result;
@@ -2210,7 +2216,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     phaseForm.reset();
                     document.getElementById('phaseDesc').innerHTML = '';
                     closeModal(document.getElementById('phaseModal'));
-                    currentActivity = db.getPlacementActivities().find(a => a.id === currentActivityId);
+                    
+                    // Fetch completely fresh data
+                    const activities = db.getPlacementActivities();
+                    currentActivity = activities.find(a => a.id === currentActivityId);
                     
                     const activeTab = document.querySelector('.m-sub-tab.active');
                     if (activeTab) {
@@ -2221,7 +2230,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     } else {
                         renderPhases();
                     }
+                } else {
+                    alert(result.message || 'Failed to save phase.');
                 }
+            } catch (error) {
+                console.error("Error saving phase:", error);
+                alert("An error occurred while saving the phase. Please try again.");
             } finally {
                 if (submitBtn) submitBtn.disabled = false;
             }
@@ -3253,15 +3267,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // --- Initialization ---
+    const initializers = [
+        { name: 'Students', fn: renderStudents },
+        { name: 'Teachers', fn: renderTeachers },
+        { name: 'Training Programs', fn: renderTrainingPrograms },
+        { name: 'Placement Activities', fn: renderPlacementActivities },
+        { name: 'Calendar', fn: renderCalendar }
+    ];
+
+    for (const init of initializers) {
+        try {
+            if (typeof init.fn === 'function') init.fn();
+        } catch (e) {
+            console.warn(`${init.name} initial render failed:`, e);
+        }
+    }
+
     try {
-        if (typeof renderStudents === 'function') renderStudents();
-        if (typeof renderTeachers === 'function') renderTeachers();
-        if (typeof renderTrainingPrograms === 'function') renderTrainingPrograms();
-        if (typeof renderPlacementActivities === 'function') renderPlacementActivities();
-        if (typeof renderCalendar === 'function') renderCalendar();
-        
         handleRouting(); // Initialize routing based on URL
     } catch (error) {
-        console.error("Dashboard initialization failed:", error);
+        console.error("Dashboard routing initialization failed:", error);
     }
 });
