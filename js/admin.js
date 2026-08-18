@@ -144,45 +144,72 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tabs = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content');
     
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabId = tab.dataset.tab;
-            const tabContent = document.getElementById(`${tabId}Tab`);
-            
-            if (!tabContent) return;
+    function activateTab(tabId) {
+        const tab = document.querySelector(`.tab[data-tab="${tabId}"]`);
+        const tabContent = document.getElementById(`${tabId}Tab`);
+        
+        if (!tab || !tabContent) return;
 
-            tabs.forEach(t => t.classList.remove('active'));
-            tabContents.forEach(c => c.classList.remove('active'));
-            
-            tab.classList.add('active');
-            tabContent.classList.add('active');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        tab.classList.add('active');
+        tabContent.classList.add('active');
 
-            // Update breadcrumb and title
-            const breadcrumb = document.querySelector('.breadcrumb');
-            const pageTitle = document.querySelector('.page-title');
-            
+        // Update breadcrumb and title
+        const breadcrumb = document.querySelector('.breadcrumb');
+        const pageTitle = document.querySelector('.page-title');
+        
+        if (breadcrumb && pageTitle) {
             const tabName = tab.textContent.trim();
             breadcrumb.textContent = `Portal / ${tabName}`;
             pageTitle.textContent = tabName;
+        }
 
-            if(tabId === 'calendar') {
-                initCalendarSelectors();
-                renderCalendar();
-            }
-            if(tabId === 'placement') {
-                renderPlacementActivities();
-            }
-            if(tabId === 'dashboard') {
-                renderDashboard();
-            }
-            if(tabId === 'classView') {
-                renderClassView();
-            }
-            if(tabId === 'mcq') {
-                renderMCQ();
-            }
+        if(tabId === 'calendar') {
+            initCalendarSelectors();
+            renderCalendar();
+        }
+        if(tabId === 'placement') {
+            renderPlacementActivities();
+        }
+        if(tabId === 'dashboard') {
+            renderDashboard();
+        }
+        if(tabId === 'classView') {
+            renderClassView();
+        }
+        if(tabId === 'mcq') {
+            renderMCQ();
+        }
+    }
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.hash = tab.dataset.tab;
         });
     });
+
+    window.addEventListener('hashchange', handleRouting);
+
+    function handleRouting() {
+        const hash = window.location.hash.substring(1) || 'dashboard';
+        const parts = hash.split('/');
+        const mainTabId = parts[0];
+        
+        activateTab(mainTabId);
+
+        if (mainTabId === 'placement') {
+            if (parts[1] === 'manage' && parts[2]) {
+                openManagePlacementView(parts[2], parts[3] || 'funnel', false);
+            } else {
+                if (typeof closeManagePlacementView === 'function') {
+                    closeManagePlacementView(false);
+                }
+            }
+        }
+    }
 
     // --- Sub-Tab Logic (User Management) ---
     const subTabs = document.querySelectorAll('.sub-tab');
@@ -2082,7 +2109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentActivity = null;
     let editingPhaseId = null;
 
-    window.openManagePlacementView = (id) => {
+    window.openManagePlacementView = (id, subTab = 'funnel', updateHash = true) => {
         currentActivityId = id;
         const activities = db.getPlacementActivities();
         currentActivity = activities.find(a => a.id === id);
@@ -2101,35 +2128,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         mTabs.forEach(t => t.classList.remove('active'));
         mPages.forEach(p => p.classList.add('hidden'));
         
-        if(mTabs[0]) mTabs[0].classList.add('active');
-        const funnelTab = document.getElementById('funnelTab');
-        if(funnelTab) funnelTab.classList.remove('hidden');
+        const targetTab = Array.from(mTabs).find(t => t.dataset.tab === subTab) || mTabs[0];
+        if (targetTab) {
+            targetTab.classList.add('active');
+            const targetTabId = targetTab.dataset.tab;
+            const targetPage = document.getElementById(`${targetTabId}Tab`);
+            if (targetPage) targetPage.classList.remove('hidden');
 
-        renderPhases();
-        renderFunnel();
-        renderStudentTracking();
+            if (targetTabId === 'funnel') renderFunnel();
+            else if (targetTabId === 'phases') renderPhases();
+            else if (targetTabId === 'students') renderStudentTracking();
+        }
+
+        if (updateHash) {
+            const newHash = `placement/manage/${id}/${targetTab.dataset.tab}`;
+            if (window.location.hash !== `#${newHash}`) {
+                window.location.hash = newHash;
+            }
+        }
     };
 
-    window.closeManagePlacementView = () => {
+    window.closeManagePlacementView = (updateHash = true) => {
         currentActivityId = null;
         currentActivity = null;
         document.getElementById('placementListTabs').classList.remove('hidden');
         document.getElementById('placementListView').classList.remove('hidden');
         document.getElementById('placementManageView').classList.add('hidden');
         renderPlacementActivities(); // Refresh list to reflect any changes
+        
+        if (updateHash && window.location.hash.startsWith('#placement/manage')) {
+            window.location.hash = 'placement';
+        }
     };
 
     // Tab Logic for Manage View
     const mTabs = document.querySelectorAll('.m-sub-tab');
     const mPages = document.querySelectorAll('.manage-sub-page');
     mTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            mTabs.forEach(t => t.classList.remove('active'));
-            mPages.forEach(p => p.classList.add('hidden'));
-            
-            tab.classList.add('active');
-            const tabId = tab.dataset.tab;
-            document.getElementById(`${tabId}Tab`).classList.remove('hidden');
+        tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentActivityId) {
+                window.location.hash = `placement/manage/${currentActivityId}/${tab.dataset.tab}`;
+            }
         });
     });
 
@@ -2171,9 +2211,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     document.getElementById('phaseDesc').innerHTML = '';
                     closeModal(document.getElementById('phaseModal'));
                     currentActivity = db.getPlacementActivities().find(a => a.id === currentActivityId);
-                    renderPhases();
-                    renderFunnel();
-                    renderStudentTracking();
+                    
+                    const activeTab = document.querySelector('.m-sub-tab.active');
+                    if (activeTab) {
+                        const tabId = activeTab.dataset.tab;
+                        if (tabId === 'phases') renderPhases();
+                        else if (tabId === 'funnel') renderFunnel();
+                        else if (tabId === 'students') renderStudentTracking();
+                    } else {
+                        renderPhases();
+                    }
                 }
             } finally {
                 if (submitBtn) submitBtn.disabled = false;
@@ -2198,7 +2245,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (confirm('Are you sure you want to delete this phase and all student completion data?')) {
             const result = await db.deletePlacementPhase(currentActivityId, id);
             if (result.success) {
-                openManagePlacementView(currentActivityId);
+                currentActivity = db.getPlacementActivities().find(a => a.id === currentActivityId);
+                const activeTab = document.querySelector('.m-sub-tab.active');
+                if (activeTab) {
+                    const tabId = activeTab.dataset.tab;
+                    if (tabId === 'phases') renderPhases();
+                    else if (tabId === 'funnel') renderFunnel();
+                    else if (tabId === 'students') renderStudentTracking();
+                } else {
+                    renderPhases();
+                }
             }
         }
     };
@@ -3204,7 +3260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof renderPlacementActivities === 'function') renderPlacementActivities();
         if (typeof renderCalendar === 'function') renderCalendar();
         
-        renderDashboard(); // Render dashboard initially
+        handleRouting(); // Initialize routing based on URL
     } catch (error) {
         console.error("Dashboard initialization failed:", error);
     }
