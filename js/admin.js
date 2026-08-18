@@ -2,7 +2,19 @@
 // Handles UI logic for Admin Dashboard
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Wait for Google Sheets data to sync
+    // PREVENT FLICKER: Immediately switch tabs based on URL hash before data loads
+    const initialHash = window.location.hash.substring(1) || 'dashboard';
+    const earlyMainTabId = initialHash.split('/')[0] || 'dashboard';
+    const earlyTab = document.querySelector(`.tab[data-tab="${earlyMainTabId}"]`);
+    const earlyTabContent = document.getElementById(`${earlyMainTabId}Tab`);
+    if (earlyTab && earlyTabContent) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        earlyTab.classList.add('active');
+        earlyTabContent.classList.add('active');
+    }
+
+    // Wait for Google Sheets / Supabase data to sync
     await db.ready;
 
     const userRole = sessionStorage.getItem('userRole') || 'admin';

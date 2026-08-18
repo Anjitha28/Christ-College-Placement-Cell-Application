@@ -722,9 +722,17 @@ class Database {
         activity.phases = activity.phases || [];
         activity.phases.push(phase);
         
-        const res = await this.sync("Activity", activity);
-        if (res.success) showToast('Phase added successfully!', 'success');
-        return res;
+        // Optimistic background sync (prevent UI lag)
+        this.sync("Activity", activity).then(res => {
+            if (res.success) {
+                if (typeof showToast === 'function') showToast('Phase synced to cloud.', 'success');
+            } else {
+                console.error("Failed to sync phase to cloud");
+            }
+        });
+        
+        // Return instantly to close modal and update UI
+        return { success: true, message: 'Phase added successfully!' };
     }
 
     async updatePlacementPhase(activityId, phaseId, updatedData) {
