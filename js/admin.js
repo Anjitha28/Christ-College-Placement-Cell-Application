@@ -200,14 +200,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     function handleRouting() {
         const hash = window.location.hash.substring(1) || 'dashboard';
         const parts = hash.split('/');
-        const mainTabId = parts[0];
+        const mainTabId = parts[0] || 'dashboard';
         
         activateTab(mainTabId);
 
         if (mainTabId === 'placement') {
             if (parts[1] === 'manage' && parts[2]) {
-                // Short delay ensures DOM and cache are ready if this fires very early
-                setTimeout(() => openManagePlacementView(parts[2], parts[3] || 'funnel', false), 50);
+                const subTab = parts[3] || 'funnel';
+                // Delay ensures DOM and data are ready
+                setTimeout(() => {
+                    openManagePlacementView(parts[2], subTab, false);
+                }, 100);
             } else {
                 if (typeof closeManagePlacementView === 'function') {
                     closeManagePlacementView(false);
@@ -2116,7 +2119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.openManagePlacementView = (id, subTab = 'funnel', updateHash = true) => {
         currentActivityId = id;
-        const activities = db.getPlacementActivities();
+        const activities = db.getPlacementActivities() || [];
         currentActivity = activities.find(a => a.id === id);
         
         if (!currentActivity) return;
@@ -2127,7 +2130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.getElementById('manageActivityTitle').textContent = currentActivity.name;
 
-        // Reset to first tab
+        // Reset all tabs
         const mTabs = document.querySelectorAll('.m-sub-tab');
         const mPages = document.querySelectorAll('.manage-sub-page');
         mTabs.forEach(t => t.classList.remove('active'));
@@ -2148,6 +2151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (updateHash) {
             const newHash = `placement/manage/${id}/${targetTab.dataset.tab}`;
             if (window.location.hash !== `#${newHash}`) {
+                // Only push state if we want to change history, else replace
                 window.location.hash = newHash;
             }
         }
@@ -2161,7 +2165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('placementManageView').classList.add('hidden');
         renderPlacementActivities(); // Refresh list to reflect any changes
         
-        if (updateHash && window.location.hash.startsWith('#placement/manage')) {
+        if (updateHash && window.location.hash.includes('placement/manage')) {
             window.location.hash = 'placement';
         }
     };
@@ -2182,9 +2186,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(addPhaseBtn) {
         addPhaseBtn.onclick = () => {
             editingPhaseId = null;
-            document.getElementById('phaseForm').reset();
-            document.getElementById('phaseDesc').innerHTML = '';
+            const form = document.getElementById('phaseForm');
+            if (form) form.reset();
+            const desc = document.getElementById('phaseDesc');
+            if (desc) desc.innerHTML = '';
             document.getElementById('modalTitle').textContent = 'Add Selection Phase';
+            
+            // Ensure submit button is re-enabled if previously stuck
+            const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+            if (submitBtn) submitBtn.disabled = false;
+
             document.getElementById('phaseModal').classList.remove('hidden');
         };
     }
@@ -2213,13 +2224,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 if (result.success) {
+                    // Update currentActivity explicitly from DB after success
+                    const activities = db.getPlacementActivities() || [];
+                    currentActivity = activities.find(a => a.id === currentActivityId);
+                    
                     phaseForm.reset();
                     document.getElementById('phaseDesc').innerHTML = '';
                     closeModal(document.getElementById('phaseModal'));
-                    
-                    // Fetch completely fresh data
-                    const activities = db.getPlacementActivities();
-                    currentActivity = activities.find(a => a.id === currentActivityId);
                     
                     const activeTab = document.querySelector('.m-sub-tab.active');
                     if (activeTab) {
