@@ -231,7 +231,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     }
-
     // --- Sub-Tab Logic (User Management) ---
     const subTabs = document.querySelectorAll('.sub-tab');
     const subTabContents = document.querySelectorAll('.sub-tab-content');
@@ -2130,7 +2129,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentActivity = null;
     let editingPhaseId = null;
 
-    window.openManagePlacementView = (id, subTab = 'funnel', updateHash = true, uiOnly = false) => {
+    function openManagePlacementView(id, subTab = 'funnel', updateHash = true, uiOnly = false) {
         currentActivityId = id;
         
         // Force the Manage view to be visible immediately to prevent fallback to list/dashboard
@@ -2188,7 +2187,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.location.hash = newHash;
             }
         }
-    };
+    }
+    window.openManagePlacementView = openManagePlacementView;
 
     window.closeManagePlacementView = (updateHash = true) => {
         currentActivityId = null;
