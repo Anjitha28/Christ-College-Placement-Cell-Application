@@ -2,41 +2,7 @@
 // Handles UI logic for Admin Dashboard
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // PREVENT FLICKER: Immediately switch tabs based on URL hash before data loads
-    const initialHash = window.location.hash.substring(1) || 'dashboard';
-    const earlyMainTabId = initialHash.split('/')[0] || 'dashboard';
-    const earlyTab = document.querySelector(`.tab[data-tab="${earlyMainTabId}"]`);
-    const earlyTabContent = document.getElementById(`${earlyMainTabId}Tab`);
-    if (earlyTab && earlyTabContent) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        earlyTab.classList.add('active');
-        earlyTabContent.classList.add('active');
-        
-        // Prevent sub-view flicker for placement manage view
-        if (initialHash.startsWith('placement/manage')) {
-            const listTabs = document.getElementById('placementListTabs');
-            const listView = document.getElementById('placementListView');
-            const manageView = document.getElementById('placementManageView');
-            if (listTabs) listTabs.classList.add('hidden');
-            if (listView) listView.classList.add('hidden');
-            if (manageView) manageView.classList.remove('hidden');
-            
-            // Prevent sub-tab flicker inside manage view
-            const parts = initialHash.split('/');
-            const earlySubTab = parts[3] || 'funnel';
-            document.querySelectorAll('.manage-sub-page').forEach(p => p.classList.add('hidden'));
-            document.querySelectorAll('.m-sub-tab').forEach(t => t.classList.remove('active'));
-            
-            const targetPage = document.getElementById(`${earlySubTab}Tab`);
-            if (targetPage) targetPage.classList.remove('hidden');
-            
-            const targetTab = document.querySelector(`.m-sub-tab[data-tab="${earlySubTab}"]`);
-            if (targetTab) targetTab.classList.add('active');
-        }
-    }
-
-    // Wait for Google Sheets / Supabase data to sync
+    // Wait for Google Sheets / Supabase data to sync FIRST
     await db.ready;
 
     const userRole = sessionStorage.getItem('userRole') || 'admin';
@@ -201,15 +167,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
+            if(tabId === 'dashboard') {
+                renderDashboard();
+            }
+            if(tabId === 'userManagement') {
+                renderStudents();
+                renderTeachers();
+            }
+            if(tabId === 'training') {
+                renderTrainingPrograms();
+            }
             if(tabId === 'calendar') {
                 initCalendarSelectors();
                 renderCalendar();
             }
             if(tabId === 'placement') {
                 renderPlacementActivities();
-            }
-            if(tabId === 'dashboard') {
-                renderDashboard();
             }
             if(tabId === 'classView') {
                 renderClassView();
@@ -241,10 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (mainTabId === 'placement') {
             if (parts[1] === 'manage' && parts[2]) {
                 const subTab = parts[3] || 'funnel';
-                // Delay ensures DOM and data are ready
-                setTimeout(() => {
-                    openManagePlacementView(parts[2], subTab, false);
-                }, 100);
+                openManagePlacementView(parts[2], subTab, false);
             } else {
                 if (typeof closeManagePlacementView === 'function') {
                     closeManagePlacementView(false);
@@ -3327,25 +3297,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // --- Initialization ---
-    const initializers = [
-        { name: 'Students', fn: renderStudents },
-        { name: 'Teachers', fn: renderTeachers },
-        { name: 'Training Programs', fn: renderTrainingPrograms },
-        { name: 'Placement Activities', fn: renderPlacementActivities },
-        { name: 'Calendar', fn: renderCalendar }
-    ];
-
-    for (const init of initializers) {
-        try {
-            if (typeof init.fn === 'function') init.fn();
-        } catch (e) {
-            console.warn(`${init.name} initial render failed:`, e);
-        }
-    }
-
     try {
-        handleRouting(); // Initialize routing based on URL
+        handleRouting(); // Initialize routing based on URL synchronously
     } catch (error) {
         console.error("Dashboard routing initialization failed:", error);
     }
