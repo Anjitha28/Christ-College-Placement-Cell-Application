@@ -12,6 +12,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         earlyTab.classList.add('active');
         earlyTabContent.classList.add('active');
+        
+        // Prevent sub-view flicker for placement manage view
+        if (initialHash.startsWith('placement/manage')) {
+            const listTabs = document.getElementById('placementListTabs');
+            const listView = document.getElementById('placementListView');
+            const manageView = document.getElementById('placementManageView');
+            if (listTabs) listTabs.classList.add('hidden');
+            if (listView) listView.classList.add('hidden');
+            if (manageView) manageView.classList.remove('hidden');
+            
+            // Prevent sub-tab flicker inside manage view
+            const parts = initialHash.split('/');
+            const earlySubTab = parts[3] || 'funnel';
+            document.querySelectorAll('.manage-sub-page').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.m-sub-tab').forEach(t => t.classList.remove('active'));
+            
+            const targetPage = document.getElementById(`${earlySubTab}Tab`);
+            if (targetPage) targetPage.classList.remove('hidden');
+            
+            const targetTab = document.querySelector(`.m-sub-tab[data-tab="${earlySubTab}"]`);
+            if (targetTab) targetTab.classList.add('active');
+        }
     }
 
     // Wait for Google Sheets / Supabase data to sync
