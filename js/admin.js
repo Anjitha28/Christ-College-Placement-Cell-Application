@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             addStudentForm.reset();
             studentModalTitle.textContent = 'Add New Student';
             saveStudentBtn.textContent = 'Save Student Profile';
-            studentModal.classList.remove('hidden');
+            openModal(studentModal);
         });
     }
 
@@ -479,7 +479,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('sIsCoordinator').checked = s.isCoordinator === true || s.isCoordinator === 'true';
             }
 
-            studentModal.classList.remove('hidden');
+            openModal(studentModal);
             studentModalTitle.textContent = 'Edit Student Profile';
             saveStudentBtn.textContent = 'Update Student Profile';
         }
@@ -501,7 +501,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div><label class="small text-muted">Email</label><p><strong>${s.mailId}</strong></p></div>
                 <div><label class="small text-muted">Gender</label><p><strong>${s.gender}</strong></p></div>
             `;
-            document.getElementById('studentDetailModal').classList.remove('hidden');
+            openModal(document.getElementById('studentDetailModal'));
         }
     };
 
@@ -766,7 +766,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             addTeacherForm.reset();
             teacherModalTitle.textContent = 'Add New Teacher';
             saveTeacherBtn.textContent = 'Save Teacher';
-            teacherModal.classList.remove('hidden');
+            openModal(teacherModal);
         });
     }
 
@@ -929,7 +929,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('tIsCoordinator').checked = t.isCoordinator === true || t.isCoordinator === 'true';
             }
             
-            teacherModal.classList.remove('hidden');
+            openModal(teacherModal);
             teacherModalTitle.textContent = 'Edit Teacher Record';
             saveTeacherBtn.textContent = 'Update Teacher';
         }
@@ -979,7 +979,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('trnDesc').innerHTML = '';
             trainingModalTitle.textContent = 'Create New Training Program';
             saveTrainingBtn.textContent = 'Create Program';
-            trainingModal.classList.remove('hidden');
+            openModal(trainingModal);
             populateTrainingFilters();
         });
     }
@@ -1178,7 +1178,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 deptFilterSection.classList.add('hidden');
             }
 
-            trainingModal.classList.remove('hidden');
+            openModal(trainingModal);
             trainingModalTitle.textContent = 'Edit Training Program';
             saveTrainingBtn.textContent = 'Update Program';
         }
@@ -1476,7 +1476,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('pDesc').innerHTML = '';
             placementModalTitle.textContent = 'Create Placement Activity';
             savePlacementBtn.textContent = 'Create Activity';
-            placementModal.classList.remove('hidden');
+            openModal(placementModal);
             populatePlacementFilters();
         });
     }
@@ -1490,7 +1490,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('pDesc').innerHTML = '';
             placementModalTitle.textContent = 'Create Recruitment Drive';
             savePlacementBtn.textContent = 'Create Recruitment';
-            placementModal.classList.remove('hidden');
+            openModal(placementModal);
             populatePlacementFilters();
         });
     }
@@ -1739,7 +1739,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }, 100);
             }
 
-            placementModal.classList.remove('hidden');
+            openModal(placementModal);
             placementModalTitle.textContent = 'Edit Placement Activity';
             savePlacementBtn.textContent = 'Update Activity';
         }
@@ -2131,14 +2131,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.openManagePlacementView = (id, subTab = 'funnel', updateHash = true) => {
         currentActivityId = id;
-        const activities = db.getPlacementActivities() || [];
-        currentActivity = activities.find(a => a.id === id);
         
-        if (!currentActivity) return;
-
+        // Force the Manage view to be visible immediately to prevent fallback to list/dashboard
         document.getElementById('placementListTabs').classList.add('hidden');
         document.getElementById('placementListView').classList.add('hidden');
         document.getElementById('placementManageView').classList.remove('hidden');
+        
+        const activities = db.getPlacementActivities() || [];
+        currentActivity = activities.find(a => a.id === id);
+        
+        if (!currentActivity) {
+            console.warn("Placement activity not found in cache for ID:", id);
+            document.getElementById('manageActivityTitle').textContent = "Loading Activity...";
+            // If data is slow to sync, retry finding it once after a delay
+            setTimeout(() => {
+                const refreshedActivities = db.getPlacementActivities() || [];
+                currentActivity = refreshedActivities.find(a => a.id === id);
+                if (currentActivity) {
+                    window.openManagePlacementView(id, subTab, updateHash);
+                } else {
+                    document.getElementById('manageActivityTitle').textContent = "Activity Not Found";
+                }
+            }, 1000);
+            return;
+        }
 
         document.getElementById('manageActivityTitle').textContent = currentActivity.name;
 
@@ -2208,7 +2224,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
             if (submitBtn) submitBtn.disabled = false;
 
-            document.getElementById('phaseModal').classList.remove('hidden');
+            openModal(document.getElementById('phaseModal'));
         };
     }
 
@@ -2275,7 +2291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         radios.forEach(r => { if(r.value === p.mode) r.checked = true; });
 
         document.getElementById('modalTitle').textContent = 'Edit Selection Phase';
-        document.getElementById('phaseModal').classList.remove('hidden');
+        openModal(document.getElementById('phaseModal'));
     };
 
     window.deletePhase = async (id) => {
@@ -2338,7 +2354,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
 
-        document.getElementById('declarationModal').classList.remove('hidden');
+        openModal(document.getElementById('declarationModal'));
     };
 
     const exportReportBtn = document.getElementById('exportReportBtn');
@@ -2700,7 +2716,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function openClassModal(title, html) {
         document.getElementById('classModalTitle').textContent = title;
         document.getElementById('classModalBody').innerHTML = html;
-        document.getElementById('classModal').classList.remove('hidden');
+        openModal(document.getElementById('classModal'));
     }
 
     window.classReport1 = function (className) {
