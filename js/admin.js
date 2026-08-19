@@ -2,7 +2,14 @@
 // Handles UI logic for Admin Dashboard
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Wait for Google Sheets / Supabase data to sync FIRST
+    // 1. Route UI Synchronously before DB loads to prevent ANY dashboard flash
+    try {
+        handleRouting(true); 
+    } catch(e) {
+        console.warn("Early UI routing failed:", e);
+    }
+
+    // 2. Wait for Google Sheets / Supabase data to sync
     await db.ready;
 
     const userRole = sessionStorage.getItem('userRole') || 'admin';
@@ -144,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tabs = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content');
     
-    function activateTab(tabId) {
+    function activateTab(tabId, uiOnly = false) {
         const tab = document.querySelector(`.tab[data-tab="${tabId}"]`);
         const tabContent = document.getElementById(`${tabId}Tab`);
         
@@ -165,6 +172,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             breadcrumb.textContent = `Portal / ${tabName}`;
             pageTitle.textContent = tabName;
         }
+
+        if (uiOnly) return;
 
         try {
             if(tabId === 'dashboard') {
@@ -202,21 +211,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    window.addEventListener('hashchange', handleRouting);
+    window.addEventListener('hashchange', () => handleRouting(false));
 
-    function handleRouting() {
+    function handleRouting(uiOnly = false) {
         const hash = window.location.hash.substring(1) || 'dashboard';
         const parts = hash.split('/');
         const mainTabId = parts[0] || 'dashboard';
         
-        activateTab(mainTabId);
+        activateTab(mainTabId, uiOnly);
 
         if (mainTabId === 'placement') {
             if (parts[1] === 'manage' && parts[2]) {
                 const subTab = parts[3] || 'funnel';
-                openManagePlacementView(parts[2], subTab, false);
+                openManagePlacementView(parts[2], subTab, false, uiOnly);
             } else {
-                if (typeof closeManagePlacementView === 'function') {
+                if (typeof closeManagePlacementView === 'function' && !uiOnly) {
                     closeManagePlacementView(false);
                 }
             }
@@ -2121,7 +2130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentActivity = null;
     let editingPhaseId = null;
 
-    window.openManagePlacementView = (id, subTab = 'funnel', updateHash = true) => {
+    window.openManagePlacementView = (id, subTab = 'funnel', updateHash = true, uiOnly = false) => {
         currentActivityId = id;
         
         // Force the Manage view to be visible immediately to prevent fallback to list/dashboard
@@ -2129,28 +2138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('placementListView').classList.add('hidden');
         document.getElementById('placementManageView').classList.remove('hidden');
         
-        const activities = db.getPlacementActivities() || [];
-        currentActivity = activities.find(a => a.id === id);
-        
-        if (!currentActivity) {
-            console.warn("Placement activity not found in cache for ID:", id);
-            document.getElementById('manageActivityTitle').textContent = "Loading Activity...";
-            // If data is slow to sync, retry finding it once after a delay
-            setTimeout(() => {
-                const refreshedActivities = db.getPlacementActivities() || [];
-                currentActivity = refreshedActivities.find(a => a.id === id);
-                if (currentActivity) {
-                    window.openManagePlacementView(id, subTab, updateHash);
-                } else {
-                    document.getElementById('manageActivityTitle').textContent = "Activity Not Found";
-                }
-            }, 1000);
-            return;
-        }
-
-        document.getElementById('manageActivityTitle').textContent = currentActivity.name;
-
-        // Reset all tabs
+        // Reset all tabs UI immediately
         const mTabs = document.querySelectorAll('.m-sub-tab');
         const mPages = document.querySelectorAll('.manage-sub-page');
         mTabs.forEach(t => t.classList.remove('active'));
@@ -2162,7 +2150,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             const targetTabId = targetTab.dataset.tab;
             const targetPage = document.getElementById(`${targetTabId}Tab`);
             if (targetPage) targetPage.classList.remove('hidden');
+        }
 
+        if (uiOnly) return; // Skip data fetching if only UI state is requested
+
+        const activities = db.getPlacementActivities() || [];
+        currentActivity = activities.find(a => a.id === id);
+        
+        if (!currentActivity) {
+            console.warn("Placement activity not found in cache for ID:", id);
+            document.getElementById('manageActivityTitle').textContent = "Loading Activity...";
+            setTimeout(() => {
+                const refreshedActivities = db.getPlacementActivities() || [];
+                currentActivity = refreshedActivities.find(a => a.id === id);
+                if (currentActivity) {
+                    window.openManagePlacementView(id, subTab, updateHash, false);
+                } else {
+                    document.getElementById('manageActivityTitle').textContent = "Activity Not Found";
+                }
+            }, 1000);
+            return;
+        }
+
+        document.getElementById('manageActivityTitle').textContent = currentActivity.name;
+        
+        if (targetTab) {
+            const targetTabId = targetTab.dataset.tab;
             if (targetTabId === 'funnel') renderFunnel();
             else if (targetTabId === 'phases') renderPhases();
             else if (targetTabId === 'students') renderStudentTracking();
@@ -3298,7 +3311,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     try {
-        handleRouting(); // Initialize routing based on URL synchronously
+        handleRouting(false); // Render data now that DB is loaded
     } catch (error) {
         console.error("Dashboard routing initialization failed:", error);
     }
