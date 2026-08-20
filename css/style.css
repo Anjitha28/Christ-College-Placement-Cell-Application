@@ -1443,6 +1443,46 @@ select.form-control { cursor: pointer; }
     }
 }
 
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    gap: 1rem;
+}
+@media (max-width: 768px) {
+    .section-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .section-header > div {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    .section-header .d-flex {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    .section-header input, .section-header select, .section-header button {
+        width: 100%;
+    }
+    
+    /* Ensure close buttons on modals don't overlap */
+    .premium-ui[id$="Modal"] > div > div:first-child {
+        padding-right: 3rem !important;
+    }
+    .premium-ui[id$="Modal"] button[onclick*="close"], .premium-ui[id$="Modal"] button[onclick*="List.classList.add"] {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+}
+
 /* Mobile Navigation & Responsive Base */
 .mobile-menu-btn {
     display: none;
@@ -1727,6 +1767,8 @@ select.form-control { cursor: pointer; }
     border-radius: 20px !important;
     box-shadow: 0 30px 70px -20px rgba(16,24,40,.5) !important;
     animation: premPop .22s cubic-bezier(.2,.8,.2,1);
+    max-height: 95vh;
+    overflow-y: auto;
 }
 @keyframes premPop { from { opacity:0; transform: translateY(14px) scale(.98); } to { opacity:1; transform:none; } }
 
@@ -2256,4 +2298,6 @@ select.form-control { cursor: pointer; }
 
 / *   R i c h   t e x t   s t y l e s   * / \ n [ c o n t e n t e d i t a b l e = \  
  t r u e \ ]   u l ,   . r i c h - t e x t   u l   {   l i s t - s t y l e - t y p e :   d i s c ;   m a r g i n - l e f t :   1 . 5 r e m ;   m a r g i n - b o t t o m :   1 r e m ;   } \ n [ c o n t e n t e d i t a b l e = \ t r u e \ ]   o l ,   . r i c h - t e x t   o l   {   l i s t - s t y l e - t y p e :   d e c i m a l ;   m a r g i n - l e f t :   1 . 5 r e m ;   m a r g i n - b o t t o m :   1 r e m ;   } \ n [ c o n t e n t e d i t a b l e = \ t r u e \ ]   l i ,   . r i c h - t e x t   l i   {   m a r g i n - b o t t o m :   0 . 2 5 r e m ;   }
+
+
 

@@ -119,7 +119,7 @@
             <div class="content-body">
             
             <!-- Minimalist Dashboard Tab -->
-            <div id="dashboardTab" class="tab-content" style="background: #f3f4f6; padding: 1.5rem; margin: -1.5rem; min-height: 100vh;">
+            <div id="dashboardTab" class="tab-content" style="min-height: 100vh;">
                 <!-- Top Metrics (4 Cards) -->
                 <div class="stat-grid-4 mb-4">
                     <div class="stat-card">
@@ -278,7 +278,7 @@
                 <div style="padding: 0 2rem 2rem 2rem;">
                     <!-- Manage Students Tab -->
                     <div id="studentsSubTab" class="sub-tab-content active">
-                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem;">
+                <div class="section-header">
                     <div>
                         <h3 style="margin-bottom: 0.25rem; color: #111827; font-size: 1.25rem;">Student Master Records</h3>
                         <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">Manage student datasets with full details.</p>
@@ -372,7 +372,7 @@
 
             <!-- Manage Teachers Tab -->
             <div id="teachersSubTab" class="sub-tab-content hidden">
-                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem;">
+                <div class="section-header">
                     <div>
                         <h3 style="margin-bottom: 0.25rem; color: #111827; font-size: 1.25rem;">Teacher Master Records</h3>
                         <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">Manage teacher datasets.</p>
@@ -419,7 +419,7 @@
             
             <!-- Training Tab -->
             <div id="trainingTab" class="tab-content glass-card premium-ui">
-                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem;">
+                <div class="section-header">
                     <div>
                         <h3 style="margin-bottom: 0.25rem; color: #111827; font-size: 1.25rem;">Training Programs</h3>
                     </div>
@@ -467,7 +467,7 @@
                         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('attendanceSection').classList.add('hidden')">Close</button>
                     </div>
                     <div id="attendanceControls" class="mb-3">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; align-items: end;">
+                        <div class="dash-grid-3" style="gap: 1rem; align-items: end;">
                             <div class="form-group mb-0">
                                 <label class="form-label">Select Day</label>
                                 <select id="attnDay" class="form-control">
@@ -553,7 +553,7 @@
                     </div>
                     
                     <!-- KPI Cards -->
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="dash-grid-3" style="gap: 1rem; margin-bottom: 1.5rem;">
                         <div class="glass-card" style="padding: 1rem; text-align: center; border-left: 4px solid #3b82f6;">
                             <div style="font-size: 0.85rem; color: #6b7280; font-weight: 600; text-transform: uppercase;">Total Exam Attempts</div>
                             <div style="font-size: 1.5rem; color: #1e3a8a; font-weight: 700; margin-top: 0.5rem;" id="kpiTotalAttempts">0</div>
@@ -662,7 +662,7 @@
 
             <!-- Calendar Tab -->
             <div id="calendarTab" class="tab-content glass-card premium-ui">
-                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                <div class="section-header">
                     <div>
                         <h3 style="margin-bottom: 0.25rem; color: #111827; font-size: 1.25rem;">Program Calendar</h3>
                         <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">Visual schedule of all training activities.</p>
@@ -697,7 +697,7 @@
                         <h3 class="gradient-text mb-0">Student Profile</h3>
                         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('studentDetailModal').classList.add('hidden')">✕</button>
                     </div>
-                    <div id="studentDetailContent" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div id="studentDetailContent" class="dash-grid-2">
                         <!-- Content injected by JS -->
                     </div>
                 </div>
@@ -717,7 +717,7 @@
 
                 <!-- Sub Tab: Placement Activities -->
                 <div id="activitySubTab" class="p-sub-content">
-                    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                    <div class="section-header">
                         <div>
                             <h3 style="margin-bottom: 0.25rem; color: #111827; font-size: 1.25rem;">Placement Activities</h3>
                             <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">Manage preparatory and training activities.</p>
@@ -748,7 +748,7 @@
 
                 <!-- Sub Tab: Recruitments -->
                 <div id="recruitmentSubTab" class="p-sub-content hidden">
-                    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                    <div class="section-header">
                         <div>
                             <h3 style="margin-bottom: 0.25rem; color: #111827; font-size: 1.25rem;">Recruitment Drives</h3>
                             <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">Manage recruitment processes and phases.</p>
@@ -829,7 +829,7 @@
                     <!-- Student Tracking Sub-page -->
                     <div id="studentsTab" class="manage-sub-page hidden">
                         <div class="glass-card">
-                            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                            <div class="section-header">
                                 <div>
                                     <h4 class="mb-0">Student Progress Tracking</h4>
                                     <p class="text-muted small">Monitor participation and phase completion for all registered students.</p>
@@ -998,7 +998,7 @@
                         </div>
                         <form id="addStudentForm" class="premium-modal-form">
                             <div class="premium-modal-body">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <div class="dash-grid-2">
                                     <div class="form-group mb-0">
                                         <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">FULL NAME</label>
                                         <input type="text" id="sName" class="form-control" required placeholder="John Doe" style="background: #f9fafb; border-color: #e5e7eb;">
@@ -1059,7 +1059,7 @@
 
 <!-- Teacher Modal (Pop-up) -->
                 <div id="teacherModal" class="premium-modal-wrapper hidden">
-                    <div class="premium-modal-card" style="width: 600px;">
+                    <div class="premium-modal-card" style="width: 600px; max-width: 95vw;">
                         <div class="premium-modal-header" style="padding-top: 2.25rem !important; padding-bottom: 1.75rem !important;">
                             <h2 id="teacherModalTitle" style="margin-top: 0 !important; margin-bottom: 0.5rem !important; line-height: 1.4 !important; display: block !important;">Add New Teacher</h2>
                             <p id="teacherModalSubtitle">Set up a new instructor profile for the portal.</p>
@@ -1067,7 +1067,7 @@
                         </div>
                         <form id="addTeacherForm" class="premium-modal-form">
                             <div class="premium-modal-body">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <div class="dash-grid-2">
                                     <div class="form-group mb-0">
                                         <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">FULL NAME</label>
                                         <input type="text" id="tName" class="form-control" required placeholder="Dr. John Doe" style="background: #f9fafb; border-color: #e5e7eb;">
@@ -1112,7 +1112,7 @@
                         </div>
                         <form id="addTrainingForm" class="premium-modal-form">
                             <div class="premium-modal-body">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <div class="dash-grid-2">
                                     <div class="form-group mb-0">
                                         <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">PROGRAM NAME</label>
                                         <input type="text" id="trnName" class="form-control" required placeholder="e.g. Soft Skills Workshop" style="background: #f9fafb; border-color: #e5e7eb;">
@@ -1191,7 +1191,7 @@
                         </div>
                         <form id="addPlacementForm" class="premium-modal-form">
                             <div class="premium-modal-body">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <div class="dash-grid-2">
                                     <div class="form-group mb-0" id="pNameContainer" style="grid-column: span 2;">
                                         <label class="form-label" id="pNameLabel" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">ACTIVITY NAME</label>
                                         <input type="text" id="pName" class="form-control" required placeholder="e.g. Google Recruitment Drive 2026" style="background: #f9fafb; border-color: #e5e7eb;">
@@ -1251,7 +1251,7 @@
 
 <!-- Force Password Reset Modal -->
     <div id="resetPassModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(8px);">
-        <div class="glass-card" style="width: 400px; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <div class="glass-card" style="width: 400px; max-width: 95vw; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
             <h3 class="mb-2" style="color: #1e3a8a; font-weight: 700;">Security Update</h3>
             <p class="text-muted small mb-4">Please set a new password for your account to continue.</p>
             <div class="form-group">
@@ -1293,6 +1293,10 @@
     </script>
 </body>
 </html>
+
+
+
+
 
 
 
