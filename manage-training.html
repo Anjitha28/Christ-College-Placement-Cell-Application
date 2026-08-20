@@ -436,6 +436,7 @@
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                     tab.classList.add('active');
                     document.getElementById(`${tab.dataset.tab}Tab`).classList.add('active');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                     if(tab.dataset.tab === 'dashboard') renderDashboard();
                     if(tab.dataset.tab === 'registrations') populateRegFilters();
                     if(tab.dataset.tab === 'batches') renderBatchesTab();
@@ -1384,4 +1385,5 @@
     </style>
 </body>
 </html>
+
 

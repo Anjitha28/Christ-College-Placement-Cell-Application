@@ -162,6 +162,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         tab.classList.add('active');
         tabContent.classList.add('active');
+        
+        // Scroll to top when navigating to a new section
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
         // Update breadcrumb and title
         const breadcrumb = document.querySelector('.breadcrumb');

@@ -78,6 +78,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             tab.classList.add('active');
             const targetId = tab.getAttribute('data-tab') + 'Tab';
             document.getElementById(targetId).classList.add('active');
+            
+            // Scroll to top when navigating to a new section
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     });
 
