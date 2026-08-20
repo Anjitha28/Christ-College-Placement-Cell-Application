@@ -12,6 +12,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Wait for Google Sheets / Supabase data to sync
     await db.ready;
 
+    // 2.5 Force clear search inputs to prevent aggressive browser autofill 
+    // from injecting usernames (like "admin") and causing empty tables.
+    const stSearch = document.getElementById('searchStudent');
+    const tcSearch = document.getElementById('searchTeacher');
+    if (stSearch) stSearch.value = '';
+    if (tcSearch) tcSearch.value = '';
+
     const userRole = sessionStorage.getItem('userRole') || 'admin';
     const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
 
