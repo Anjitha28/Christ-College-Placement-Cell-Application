@@ -849,7 +849,7 @@
                     card.onclick = () => openPlacementDetails(a.id);
                     
                     card.innerHTML = `
-                        <div class="d-flex align-items-center justify-content-between">
+                        <div class="responsive-list-row">
                             <div style="flex: 2; min-width: 0;">
                                 <div class="d-flex align-items-center gap-3">
                                     <div style="width: 40px; height: 40px; border-radius: 10px; background: ${a.type === 'recruitment' ? '#ecfdf5' : '#eef2ff'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -1051,13 +1051,13 @@
                         card.style.cursor = 'pointer';
                         card.onclick = () => openDetailsModal(p.id);
                         card.innerHTML = `
-                            <div class="d-flex align-items-center w-100" style="padding: 0.5rem 0;">
-                                <div style="flex: 2; min-width: 200px;">
+                            <div class="responsive-list-row">
+                                <div style="flex: 2; min-width: 0;">
                                     <div class="d-flex align-items-center gap-2 mb-1">
                                         <h5 class="mb-0" style="color: #111827; font-weight: 700; font-size: 1rem;">${p.name}</h5>
                                         <span class="badge bg-info" style="font-size: 9px; color: white; padding: 2px 6px; border-radius: 4px;">Training</span>
                                     </div>
-                                    <p class="text-muted small mb-0 text-truncate" style="max-width: 350px;">${strippedDesc}</p>
+                                    <p class="text-muted small mb-0 text-truncate" style="max-width: 100%;">${strippedDesc}</p>
                                 </div>
                                 
                                 <div style="flex: 1.5; text-align: left; padding-left: 1rem;">
@@ -1071,7 +1071,7 @@
                                 <div style="flex: 1.5; text-align: left; padding-left: 1rem;">
                                     <div class="d-flex align-items-center justify-content-start gap-2 text-muted small">
                                         <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                                        <span class="text-truncate" style="max-width: 150px; font-weight: 500;">${p.venue}</span>
+                                        <span class="text-truncate" style="max-width: 100%; font-weight: 500;">${p.venue}</span>
                                     </div>
                                 </div>
 
@@ -1313,6 +1313,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
