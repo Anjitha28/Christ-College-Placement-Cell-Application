@@ -55,6 +55,7 @@ body {
     background: #f9fafb;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
     width: calc(100% - 250px);
     max-width: calc(100% - 250px);
     overflow-x: hidden;
