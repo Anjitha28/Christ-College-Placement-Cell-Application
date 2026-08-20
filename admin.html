@@ -98,9 +98,14 @@
 
         <main class="main-content" style="padding: 0;">
             <div class="top-header" id="mainHeader">
-                <div>
+                <div class="d-flex align-items-center gap-3">
+                    <button id="mobileMenuBtn" class="mobile-menu-btn d-md-none" onclick="toggleSidebar()">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+                    </button>
+                    <div>
                     <div class="breadcrumb">Portal / Loading...</div>
                     <h1 class="page-title"></h1>
+                    </div>
                 </div>
                 <div class="user-profile">
                     <div class="user-info" style="text-align: right;">
@@ -1262,8 +1267,34 @@
     </div>
 
     <script src="js/admin.js?v=3"></script>
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobileOverlay" class="mobile-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Mobile Navigation Toggle Script -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.querySelector(".sidebar");
+            const overlay = document.getElementById("mobileOverlay");
+            if (sidebar) sidebar.classList.toggle("open");
+            if (overlay) overlay.classList.toggle("active");
+        }
+
+        // Close sidebar on navigation (for mobile)
+        document.addEventListener("DOMContentLoaded", () => {
+            const navLinks = document.querySelectorAll(".sidebar-nav li a");
+            navLinks.forEach(link => {
+                link.addEventListener("click", () => {
+                    if (window.innerWidth <= 768) {
+                        toggleSidebar();
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
+
+
 
 
 
