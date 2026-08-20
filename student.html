@@ -64,6 +64,7 @@
                     <div>
                     <div class="breadcrumb">Portal / Student Profile</div>
                     <h1 class="page-title" id="studentName">Welcome, Student</h1>
+                    </div>
                 </div>
                 <div class="user-profile" onclick="openStudentProfile()" style="cursor: pointer;">
                     <div class="user-info" style="text-align: right;">
@@ -260,7 +261,7 @@
                     <p id="modalDesc" style="color: #4b5563; line-height: 1.6; font-size: 0.95rem;"></p>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                <div class="dash-grid-3" style="gap: 1rem; margin-bottom: 2rem;">
                     <div style="background: #f9fafb; padding: 1rem; border-radius: 12px; border: 1px solid #f3f4f6;">
                         <span style="display: block; font-size: 10px; color: #6b7280; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Venue</span>
                         <strong id="modalVenue" style="color: #111827; font-size: 0.9rem;"></strong>
@@ -358,7 +359,7 @@
                 <div style="padding: 1rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
                     <h6 style="margin: 0; font-weight: 700; color: #475569;">Question Navigator</h6>
                 </div>
-                <div id="fsQuestionGrid" style="padding: 1.5rem; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; overflow-y: auto; flex: 1; align-content: start;">
+                <div id="fsQuestionGrid" style="padding: 1.5rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 0.75rem; overflow-y: auto; flex: 1; align-content: start;">
                     <!-- Grid items injected by JS -->
                 </div>
             </div>
@@ -1312,6 +1313,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 

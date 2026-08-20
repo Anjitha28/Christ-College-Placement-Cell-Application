@@ -1509,6 +1509,37 @@ select.form-control { cursor: pointer; }
     .main-footer > div > div {
         justify-content: center !important;
     }
+    /* FS Exam Modal Responsiveness */
+    #fsExamModal > div:nth-child(2) {
+        flex-direction: column !important;
+        overflow-y: auto !important;
+    }
+    #fsExamModal > div:nth-child(2) > div:nth-child(1) {
+        width: 100% !important;
+        max-height: 250px !important;
+        border-right: none !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+    #fsExamModal > div:nth-child(2) > div:nth-child(2) {
+        padding: 1rem !important;
+    }
+    #fsExamModal > div:nth-child(1) {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem !important;
+    }
+    #fsExamModal > div:nth-child(1) > div:nth-child(2) {
+        flex-direction: column;
+        gap: 1rem !important;
+    }
+    #fsQuestionArea {
+        padding: 1.5rem !important;
+    }
+    #btnFsPrev, #btnFsReview, #btnFsNext {
+        padding: 0.5rem 1rem !important;
+        font-size: 0.85rem !important;
+    }
+
     
     /* Splash Screen */
     #splash-screen img {
@@ -2113,6 +2144,37 @@ select.form-control { cursor: pointer; }
 .modal-overlay, #examModal, #trainingModal, #attendanceModal {
     transition: opacity 0.25s ease-out;
 }
+    /* FS Exam Modal Responsiveness */
+    #fsExamModal > div:nth-child(2) {
+        flex-direction: column !important;
+        overflow-y: auto !important;
+    }
+    #fsExamModal > div:nth-child(2) > div:nth-child(1) {
+        width: 100% !important;
+        max-height: 250px !important;
+        border-right: none !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+    #fsExamModal > div:nth-child(2) > div:nth-child(2) {
+        padding: 1rem !important;
+    }
+    #fsExamModal > div:nth-child(1) {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem !important;
+    }
+    #fsExamModal > div:nth-child(1) > div:nth-child(2) {
+        flex-direction: column;
+        gap: 1rem !important;
+    }
+    #fsQuestionArea {
+        padding: 1.5rem !important;
+    }
+    #btnFsPrev, #btnFsReview, #btnFsNext {
+        padding: 0.5rem 1rem !important;
+        font-size: 0.85rem !important;
+    }
+
 
 /* Splash Screen */
 #splash-screen {
