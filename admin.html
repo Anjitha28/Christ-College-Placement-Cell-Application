@@ -13,6 +13,25 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 </head>
 <body>
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <img src="beintrack_logo.png" alt="BE IN TRACK Logo">
+        <h1>BE IN TRACK</h1>
+        <p>@powered by KVJAnalytics</p>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(function() {
+                var splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.classList.add('hidden');
+                    setTimeout(function() {
+                        splash.style.display = 'none';
+                    }, 300);
+                }
+            }, 1000);
+        });
+    </script>
     <div class="app-container">
         <aside class="sidebar">
             <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; width: 100%; overflow: hidden; padding: 0 10px;">

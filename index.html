@@ -9,6 +9,25 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="premium-ui">
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <img src="beintrack_logo.png" alt="BE IN TRACK Logo">
+        <h1>BE IN TRACK</h1>
+        <p>@powered by KVJAnalytics</p>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(function() {
+                var splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.classList.add('hidden');
+                    setTimeout(function() {
+                        splash.style.display = 'none';
+                    }, 300);
+                }
+            }, 1000);
+        });
+    </script>
     <div class="login-wrapper">
         <div class="glass-card login-card text-center">
             <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
