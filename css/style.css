@@ -364,9 +364,7 @@ h3 {
 }
 
 /* Tables */
-.table-responsive {
-    overflow-x: auto;
-}
+.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 0.5rem; }
 
 .table {
     width: 100%;
@@ -1549,6 +1547,55 @@ select.form-control { cursor: pointer; }
     .content-body { padding: 1rem; }
     
     /* Grids & Cards */
+        /* Mobile Polish - Spacing, Padding, Typography */
+    .glass-card, .premium-ui .glass-card {
+        padding: 1rem !important;
+        border-radius: 12px !important;
+    }
+    .premium-ui .modal-content,
+    .premium-ui[id$="Modal"] > .glass-card,
+    .premium-ui[id$="Modal"] > div {
+        padding: 1.25rem !important;
+        border-radius: 12px !important;
+    }
+    .stat-card, .premium-ui .stat-card {
+        padding: 1rem !important;
+    }
+    .premium-ui .stat-value {
+        font-size: 1.5rem !important;
+    }
+    .page-title, .premium-ui h2, .premium-ui h3, h2, h3, h4 {
+        font-size: 1.25rem !important;
+    }
+    .premium-ui .table thead th, .premium-ui .table tbody td, .table th, .table td {
+        padding: 0.75rem 0.5rem !important;
+        font-size: 0.85rem !important;
+    }
+    .management-tabs, .premium-ui .tabs {
+        display: flex;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+    .management-tab, .premium-ui .tabs .tab {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.85rem !important;
+        flex: 1 1 auto;
+        text-align: center;
+        border-radius: 8px !important;
+    }
+    .section-header {
+        margin-bottom: 1rem !important;
+        padding-bottom: 0.75rem !important;
+    }
+    .main-footer {
+        margin: 0 0.5rem 0.5rem 0.5rem !important;
+        padding: 1rem 0.75rem !important;
+    }
+    .premium-ui .btn {
+        padding: 0 0.75rem !important;
+        font-size: 0.8rem !important;
+    }
+
     .dash-grid-4, .dash-grid-3, .dash-grid-2, .stat-grid-4, .stat-grid-5, .overview-grid-2 {
         grid-template-columns: 1fr !important;
     }
@@ -2298,6 +2345,8 @@ select.form-control { cursor: pointer; }
 
 / *   R i c h   t e x t   s t y l e s   * / \ n [ c o n t e n t e d i t a b l e = \  
  t r u e \ ]   u l ,   . r i c h - t e x t   u l   {   l i s t - s t y l e - t y p e :   d i s c ;   m a r g i n - l e f t :   1 . 5 r e m ;   m a r g i n - b o t t o m :   1 r e m ;   } \ n [ c o n t e n t e d i t a b l e = \ t r u e \ ]   o l ,   . r i c h - t e x t   o l   {   l i s t - s t y l e - t y p e :   d e c i m a l ;   m a r g i n - l e f t :   1 . 5 r e m ;   m a r g i n - b o t t o m :   1 r e m ;   } \ n [ c o n t e n t e d i t a b l e = \ t r u e \ ]   l i ,   . r i c h - t e x t   l i   {   m a r g i n - b o t t o m :   0 . 2 5 r e m ;   }
+
+
 
 
 
