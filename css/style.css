@@ -1571,6 +1571,7 @@ select.form-control { cursor: pointer; }
         padding: 0.75rem 0.5rem !important;
         font-size: 0.85rem !important;
     }
+    .premium-ui .table thead th, .table thead th { vertical-align: top !important; white-space: normal !important; }
     .management-tabs, .premium-ui .tabs {
         display: flex;
         flex-wrap: wrap !important;
@@ -2352,6 +2353,7 @@ select.form-control { cursor: pointer; }
 
 / *   R i c h   t e x t   s t y l e s   * / \ n [ c o n t e n t e d i t a b l e = \  
  t r u e \ ]   u l ,   . r i c h - t e x t   u l   {   l i s t - s t y l e - t y p e :   d i s c ;   m a r g i n - l e f t :   1 . 5 r e m ;   m a r g i n - b o t t o m :   1 r e m ;   } \ n [ c o n t e n t e d i t a b l e = \ t r u e \ ]   o l ,   . r i c h - t e x t   o l   {   l i s t - s t y l e - t y p e :   d e c i m a l ;   m a r g i n - l e f t :   1 . 5 r e m ;   m a r g i n - b o t t o m :   1 r e m ;   } \ n [ c o n t e n t e d i t a b l e = \ t r u e \ ]   l i ,   . r i c h - t e x t   l i   {   m a r g i n - b o t t o m :   0 . 2 5 r e m ;   }
+
 
 
 
