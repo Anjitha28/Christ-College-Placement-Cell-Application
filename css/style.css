@@ -2382,3 +2382,15 @@ select.form-control { cursor: pointer; }
 
 
 
+
+@media (max-width: 768px) {
+    .table-responsive .table {
+        min-width: 750px;
+    }
+    #dashboardPlacedTable {
+        min-width: 900px;
+    }
+    #studentsTable {
+        min-width: 1000px;
+    }
+}
