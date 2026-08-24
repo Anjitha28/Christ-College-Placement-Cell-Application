@@ -2503,6 +2503,117 @@ select.form-control { cursor: pointer; }
 
 
 
+/* Placement & Recruitment Tables Styling */
+.placement-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#activityTable {
+    min-width: 820px;
+}
+
+#recruitmentTable {
+    min-width: 920px;
+}
+
+.placement-table thead th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.85rem 1rem !important;
+    border-bottom: 2px solid #e2e8f0;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+}
+
+.placement-table tbody td {
+    padding: 0.9rem 1rem !important;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle !important;
+    font-size: 0.875rem;
+    color: #1e293b;
+}
+
+.placement-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.placement-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+/* Job Role Pill */
+.jobrole-pill {
+    display: inline-block;
+    padding: 0.3rem 0.75rem;
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 600;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap !important;
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+/* Registered Count */
+.registered-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #0D6EFC;
+}
+
+/* Placement Status Badges */
+.placement-status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.35rem 0.85rem !important;
+    border-radius: 999px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.03em !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+}
+
+.status-badge-completed {
+    background: #dcfce7 !important;
+    color: #15803d !important;
+    border: 1px solid #bbf7d0 !important;
+}
+
+.status-badge-progress {
+    background: #dbeafe !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bfdbfe !important;
+}
+
+.status-badge-upcoming {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+}
+
+.status-badge-unknown {
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
 #calendarRightPanelWrapper {
     scroll-margin-top: 1.5rem;
 }
@@ -2524,5 +2635,12 @@ select.form-control { cursor: pointer; }
     #studentsTable {
         min-width: 1000px;
     }
+    #activityTable {
+        min-width: 820px !important;
+    }
+    #recruitmentTable {
+        min-width: 920px !important;
+    }
 }
+
 

@@ -1647,41 +1647,52 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const createRow = (a) => {
             let statusLabel = 'Upcoming';
-            let statusBadge = 'bg-warning text-dark';
+            let statusClass = 'status-badge-upcoming';
             
             if (a.lastDate && today > a.lastDate) {
                 statusLabel = 'Completed';
-                statusBadge = 'bg-success';
+                statusClass = 'status-badge-completed';
             } else if (a.date && a.lastDate && today >= a.date && today <= a.lastDate) {
                 statusLabel = 'In-Progress';
-                statusBadge = 'bg-primary';
+                statusClass = 'status-badge-progress';
             } else if (!a.date || !a.lastDate) {
                 statusLabel = 'Unknown';
-                statusBadge = 'bg-secondary';
+                statusClass = 'status-badge-unknown';
             }
 
             return `
             <tr>
-                <td>
+                <td style="text-align: left; vertical-align: middle;">
                     <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                        <span class="badge ${a.type === 'recruitment' ? 'bg-success' : 'bg-primary'}" style="font-size: 10px; text-transform: capitalize; padding: 3px 8px; border-radius: 4px;">${a.type === 'recruitment' ? 'Recruitment' : 'Activity'}</span>
-                        <strong style="color: #111827; font-size: 0.95rem;">${a.name}</strong>
+                        <span class="badge ${a.type === 'recruitment' ? 'bg-success' : 'bg-primary'}" style="font-size: 10px; text-transform: capitalize; padding: 2px 7px; border-radius: 4px; font-weight: 600; white-space: nowrap;">${a.type === 'recruitment' ? 'Recruitment' : 'Activity'}</span>
+                        <strong style="color: #111827; font-size: 0.92rem;">${a.name}</strong>
                     </div>
                     ${a.description ? `<div class="small text-muted" style="max-width: 320px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35;">${a.description}</div>` : ''}
                 </td>
-                <td style="white-space: nowrap;"><span class="text-danger fw-semibold" style="font-size: 0.85rem;">${a.date}</span></td>
-                ${a.type === 'recruitment' ? `<td><span class="badge bg-light text-dark" style="border: 1px solid #e5e7eb; font-weight: 500;">${a.venue || '—'}</span></td>` : ''}
-                <td><span class="small" style="color: #4b5563;">${a.target.type === 'all' ? 'All Students' : (a.target.type === 'course' ? (a.target.courses || []).length + ' Courses' : (a.target.type === 'dept' ? (a.target.depts || []).length + ' Depts' : (a.target.students || []).length + ' Students'))}</span></td>
-                <td><strong class="text-primary" style="font-size: 0.95rem;">${(a.registrations || []).length}</strong></td>
-                <td><span class="badge ${statusBadge}" style="font-size: 11px; padding: 4px 10px; border-radius: 999px;">${statusLabel}</span></td>
-                <td style="white-space: nowrap;">
-                    <div class="d-flex gap-1 align-items-center">
-                        <button class="btn btn-secondary btn-sm" onclick="openManagePlacementView('${a.id}')" title="Manage Activity" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 600;">Manage</button>
+                <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
+                    <span class="text-danger fw-semibold" style="font-size: 0.85rem;">${a.date}</span>
+                </td>
+                ${a.type === 'recruitment' ? `
+                <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
+                    <span class="jobrole-pill" title="${a.venue || ''}">${a.venue || '—'}</span>
+                </td>` : ''}
+                <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
+                    <span class="small" style="color: #4b5563; font-weight: 500;">${a.target.type === 'all' ? 'All Students' : (a.target.type === 'course' ? (a.target.courses || []).length + ' Courses' : (a.target.type === 'dept' ? (a.target.depts || []).length + ' Depts' : (a.target.students || []).length + ' Students'))}</span>
+                </td>
+                <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
+                    <span class="registered-count">${(a.registrations || []).length}</span>
+                </td>
+                <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
+                    <span class="placement-status-badge ${statusClass}">${statusLabel}</span>
+                </td>
+                <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
+                    <div class="d-flex gap-1 align-items-center justify-content-center">
+                        <button class="btn btn-secondary btn-sm" onclick="openManagePlacementView('${a.id}')" title="Manage Activity" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">Manage</button>
                         ${Permissions.can(userRole, 'edit_training_drives') ? `
-                        <button class="btn btn-secondary btn-sm" onclick="editPlacementActivity('${a.id}')" title="Edit Info" style="padding: 0.35rem 0.5rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="editPlacementActivity('${a.id}')" title="Edit Info" style="padding: 0.35rem 0.5rem; display: inline-flex; align-items: center; justify-content: center;">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="deletePlacementActivity('${a.id}')" title="Delete" style="padding: 0.35rem 0.5rem; border: none;">
+                        <button class="btn btn-danger btn-sm" onclick="deletePlacementActivity('${a.id}')" title="Delete" style="padding: 0.35rem 0.5rem; border: none; display: inline-flex; align-items: center; justify-content: center;">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                         </button>
                         ` : ''}
