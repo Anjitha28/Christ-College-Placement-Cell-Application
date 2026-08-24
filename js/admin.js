@@ -1663,25 +1663,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             return `
             <tr>
                 <td>
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="badge ${a.type === 'recruitment' ? 'bg-secondary' : 'bg-primary'}" style="font-size: 9px; text-transform: capitalize;">${a.type === 'recruitment' ? 'Recruitment' : 'Activity'}</span>
-                        <strong style="color: #111827;">${a.name}</strong>
+                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                        <span class="badge ${a.type === 'recruitment' ? 'bg-success' : 'bg-primary'}" style="font-size: 10px; text-transform: capitalize; padding: 3px 8px; border-radius: 4px;">${a.type === 'recruitment' ? 'Recruitment' : 'Activity'}</span>
+                        <strong style="color: #111827; font-size: 0.95rem;">${a.name}</strong>
                     </div>
-                    <div class="small text-muted" style="max-height: 40px; overflow: hidden;">${a.description}</div>
+                    ${a.description ? `<div class="small text-muted" style="max-width: 320px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35;">${a.description}</div>` : ''}
                 </td>
-                <td><span class="text-danger">${a.date}</span></td>
-                ${a.type === 'recruitment' ? `<td>${a.venue || ''}</td>` : ''}
-                <td>${a.target.type === 'all' ? 'All Students' : (a.target.type === 'course' ? (a.target.courses || []).length + ' Courses' : (a.target.type === 'dept' ? (a.target.depts || []).length + ' Depts' : (a.target.students || []).length + ' Students'))}</td>
-                <td><strong class="text-primary">${(a.registrations || []).length}</strong></td>
-                <td><span class="badge ${statusBadge}" style="font-size: 11px; padding: 5px 10px;">${statusLabel}</span></td>
-                <td>
-                    <div class="d-flex gap-1">
-                        <button class="btn btn-secondary btn-sm" onclick="openManagePlacementView('${a.id}')" title="Manage Activity">Manage</button>
+                <td style="white-space: nowrap;"><span class="text-danger fw-semibold" style="font-size: 0.85rem;">${a.date}</span></td>
+                ${a.type === 'recruitment' ? `<td><span class="badge bg-light text-dark" style="border: 1px solid #e5e7eb; font-weight: 500;">${a.venue || '—'}</span></td>` : ''}
+                <td><span class="small" style="color: #4b5563;">${a.target.type === 'all' ? 'All Students' : (a.target.type === 'course' ? (a.target.courses || []).length + ' Courses' : (a.target.type === 'dept' ? (a.target.depts || []).length + ' Depts' : (a.target.students || []).length + ' Students'))}</span></td>
+                <td><strong class="text-primary" style="font-size: 0.95rem;">${(a.registrations || []).length}</strong></td>
+                <td><span class="badge ${statusBadge}" style="font-size: 11px; padding: 4px 10px; border-radius: 999px;">${statusLabel}</span></td>
+                <td style="white-space: nowrap;">
+                    <div class="d-flex gap-1 align-items-center">
+                        <button class="btn btn-secondary btn-sm" onclick="openManagePlacementView('${a.id}')" title="Manage Activity" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 600;">Manage</button>
                         ${Permissions.can(userRole, 'edit_training_drives') ? `
-                        <button class="btn btn-secondary btn-sm" onclick="editPlacementActivity('${a.id}')" title="Edit Info">
+                        <button class="btn btn-secondary btn-sm" onclick="editPlacementActivity('${a.id}')" title="Edit Info" style="padding: 0.35rem 0.5rem;">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="deletePlacementActivity('${a.id}')" title="Delete">
+                        <button class="btn btn-danger btn-sm" onclick="deletePlacementActivity('${a.id}')" title="Delete" style="padding: 0.35rem 0.5rem; border: none;">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                         </button>
                         ` : ''}
@@ -2435,59 +2435,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(!list) return;
         list.innerHTML = '';
 
-        if (currentActivity.phases.length === 0) {
-            list.innerHTML = '<p class="text-center text-muted py-4">No selection phases defined yet.</p>';
+        if (!currentActivity.phases || currentActivity.phases.length === 0) {
+            list.innerHTML = '<div class="text-center text-muted py-5" style="background: #fff; border-radius: 8px; border: 1px dashed #e5e7eb;"><p class="mb-0">No selection phases defined yet. Click "Add New Phase" to start.</p></div>';
             return;
         }
 
         currentActivity.phases.forEach((p, idx) => {
             const card = document.createElement('div');
-            card.className = 'mb-2 d-flex align-items-center justify-content-between';
-            card.style.background = '#fff';
-            card.style.borderRadius = '8px';
-            card.style.border = '1px solid #e5e7eb';
-            card.style.borderLeft = `6px solid ${idx % 2 === 0 ? '#0D6EFC' : '#6c757d'}`;
-            card.style.width = '100%';
-            card.style.padding = '12px 20px';
-            card.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
+            card.className = 'phase-card-item';
+            card.style.borderLeft = `5px solid ${idx % 2 === 0 ? '#0D6EFC' : '#6366f1'}`;
             
             card.innerHTML = `
-                <div class="d-flex align-items-center w-100">
+                <div class="phase-card-grid">
                     <!-- Column 1: Details -->
-                    <div style="flex: 2; padding-right: 15px;">
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <span class="badge bg-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 12px;">Phase ${idx + 1}</span>
-                            <strong style="color: #111827; font-size: 14px;">${p.name}</strong>
+                    <div class="phase-card-col-details">
+                        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                            <span class="badge bg-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">Phase ${idx + 1}</span>
+                            <strong style="color: #111827; font-size: 0.95rem;">${p.name}</strong>
                         </div>
-                        <div class="text-muted" style="font-size: 12px; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: 2px;">${p.description || 'No description'}</div>
+                        <div class="text-muted small" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35;">${p.description || 'No description provided.'}</div>
                     </div>
                     
                     <!-- Column 2: Mode -->
-                    <div style="flex: 1;">
-                        <div style="font-size: 10px; font-weight: 700; color: #4b5563; text-transform: uppercase; margin-bottom: 2px;">MODE</div>
+                    <div>
+                        <div style="font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 2px;">DECLARATION MODE</div>
                         <div>
-                            <span class="badge ${p.mode === 'admin' ? 'bg-secondary' : 'bg-success'}" style="font-weight: 500; font-size: 10px; padding: 4px 8px;">${p.mode === 'admin' ? 'Admin Declaration' : 'Self Declaration'}</span>
+                            <span class="badge ${p.mode === 'admin' ? 'bg-secondary' : 'bg-success'}" style="font-weight: 500; font-size: 11px; padding: 4px 8px; border-radius: 6px;">${p.mode === 'admin' ? 'Admin Declared' : 'Self Declared'}</span>
                         </div>
                     </div>
                     
                     <!-- Column 3: Deadline -->
-                    <div style="flex: 1;">
-                        <div style="font-size: 10px; font-weight: 700; color: #4b5563; text-transform: uppercase; margin-bottom: 2px;">DEADLINE</div>
-                        <div style="font-size: 13px; font-weight: 500; color: #111827;">${p.lastDate || '—'}</div>
+                    <div>
+                        <div style="font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 2px;">DUE DATE</div>
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #111827;">${p.lastDate || '—'}</div>
                     </div>
                     
                     <!-- Column 4: Qualified -->
-                    <div style="flex: 1;">
-                        <div style="font-size: 10px; font-weight: 700; color: #4b5563; text-transform: uppercase; margin-bottom: 2px;">QUALIFIED</div>
-                        <div style="font-size: 14px; font-weight: 700; color: #0D6EFC;">${p.completions.length}</div>
+                    <div>
+                        <div style="font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 2px;">QUALIFIED</div>
+                        <div style="font-size: 1rem; font-weight: 700; color: #0D6EFC;">${(p.completions || []).length}</div>
                     </div>
 
                     <!-- Column 5: Actions -->
-                    <div class="d-flex gap-2 justify-content-end align-items-center" style="flex: 1.5;">
-                        ${p.mode === 'admin' ? `<button class="btn" style="background-color: #000080; color: white; font-weight: 600; font-size: 12px; padding: 6px 12px;" onclick="openDeclaration('${p.id}')">Admin Declaration</button>` : ''}
+                    <div class="phase-card-col-actions d-flex gap-2 justify-content-end align-items-center">
+                        ${p.mode === 'admin' ? `<button class="btn btn-sm" style="background-color: #000080; color: white; font-weight: 600; font-size: 12px; padding: 6px 12px; white-space: nowrap; border-radius: 6px;" onclick="openDeclaration('${p.id}')">Declare Status</button>` : ''}
                         ${Permissions.can(userRole, 'edit_training_drives') ? `
-                        <button class="btn btn-light" style="font-weight: 600; border: 1px solid #e5e7eb; font-size: 12px; padding: 6px 12px;" onclick="editPhase('${p.id}')">Edit</button>
-                        <button class="btn btn-danger" onclick="deletePhase('${p.id}')" style="font-weight: 600; font-size: 12px; padding: 6px 12px; border: none;">✕</button>
+                        <button class="btn btn-light btn-sm" style="font-weight: 600; border: 1px solid #e5e7eb; font-size: 12px; padding: 6px 12px; border-radius: 6px;" onclick="editPhase('${p.id}')">Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deletePhase('${p.id}')" style="font-weight: 600; font-size: 12px; padding: 6px 10px; border-radius: 6px; border: none;" title="Delete Phase">✕</button>
                         ` : ''}
                     </div>
                 </div>
@@ -2501,40 +2495,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(!funnel) return;
         funnel.innerHTML = '';
 
-        const students = db.getStudents();
-        const targetedStudents = students.filter(s => {
-            const t = currentActivity.target;
-            if(t.type === 'all') return true;
-            if(t.type === 'course') return (t.courses || []).includes(s.course);
-            if(t.type === 'dept') return (t.depts || []).includes(s.department);
-            if(t.type === 'student') return (t.students || []).includes(s.registerNumber);
-            return false;
-        });
-
-        const registrationCount = currentActivity.registrations.length;
+        const registrationCount = (currentActivity.registrations || []).length;
         const stages = [
             { name: 'Registrations', count: registrationCount, color: '#1e293b' }
         ];
 
-        currentActivity.phases.forEach((p, idx) => {
+        (currentActivity.phases || []).forEach((p, idx) => {
             stages.push({
                 name: p.name,
-                count: p.completions.length,
-                color: `hsl(${215}, ${70}%, ${40 + (idx * 10)}%)`
+                count: (p.completions || []).length,
+                color: `hsl(${215}, ${70}%, ${40 + (idx * 8)}%)`
             });
         });
 
-        const maxWidth = 300;
+        const maxWidth = 340;
         stages.forEach((stage) => {
-            const width = maxWidth * (registrationCount === 0 ? 1 : (stage.count / registrationCount || 0.1));
+            const width = maxWidth * (registrationCount === 0 ? 1 : (stage.count / registrationCount || 0.15));
             const div = document.createElement('div');
             div.className = 'funnel-stage';
-            div.style.width = Math.max(width, 100) + 'px';
+            div.style.width = Math.max(width, 120) + 'px';
             div.style.backgroundColor = stage.color;
+            const percent = registrationCount === 0 ? '0%' : Math.round((stage.count / registrationCount) * 100) + '%';
             div.innerHTML = `
-                <span class="funnel-label">${stage.name}</span>
-                ${stage.count}
-                <span class="funnel-value">${registrationCount === 0 ? '0' : Math.round((stage.count / registrationCount) * 100)}%</span>
+                <span class="funnel-label" title="${stage.name}">${stage.name}</span>
+                <span class="funnel-count-pill">${stage.count}</span>
+                <span class="funnel-value">${percent}</span>
             `;
             funnel.appendChild(div);
         });
@@ -2546,20 +2531,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         list.innerHTML = '';
         
         const students = db.getStudents();
-        const registered = students.filter(s => currentActivity.registrations.includes(s.registerNumber));
+        const registered = students.filter(s => (currentActivity.registrations || []).includes(s.registerNumber));
 
         if (registered.length === 0) {
-            list.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-5">No registrations yet for this recruitment drive.</td></tr>';
+            list.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-5">No registered students yet for this activity.</td></tr>';
             return;
         }
 
         registered.forEach(s => {
             let currentPhaseIdx = -1;
-            currentActivity.phases.forEach((p, i) => {
-                if (p.completions.includes(s.registerNumber)) currentPhaseIdx = i;
+            (currentActivity.phases || []).forEach((p, i) => {
+                if ((p.completions || []).includes(s.registerNumber)) currentPhaseIdx = i;
             });
 
-            const isQualified = currentPhaseIdx === currentActivity.phases.length - 1 && currentPhaseIdx !== -1;
+            const isQualified = currentActivity.phases && currentActivity.phases.length > 0 && currentPhaseIdx === currentActivity.phases.length - 1;
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
@@ -2567,17 +2552,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="text-muted small">${s.registerNumber}</div>
                 </td>
                 <td>
-                    <div class="small">${s.course}</div>
-                    <div class="text-muted" style="font-size: 10px;">${s.department}</div>
+                    <div class="small fw-semibold" style="color: #374151;">${s.course}</div>
+                    <div class="text-muted" style="font-size: 11px;">${s.department}</div>
                 </td>
                 <td>
-                    <span class="badge ${currentPhaseIdx === -1 ? 'bg-light text-dark' : 'bg-primary-light text-primary'}">
+                    <span class="badge ${currentPhaseIdx === -1 ? 'bg-light text-dark' : 'bg-primary-light text-primary'}" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">
                         ${currentPhaseIdx === -1 ? 'Registered' : currentActivity.phases[currentPhaseIdx].name}
                     </span>
                 </td>
                 <td>
                     <span class="status-pill ${isQualified ? 'status-qualified' : (currentPhaseIdx === -1 ? 'status-dropped' : 'status-pending')}">
-                        ${isQualified ? 'Final Qualified' : (currentPhaseIdx === -1 ? 'Pending Start' : 'In Progress')}
+                        ${isQualified ? 'Final Qualified' : (currentPhaseIdx === -1 ? 'Registered' : 'In Progress')}
                     </span>
                 </td>
             `;
