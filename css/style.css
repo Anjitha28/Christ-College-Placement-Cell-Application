@@ -2383,6 +2383,17 @@ select.form-control { cursor: pointer; }
 
 
 
+#calendarRightPanelWrapper {
+    scroll-margin-top: 1.5rem;
+}
+
+@media (max-width: 992px) {
+    #calendarRightPanelWrapper {
+        max-width: 100% !important;
+        scroll-margin-top: 1rem;
+    }
+}
+
 @media (max-width: 768px) {
     .table-responsive .table {
         min-width: 750px;
@@ -2394,3 +2405,4 @@ select.form-control { cursor: pointer; }
         min-width: 1000px;
     }
 }
+

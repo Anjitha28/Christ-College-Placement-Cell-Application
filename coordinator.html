@@ -572,8 +572,21 @@
                         <select id="calYear" class="form-control" style="width: 100px;"></select>
                     </div>
                 </div>
-                <div id="calendarContainer" style="padding: 1rem; background: #fff; border-radius: 12px;">
-                    <!-- Calendar will be rendered here -->
+                <div class="d-flex gap-4" style="flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <div id="calendarContainer" style="padding: 1rem; background: #fff; border-radius: 12px; border: 1px solid #e5e7eb;">
+                            <!-- Calendar will be rendered here -->
+                        </div>
+                    </div>
+                    
+                    <div style="width: 100%; max-width: 350px; flex-shrink: 0;" id="calendarRightPanelWrapper">
+                        <div style="padding: 1.25rem; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; min-height: 400px; position: sticky; top: 1rem;">
+                            <h4 id="calSelectedDateHeader" style="margin-top: 0; font-size: 1.1rem; color: #111827; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.75rem; margin-bottom: 1rem;">Select a Date</h4>
+                            <div id="calSelectedEventsList" style="display: flex; flex-direction: column; gap: 1rem;">
+                                <p class="text-muted small">Click on any date in the calendar to view scheduled programs.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

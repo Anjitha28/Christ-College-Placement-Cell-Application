@@ -1421,23 +1421,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (dayPrograms.length === 0) {
             list.innerHTML = `<p class="text-muted small">No programs scheduled for this day.</p>`;
-            return;
+        } else {
+            let html = '';
+            dayPrograms.forEach(p => {
+                const color = getProgramColor(p.id);
+                html += `
+                    <div style="background: #fff; border-left: 4px solid ${color}; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: ${color}; text-transform: uppercase; margin-bottom: 4px;">Program</div>
+                        <h5 style="margin: 0 0 4px 0; font-size: 1rem; color: #111827;">${p.name}</h5>
+                        ${p.description ? `<div style="margin: 0 0 8px 0; font-size: 0.85rem; color: #4b5563; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${p.description}</div>` : ''}
+                        <button class="btn btn-sm mt-2" style="border: 1px solid ${color}; color: ${color}; background: transparent;" onclick="window.location.href='manage-training.html?id=${p.id}'">View Program</button>
+                    </div>
+                `;
+            });
+
+            list.innerHTML = html;
         }
 
-        let html = '';
-        dayPrograms.forEach(p => {
-            const color = getProgramColor(p.id);
-            html += `
-                <div style="background: #fff; border-left: 4px solid ${color}; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <div style="font-size: 0.75rem; font-weight: 600; color: ${color}; text-transform: uppercase; margin-bottom: 4px;">Program</div>
-                    <h5 style="margin: 0 0 4px 0; font-size: 1rem; color: #111827;">${p.name}</h5>
-                    ${p.description ? `<div style="margin: 0 0 8px 0; font-size: 0.85rem; color: #4b5563; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${p.description}</div>` : ''}
-                    <button class="btn btn-sm mt-2" style="border: 1px solid ${color}; color: ${color}; background: transparent;" onclick="window.location.href='manage-training.html?id=${p.id}'">View Program</button>
-                </div>
-            `;
-        });
-
-        list.innerHTML = html;
+        // On mobile view, immediately and smoothly scroll to program details card below calendar
+        const rightPanel = document.getElementById('calendarRightPanelWrapper');
+        const calContainer = document.getElementById('calendarContainer');
+        if (rightPanel) {
+            const isMobile = window.innerWidth <= 992 || (calContainer && rightPanel.getBoundingClientRect().top > calContainer.getBoundingClientRect().top + 50);
+            if (isMobile) {
+                requestAnimationFrame(() => {
+                    rightPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            }
+        }
     };
 
     // --- Placement Management ---
