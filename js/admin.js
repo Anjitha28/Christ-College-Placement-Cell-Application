@@ -2410,12 +2410,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const placementActivities = activities.filter(a => a.type === 'placement' || !a.type);
         const recruitmentActivities = activities.filter(a => a.type === 'recruitment');
 
-        // Top 4 Metrics (animated count-up)
-        window.animateCount('dashTotalStudents', students.length);
-        window.animateCount('dashTotalTrainings', programs.length);
-        window.animateCount('dashTotalActivities', placementActivities.length);
-        window.animateCount('dashTotalRecruitments', recruitmentActivities.length);
-
         // Placement Status Logic
         let placedSet = new Set();
         let inProcessSet = new Set();
@@ -2434,12 +2428,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 });
             }
-            (a.registeredStudents || []).forEach(reg => {
+            (a.registeredStudents || a.registrations || []).forEach(reg => {
                 if (!placedSet.has(reg) && !inProcessSet.has(reg)) {
                     inProcessSet.add(reg);
                 }
             });
         });
+
+        // Registered Recruitments count (recruitments that have registered students)
+        const registeredRecruitmentsCount = recruitmentActivities.filter(a => {
+            const regs = a.registrations || a.registeredStudents || [];
+            return Array.isArray(regs) && regs.length > 0;
+        }).length;
+
+        // Top 6 Metrics (animated count-up in exact sequence)
+        // 1. Total Students -> 2. Registered Recruitments -> 3. Placed Students -> 4. Total Trainings -> 5. Placement Activities -> 6. Total Recruitments
+        window.animateCount('dashTotalStudents', students.length);
+        window.animateCount('dashRegisteredRecruitments', registeredRecruitmentsCount);
+        window.animateCount('dashPlacedStudents', placedSet.size);
+        window.animateCount('dashTotalTrainings', programs.length);
+        window.animateCount('dashTotalActivities', placementActivities.length);
+        window.animateCount('dashTotalRecruitments', recruitmentActivities.length);
 
         // Setup Placed Students Table
         function renderDashboardPlacedTable() {

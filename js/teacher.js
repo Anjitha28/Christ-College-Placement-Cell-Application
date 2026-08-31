@@ -119,8 +119,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Placement Status
     let placedSet = new Set();
     let inProcessSet = new Set();
+    let deptRegisteredRecruitments = 0;
 
-    allActivities.forEach(a => {
+    allActivities.filter(a => a.type === 'recruitment').forEach(a => {
+        const target = a.target || {};
+        const isDept = target.type === 'all' || (target.type === 'dept' && target.depts && target.depts.includes(user.department));
+        const regs = a.registeredStudents || a.registrations || [];
+        const hasDeptRegs = regs.some(reg => students.some(s => s.registerNumber === reg));
+        if (isDept && (regs.length > 0 || hasDeptRegs)) {
+            deptRegisteredRecruitments++;
+        }
+
         if (a.phases && a.phases.length > 0) {
             const finalPhase = a.phases[a.phases.length - 1];
             (finalPhase.completions || []).forEach(reg => {
@@ -129,7 +138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
         }
-        (a.registeredStudents || []).forEach(reg => {
+        (a.registeredStudents || a.registrations || []).forEach(reg => {
             if(students.find(s => s.registerNumber === reg)) {
                 if (!placedSet.has(reg) && !inProcessSet.has(reg)) {
                     inProcessSet.add(reg);
@@ -137,6 +146,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
+
+    if (document.getElementById('dashRegisteredRecruitments')) {
+        document.getElementById('dashRegisteredRecruitments').textContent = deptRegisteredRecruitments;
+    }
+    if (document.getElementById('dashPlacedStudents')) {
+        document.getElementById('dashPlacedStudents').textContent = placedSet.size;
+    }
 
     const placedCount = placedSet.size;
     const inProcessCount = inProcessSet.size;
