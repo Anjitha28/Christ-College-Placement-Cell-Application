@@ -2450,38 +2450,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.animateCount('dashTotalActivities', placementActivities.length);
         window.animateCount('dashTotalRecruitments', recruitmentActivities.length);
 
-        // --- Default Sample / Demo Datasets (Used when DB data is sparse or empty) ---
-        const sampleActivityAttendanceData = [
-            { course: 'MSc Data Analytics', count: 42 },
-            { course: 'BSc Computer Science', count: 56 },
-            { course: 'BCom', count: 68 },
-            { course: 'BBA', count: 48 },
-            { course: 'BA English', count: 34 },
-            { course: 'BSc Mathematics', count: 38 }
-        ];
-
-        const sampleCourseGenderData = [
-            { course: 'MSc Data Analytics', male: 14, female: 18, other: 0 },
-            { course: 'BSc Computer Science', male: 22, female: 20, other: 0 },
-            { course: 'BCom', male: 18, female: 24, other: 0 },
-            { course: 'BBA', male: 16, female: 15, other: 0 },
-            { course: 'BA English', male: 8, female: 16, other: 0 },
-            { course: 'BSc Mathematics', male: 10, female: 14, other: 0 }
-        ];
-
-        const samplePlacedStudentsList = [
-            { name: 'Anjitha P V', department: 'Computer Science', course: 'MSc Data Analytics', gender: 'female', activities: 4, recruitments: 3, placedRecruitment: 'TCS Digital Recruitment Drive' },
-            { name: 'Rahul Krishnan', department: 'Computer Science', course: 'BSc Computer Science', gender: 'male', activities: 5, recruitments: 4, placedRecruitment: 'Infosys Specialist Programmer' },
-            { name: 'Sneha Menon', department: 'Commerce', course: 'BCom', gender: 'female', activities: 3, recruitments: 2, placedRecruitment: 'Deloitte Tax & Advisory Drive' },
-            { name: 'Adithya Nair', department: 'Management', course: 'BBA', gender: 'male', activities: 4, recruitments: 3, placedRecruitment: 'Federal Bank Officer Trainee' },
-            { name: 'Devika S', department: 'English', course: 'BA English', gender: 'female', activities: 3, recruitments: 2, placedRecruitment: 'Cognizant Content & Communications' },
-            { name: 'Kiran Joseph', department: 'Mathematics', course: 'BSc Mathematics', gender: 'male', activities: 4, recruitments: 3, placedRecruitment: 'Wipro Elite NTH Drive' },
-            { name: 'Fathima R', department: 'Computer Science', course: 'MSc Data Analytics', gender: 'female', activities: 5, recruitments: 4, placedRecruitment: 'Accenture Advanced App Engineering' },
-            { name: 'Abhishek V', department: 'Commerce', course: 'BCom', gender: 'male', activities: 3, recruitments: 3, placedRecruitment: 'KPMG Global Services Drive' },
-            { name: 'Meera Nambiar', department: 'Management', course: 'BBA', gender: 'female', activities: 4, recruitments: 3, placedRecruitment: 'HDFC Bank Management Trainee' },
-            { name: 'Siddharth M', department: 'Computer Science', course: 'BSc Computer Science', gender: 'male', activities: 4, recruitments: 4, placedRecruitment: 'Cognizant GenC Elevate' }
-        ];
-
         // Setup Placed Students Table
         function renderDashboardPlacedTable() {
             const tableBody = document.querySelector('#dashboardPlacedTable tbody');
@@ -2530,14 +2498,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const hasRealPlacements = Object.keys(studentPlacementMap).length > 0;
 
-            // If real database has no placed students data, seamlessly use realistic sample placement data
-            if (!hasRealPlacements) {
-                let sampleList = samplePlacedStudentsList;
-                if (courseFilter) sampleList = sampleList.filter(s => s.course === courseFilter);
-                if (deptFilter) sampleList = sampleList.filter(s => s.department === deptFilter);
-                placedStudentsData = sampleList;
-            }
-
             tableBody.innerHTML = '';
             if (placedStudentsData.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No placed students found matching filters.</td></tr>';
@@ -2580,14 +2540,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 maleData = labels.map(c => courseGenderStats[c].male);
                 femaleData = labels.map(c => courseGenderStats[c].female);
                 otherData = labels.map(c => courseGenderStats[c].other);
-            }
-
-            // Fallback to sample course & gender data when real placement data is unavailable
-            if (labels.length === 0) {
-                labels = sampleCourseGenderData.map(item => item.course);
-                maleData = sampleCourseGenderData.map(item => item.male);
-                femaleData = sampleCourseGenderData.map(item => item.female);
-                otherData = sampleCourseGenderData.map(item => item.other);
             }
 
             const cgCtx = document.getElementById('courseGenderChart');
@@ -2654,13 +2606,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (dashCourseSelect && dashDeptSelect && dashCourseSelect.options.length <= 1) {
             let courses = [...new Set(students.map(s => s.course).filter(c => c))];
             let depts = [...new Set(students.map(s => s.department).filter(d => d))];
-
-            if (courses.length === 0) {
-                courses = ['MSc Data Analytics', 'BSc Computer Science', 'BCom', 'BBA', 'BA English', 'BSc Mathematics'];
-            }
-            if (depts.length === 0) {
-                depts = ['Computer Science', 'Commerce', 'Management', 'English', 'Mathematics'];
-            }
             
             courses.forEach(c => {
                 const opt = document.createElement('option');
@@ -2684,20 +2629,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 opt.textContent = a.name;
                 dashActivitySelect.appendChild(opt);
             });
-            
-            if (activities.length === 0) {
-                const sampleActivities = [
-                    { id: 'demo_act_1', name: 'Campus Placement & Aptitude Training (Sample)' },
-                    { id: 'demo_act_2', name: 'Technical Interview & Coding Bootcamp (Sample)' },
-                    { id: 'demo_act_3', name: 'Mock HR & Group Discussion Workshop (Sample)' }
-                ];
-                sampleActivities.forEach(a => {
-                    const opt = document.createElement('option');
-                    opt.value = a.id;
-                    opt.textContent = a.name;
-                    dashActivitySelect.appendChild(opt);
-                });
-            }
 
             if (dashActivitySelect.options.length > 1) {
                 dashActivitySelect.value = dashActivitySelect.options[1].value;
@@ -2722,12 +2653,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 labels = Object.keys(courseCounts);
                 data = labels.map(c => courseCounts[c]);
-            }
-
-            // Fallback to realistic sample course-wise attendance data when real registrations are unavailable
-            if (labels.length === 0 || data.every(v => v === 0)) {
-                labels = sampleActivityAttendanceData.map(item => item.course);
-                data = sampleActivityAttendanceData.map(item => item.count);
             }
 
             const ctx = document.getElementById('activityAttendanceChart');

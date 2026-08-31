@@ -403,6 +403,13 @@
         };
 
         document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Route UI Synchronously before DB loads to prevent ANY tab flash
+            try {
+                handleRouting(true);
+            } catch(e) {
+                console.warn("Early UI routing failed:", e);
+            }
+
             await db.ready;
 
             const user = JSON.parse(sessionStorage.getItem('currentUser'));
@@ -470,27 +477,61 @@
                 window.openStudentProfile = () => {
                     document.getElementById('studentProfileModal').classList.remove('hidden');
                 };
-                
-                renderTraining();
             }
 
-            // Tab Navigation
+            // Tab Navigation & Hash Routing
+            function activateTab(tabId, uiOnly = false) {
+                const tab = document.querySelector(`.sidebar-link.tab[data-tab="${tabId}"]`);
+                const tabContent = document.getElementById(`${tabId}Tab`);
+                
+                if (!tab || !tabContent) return;
+
+                document.querySelectorAll('.sidebar-link.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                tabContent.classList.add('active');
+                
+                // Scroll to top when navigating to a new section
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                // Update breadcrumb and title
+                const breadcrumb = document.querySelector('.breadcrumb');
+                const pageTitle = document.querySelector('.page-title');
+                if (breadcrumb && pageTitle) {
+                    const tabName = tab.textContent.trim();
+                    breadcrumb.textContent = `Portal / ${tabName}`;
+                    pageTitle.textContent = tabName;
+                }
+
+                if (uiOnly) return;
+
+                try {
+                    if(tabId === 'training' || tabId === 'attendance') renderTraining();
+                    if(tabId === 'placement') renderPlacement();
+                    if(tabId === 'exams') renderExams();
+                } catch (e) {
+                    console.warn(`Error rendering tab ${tabId}:`, e);
+                }
+            }
+
             const tabs = document.querySelectorAll('.sidebar-link.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
             tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(c => c.classList.remove('active'));
-                    tab.classList.add('active');
-                    document.getElementById(`${tab.dataset.tab}Tab`).classList.add('active');
-                    
-                    // Scroll to top when navigating to a new section
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    if(tab.dataset.tab === 'training' || tab.dataset.tab === 'attendance') renderTraining();
-                    if(tab.dataset.tab === 'placement') renderPlacement();
-                    if(tab.dataset.tab === 'exams') renderExams();
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.location.hash = tab.dataset.tab;
                 });
             });
+
+            window.addEventListener('hashchange', () => handleRouting(false));
+
+            function handleRouting(uiOnly = false) {
+                const hash = window.location.hash.substring(1) || 'training';
+                const parts = hash.split('/');
+                const mainTabId = parts[0] || 'training';
+                
+                activateTab(mainTabId, uiOnly);
+            }
 
             // ---------- MCQ EXAMS (student) ----------
             function studentExams() {
@@ -1285,6 +1326,13 @@
                     renderTraining();
                 }
             };
+
+            // Render current route data after DB initialization
+            try {
+                handleRouting(false);
+            } catch (err) {
+                console.error("Student portal routing execution failed:", err);
+            }
         });
     </script>
     <!-- Mobile Sidebar Overlay -->

@@ -10,6 +10,13 @@
     };
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Route UI Synchronously before DB loads to prevent ANY dashboard flash
+    try {
+        handleRouting(true); 
+    } catch(e) {
+        console.warn("Early UI routing failed:", e);
+    }
+
     await db.ready;
 
     checkAuth('teacher');
@@ -65,24 +72,60 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (pNameEl) pNameEl.textContent = user.name || 'N/A';
 
 
-    // Tab Switching
-    const tabs = document.querySelectorAll('.sidebar-link.tab');
-    const tabContents = document.querySelectorAll('.tab-content');
+    // --- UI State & Tab Navigation (Persistent across refresh) ---
+    function activateTab(tabId, uiOnly = false) {
+        const tab = document.querySelector(`.sidebar-link.tab[data-tab="${tabId}"]`);
+        const tabContent = document.getElementById(`${tabId}Tab`);
+        
+        if (!tab || !tabContent) return;
 
+        document.querySelectorAll('.sidebar-link.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+        tab.classList.add('active');
+        tabContent.classList.add('active');
+        
+        // Scroll to top when navigating to a new section
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Update breadcrumb and title
+        const breadcrumb = document.querySelector('.breadcrumb');
+        const pageTitle = document.querySelector('.page-title');
+        
+        if (breadcrumb && pageTitle) {
+            const tabName = tab.textContent.trim();
+            breadcrumb.textContent = `Portal / ${tabName}`;
+            pageTitle.textContent = tabName;
+        }
+
+        if (uiOnly) return;
+
+        try {
+            if (tabId === 'calendar') {
+                renderProgramCalendar();
+            }
+        } catch (e) {
+            console.warn(`Error rendering tab ${tabId}:`, e);
+        }
+    }
+
+    const tabs = document.querySelectorAll('.sidebar-link.tab');
     tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             e.preventDefault();
-            tabs.forEach(t => t.classList.remove('active'));
-            tabContents.forEach(c => c.classList.remove('active'));
-
-            tab.classList.add('active');
-            const targetId = tab.getAttribute('data-tab') + 'Tab';
-            document.getElementById(targetId).classList.add('active');
-            
-            // Scroll to top when navigating to a new section
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.location.hash = tab.dataset.tab;
         });
     });
+
+    window.addEventListener('hashchange', () => handleRouting(false));
+
+    function handleRouting(uiOnly = false) {
+        const hash = window.location.hash.substring(1) || 'dashboard';
+        const parts = hash.split('/');
+        const mainTabId = parts[0] || 'dashboard';
+        
+        activateTab(mainTabId, uiOnly);
+    }
 
     // --- Data Calculation for Dashboard (Scoped to Department) ---
     const students = db.getStudents().filter(s => s.department === user.department);
@@ -279,17 +322,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const hasRealPlacements = Object.keys(studentPlacementMap).length > 0;
 
-        if (!hasRealPlacements) {
-            let sampleList = [
-                { name: 'Anjitha P V', course: 'MSc Data Analytics', activities: 4, recruitments: 3, placedRecruitment: 'TCS Digital Recruitment Drive' },
-                { name: 'Rahul Krishnan', course: 'BSc Computer Science', activities: 5, recruitments: 4, placedRecruitment: 'Infosys Specialist Programmer' },
-                { name: 'Fathima R', course: 'MSc Data Analytics', activities: 5, recruitments: 4, placedRecruitment: 'Accenture Advanced App Engineering' },
-                { name: 'Siddharth M', course: 'BSc Computer Science', activities: 4, recruitments: 4, placedRecruitment: 'Cognizant GenC Elevate' }
-            ];
-            if (courseFilter) sampleList = sampleList.filter(s => s.course === courseFilter);
-            placedStudentsData = sampleList;
-        }
-
         tableBody.innerHTML = '';
         if (placedStudentsData.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No placed students found.</td></tr>';
@@ -308,15 +340,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // --- Render Course & Gender Chart for Teacher Dashboard ---
-        const sampleCourseGenderData = [
-            { course: 'MSc Data Analytics', male: 14, female: 18, other: 0 },
-            { course: 'BSc Computer Science', male: 22, female: 20, other: 0 },
-            { course: 'BCom', male: 18, female: 24, other: 0 },
-            { course: 'BBA', male: 16, female: 15, other: 0 },
-            { course: 'BA English', male: 8, female: 16, other: 0 },
-            { course: 'BSc Mathematics', male: 10, female: 14, other: 0 }
-        ];
-
         let labels = [];
         let maleData = [];
         let femaleData = [];
@@ -340,13 +363,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             maleData = labels.map(c => courseGenderStats[c].male);
             femaleData = labels.map(c => courseGenderStats[c].female);
             otherData = labels.map(c => courseGenderStats[c].other);
-        }
-
-        if (labels.length === 0) {
-            labels = sampleCourseGenderData.map(item => item.course);
-            maleData = sampleCourseGenderData.map(item => item.male);
-            femaleData = sampleCourseGenderData.map(item => item.female);
-            otherData = sampleCourseGenderData.map(item => item.other);
         }
 
         const cgCtx = document.getElementById('courseGenderChart');
@@ -396,9 +412,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dashCourseSelect = document.getElementById('dashFilterCourse');
     if (dashCourseSelect && dashCourseSelect.options.length <= 1) {
         let courses = [...new Set(students.map(s => s.course).filter(c => c))];
-        if (courses.length === 0) {
-            courses = ['MSc Data Analytics', 'BSc Computer Science', 'BCom', 'BBA', 'BA English', 'BSc Mathematics'];
-        }
         courses.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c; opt.textContent = c;
@@ -421,19 +434,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             opt.textContent = a.name;
             dashActivitySelect.appendChild(opt);
         });
-
-        if (relevantActs.length === 0) {
-            const sampleActs = [
-                { id: 'demo_dept_1', name: 'Department Placement Training (Sample)' },
-                { id: 'demo_dept_2', name: 'Technical Assessment Bootcamp (Sample)' }
-            ];
-            sampleActs.forEach(a => {
-                const opt = document.createElement('option');
-                opt.value = a.id;
-                opt.textContent = a.name;
-                dashActivitySelect.appendChild(opt);
-            });
-        }
 
         if (dashActivitySelect.options.length > 1) {
             dashActivitySelect.value = dashActivitySelect.options[1].value;
@@ -458,19 +458,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             labels = Object.keys(courseCounts);
             data = labels.map(c => courseCounts[c]);
-        }
-
-        if (labels.length === 0 || data.every(v => v === 0)) {
-            const sampleAttendance = [
-                { course: 'MSc Data Analytics', count: 42 },
-                { course: 'BSc Computer Science', count: 56 },
-                { course: 'BCom', count: 68 },
-                { course: 'BBA', count: 48 },
-                { course: 'BA English', count: 34 },
-                { course: 'BSc Mathematics', count: 38 }
-            ];
-            labels = sampleAttendance.map(item => item.course);
-            data = sampleAttendance.map(item => item.count);
         }
 
         const ctx = document.getElementById('activityAttendanceChart');
@@ -595,5 +582,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         drawCalendar();
     }
     renderProgramCalendar();
+
+    // 3. Render content after DB is loaded
+    try {
+        handleRouting(false);
+    } catch (error) {
+        console.error("Teacher portal routing initialization failed:", error);
+    }
 
 });
