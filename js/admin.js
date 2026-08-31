@@ -16,8 +16,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // from injecting usernames (like "admin") and causing empty tables.
     const stSearch = document.getElementById('searchStudent');
     const tcSearch = document.getElementById('searchTeacher');
+    const urSearch = document.getElementById('searchUserReport');
     if (stSearch) stSearch.value = '';
     if (tcSearch) tcSearch.value = '';
+    if (urSearch) urSearch.value = '';
 
     const userRole = sessionStorage.getItem('userRole') || 'admin';
     const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
@@ -192,6 +194,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(tabId === 'userManagement') {
                 renderStudents();
                 renderTeachers();
+            }
+            if(tabId === 'userReport') {
+                renderUserReport();
             }
             if(tabId === 'training') {
                 renderTrainingPrograms();
@@ -514,6 +519,611 @@ document.addEventListener('DOMContentLoaded', async () => {
             openModal(document.getElementById('studentDetailModal'));
         }
     };
+
+    // --- User Report Management & Rendering ---
+    let userReportCurrentPage = 1;
+    const userReportPageSize = 15;
+
+    function initUserReportControls() {
+        const searchInput = document.getElementById('searchUserReport');
+        const filterCourse = document.getElementById('urFilterCourse');
+        const filterDept = document.getElementById('urFilterDept');
+        const filterYear = document.getElementById('urFilterYear');
+        const resetBtn = document.getElementById('urResetFiltersBtn');
+
+        if (searchInput && !searchInput.dataset.initialized) {
+            searchInput.dataset.initialized = 'true';
+            searchInput.addEventListener('input', () => {
+                userReportCurrentPage = 1;
+                renderUserReport();
+            });
+        }
+
+        if (filterCourse && !filterCourse.dataset.initialized) {
+            filterCourse.dataset.initialized = 'true';
+            filterCourse.addEventListener('change', () => {
+                userReportCurrentPage = 1;
+                renderUserReport();
+            });
+        }
+
+        if (filterDept && !filterDept.dataset.initialized) {
+            filterDept.dataset.initialized = 'true';
+            filterDept.addEventListener('change', () => {
+                userReportCurrentPage = 1;
+                renderUserReport();
+            });
+        }
+
+        if (filterYear && !filterYear.dataset.initialized) {
+            filterYear.dataset.initialized = 'true';
+            filterYear.addEventListener('change', () => {
+                userReportCurrentPage = 1;
+                renderUserReport();
+            });
+        }
+
+        if (resetBtn && !resetBtn.dataset.initialized) {
+            resetBtn.dataset.initialized = 'true';
+            resetBtn.addEventListener('click', () => {
+                if (searchInput) searchInput.value = '';
+                if (filterCourse) filterCourse.value = '';
+                if (filterDept) filterDept.value = '';
+                if (filterYear) filterYear.value = '';
+                userReportCurrentPage = 1;
+                renderUserReport();
+            });
+        }
+    }
+
+    function renderUserReport() {
+        initUserReportControls();
+
+        const students = db.getStudents() || [];
+        const tbody = document.getElementById('userReportTableBody');
+        if (!tbody) return;
+
+        // Populate dynamic filter dropdowns
+        const courseSelect = document.getElementById('urFilterCourse');
+        const deptSelect = document.getElementById('urFilterDept');
+        const yearSelect = document.getElementById('urFilterYear');
+
+        if (courseSelect) {
+            const currentVal = courseSelect.value;
+            const courses = [...new Set(students.map(s => s.course).filter(Boolean))].sort();
+            courseSelect.innerHTML = '<option value="">All Courses</option>' + courses.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>${c}</option>`).join('');
+        }
+
+        if (deptSelect) {
+            const currentVal = deptSelect.value;
+            const depts = [...new Set(students.map(s => s.department).filter(Boolean))].sort();
+            deptSelect.innerHTML = '<option value="">All Departments</option>' + depts.map(d => `<option value="${d}" ${d === currentVal ? 'selected' : ''}>${d}</option>`).join('');
+        }
+
+        if (yearSelect) {
+            const currentVal = yearSelect.value;
+            const years = [...new Set(students.map(s => s.admissionYear).filter(Boolean))].sort();
+            yearSelect.innerHTML = '<option value="">All Years</option>' + years.map(y => `<option value="${y}" ${y === currentVal ? 'selected' : ''}>${y}</option>`).join('');
+        }
+
+        // Apply filters
+        const selectedCourse = courseSelect ? courseSelect.value : '';
+        const selectedDept = deptSelect ? deptSelect.value : '';
+        const selectedYear = yearSelect ? yearSelect.value : '';
+        const searchInput = document.getElementById('searchUserReport');
+        const searchQuery = (searchInput ? searchInput.value : '').toLowerCase().trim();
+
+        let filtered = students;
+        if (selectedCourse) {
+            filtered = filtered.filter(s => s.course === selectedCourse);
+        }
+        if (selectedDept) {
+            filtered = filtered.filter(s => s.department === selectedDept);
+        }
+        if (selectedYear) {
+            filtered = filtered.filter(s => String(s.admissionYear || '') === selectedYear);
+        }
+        if (searchQuery) {
+            filtered = filtered.filter(s => {
+                const reg = String(s.registerNumber || '').toLowerCase();
+                const name = String(s.name || '').toLowerCase();
+                const phone = String(s.phoneNumber || s.phone || '').toLowerCase();
+                const email = String(s.mailId || s.email || '').toLowerCase();
+                const course = String(s.course || '').toLowerCase();
+                const dept = String(s.department || '').toLowerCase();
+                const cls = String(s.class || '').toLowerCase();
+                const year = String(s.admissionYear || '').toLowerCase();
+
+                return reg.includes(searchQuery) ||
+                    name.includes(searchQuery) ||
+                    phone.includes(searchQuery) ||
+                    email.includes(searchQuery) ||
+                    course.includes(searchQuery) ||
+                    dept.includes(searchQuery) ||
+                    cls.includes(searchQuery) ||
+                    year.includes(searchQuery);
+            });
+        }
+
+        // Update badge
+        const countBadge = document.getElementById('userReportCountBadge');
+        if (countBadge) {
+            countBadge.textContent = `Total Students: ${filtered.length}`;
+        }
+
+        tbody.innerHTML = '';
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center py-5">
+                        <div class="report-empty-state">
+                            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/><path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z"/></svg>
+                            <h5 style="color: #1e293b; font-weight: 600; margin-bottom: 0.25rem;">No Student Records Found</h5>
+                            <p class="small text-muted mb-0">No registered students match your search criteria.</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            renderUserReportPagination(0, 0, 0);
+            return;
+        }
+
+        // Pagination calculations
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / userReportPageSize) || 1;
+        if (userReportCurrentPage > totalPages) userReportCurrentPage = totalPages;
+        if (userReportCurrentPage < 1) userReportCurrentPage = 1;
+
+        const startIndex = (userReportCurrentPage - 1) * userReportPageSize;
+        const pageStudents = filtered.slice(startIndex, startIndex + userReportPageSize);
+
+        pageStudents.forEach(s => {
+            const tr = document.createElement('tr');
+            const isCoord = s.isCoordinator === true || s.isCoordinator === 'true';
+            tr.innerHTML = `
+                <td style="font-weight: 600; color: #0f172a; white-space: nowrap;">${s.registerNumber || '—'}</td>
+                <td style="font-weight: 600; color: #1e293b;">
+                    ${s.name || '—'}
+                    ${isCoord ? '<span class="coord-badge" style="font-size: 10px; margin-left: 4px;">Coord</span>' : ''}
+                </td>
+                <td style="white-space: nowrap; color: #475569;">${s.phoneNumber || s.phone || '—'}</td>
+                <td style="color: #475569;">${s.mailId || s.email || '—'}</td>
+                <td style="white-space: nowrap;">${s.course || '—'}</td>
+                <td style="white-space: nowrap;">${s.department || '—'}</td>
+                <td style="white-space: nowrap; text-align: center;">${s.class || '—'}</td>
+                <td style="white-space: nowrap; text-align: center;">${s.admissionYear || '—'}</td>
+                <td style="white-space: nowrap; text-align: center; text-transform: capitalize;">${s.gender || '—'}</td>
+                <td style="text-align: center; white-space: nowrap;">
+                    <button type="button" class="btn-view-report" onclick="openStudentReportModal('${s.registerNumber}')" title="View Performance Report for ${s.name || s.registerNumber}">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                        View Report
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        renderUserReportPagination(startIndex + 1, Math.min(startIndex + userReportPageSize, totalItems), totalItems);
+    }
+
+    function renderUserReportPagination(start, end, total) {
+        const infoEl = document.getElementById('userReportPaginationInfo');
+        const controlsEl = document.getElementById('userReportPaginationControls');
+        if (infoEl) {
+            infoEl.textContent = total > 0 ? `Showing ${start} to ${end} of ${total} students` : 'Showing 0 students';
+        }
+        if (!controlsEl) return;
+
+        if (total <= userReportPageSize) {
+            controlsEl.innerHTML = '';
+            return;
+        }
+
+        const totalPages = Math.ceil(total / userReportPageSize);
+        let html = '';
+
+        html += `<button class="pagination-btn" ${userReportCurrentPage === 1 ? 'disabled' : ''} onclick="changeUserReportPage(${userReportCurrentPage - 1})">Previous</button>`;
+
+        for (let p = 1; p <= totalPages; p++) {
+            if (p === 1 || p === totalPages || (p >= userReportCurrentPage - 1 && p <= userReportCurrentPage + 1)) {
+                html += `<button class="pagination-btn ${p === userReportCurrentPage ? 'active' : ''}" onclick="changeUserReportPage(${p})">${p}</button>`;
+            } else if (p === userReportCurrentPage - 2 || p === userReportCurrentPage + 2) {
+                html += `<span style="padding: 0 4px; color: #94a3b8;">...</span>`;
+            }
+        }
+
+        html += `<button class="pagination-btn" ${userReportCurrentPage === totalPages ? 'disabled' : ''} onclick="changeUserReportPage(${userReportCurrentPage + 1})">Next</button>`;
+        controlsEl.innerHTML = html;
+    }
+
+    window.changeUserReportPage = (page) => {
+        userReportCurrentPage = page;
+        renderUserReport();
+    };
+
+    // --- Student Performance Report Modal (View Report) ---
+    window.openStudentReportModal = async (regNo) => {
+        const modal = document.getElementById('studentReportModal');
+        if (!modal) return;
+
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        const loadingEl = document.getElementById('studentReportLoading');
+        const errorEl = document.getElementById('studentReportError');
+        const contentEl = document.getElementById('studentReportContent');
+
+        if (loadingEl) loadingEl.classList.remove('hidden');
+        if (errorEl) errorEl.classList.add('hidden');
+        if (contentEl) contentEl.classList.add('hidden');
+
+        const retryBtn = document.getElementById('retryStudentReportBtn');
+        if (retryBtn) {
+            retryBtn.onclick = () => openStudentReportModal(regNo);
+        }
+
+        try {
+            await db.ready;
+
+            const students = db.getStudents() || [];
+            const student = students.find(s => s.registerNumber === regNo);
+
+            if (!student) {
+                throw new Error(`Student record with registration number "${regNo}" was not found.`);
+            }
+
+            const allTrainings = db.getTrainingPrograms() || [];
+            const allActivities = db.getPlacementActivities() || [];
+            const today = new Date().toISOString().split('T')[0];
+
+            // 1. Basic Student Info
+            const nameEl = document.getElementById('reportStudentName');
+            const avatarEl = document.getElementById('reportAvatar');
+            const regCourseEl = document.getElementById('reportStudentRegCourse');
+            const coordBadge = document.getElementById('reportCoordBadge');
+
+            if (nameEl) nameEl.textContent = student.name || 'Unnamed Student';
+            if (avatarEl) avatarEl.textContent = (student.name || 'S')[0].toUpperCase();
+            if (regCourseEl) regCourseEl.textContent = `Register No: ${student.registerNumber || '—'} | Course: ${student.course || '—'}`;
+            if (coordBadge) {
+                const isCoord = student.isCoordinator === true || student.isCoordinator === 'true';
+                if (isCoord) coordBadge.classList.remove('hidden');
+                else coordBadge.classList.add('hidden');
+            }
+
+            const setText = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val || '—';
+            };
+
+            setText('reportInfoName', student.name);
+            setText('reportInfoRegNo', student.registerNumber);
+            setText('reportInfoPhone', student.phoneNumber || student.phone);
+            setText('reportInfoEmail', student.mailId || student.email);
+            setText('reportInfoCourse', student.course);
+            setText('reportInfoDept', student.department);
+            setText('reportInfoClass', student.class);
+            setText('reportInfoAdmnYear', student.admissionYear);
+            setText('reportInfoGender', student.gender);
+
+            // 2. Training Programs (Registered by this student)
+            const studentTrainings = allTrainings.filter(p => (p.registrations || []).includes(regNo));
+            const trainingTbody = document.getElementById('reportTrainingTableBody');
+            const trainingEmpty = document.getElementById('reportTrainingEmpty');
+            const trainingBadge = document.getElementById('reportTrainingCountBadge');
+
+            if (trainingBadge) trainingBadge.textContent = `${studentTrainings.length} Registered`;
+            if (trainingTbody) trainingTbody.innerHTML = '';
+
+            let totalTrainingSessionsApplicable = 0;
+            let totalTrainingSessionsAttended = 0;
+
+            if (studentTrainings.length === 0) {
+                if (trainingEmpty) trainingEmpty.classList.remove('hidden');
+            } else {
+                if (trainingEmpty) trainingEmpty.classList.add('hidden');
+
+                studentTrainings.forEach(p => {
+                    const myBatch = (p.batches || []).find(b => (b.students || []).includes(regNo));
+                    const applicableSessions = (p.sessions || []).filter(s => !s.batchId || (myBatch && s.batchId === myBatch.id));
+                    const attendedSessions = applicableSessions.filter(s => (s.attendance || []).includes(regNo));
+
+                    const numSessions = applicableSessions.length;
+                    const numAttended = attendedSessions.length;
+
+                    totalTrainingSessionsApplicable += numSessions;
+                    totalTrainingSessionsAttended += numAttended;
+
+                    const attnStr = numSessions > 0 ? `${numAttended} / ${numSessions}` : 'N/A';
+                    const attnPctStr = numSessions > 0 ? `${Math.round((numAttended / numSessions) * 100)}%` : 'N/A';
+
+                    let statusLabel = 'Upcoming';
+                    let statusClass = 'status-badge-upcoming';
+
+                    if (numSessions > 0 && numAttended === numSessions) {
+                        statusLabel = 'Completed';
+                        statusClass = 'status-badge-completed';
+                    } else if (p.endDate && today > p.endDate) {
+                        statusLabel = 'Completed';
+                        statusClass = 'status-badge-completed';
+                    } else if (p.date && today >= p.date) {
+                        statusLabel = 'In-Progress';
+                        statusClass = 'status-badge-progress';
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight: 600; color: #0f172a;">${p.name || '—'}</td>
+                        <td style="color: #475569;">${p.trainer || p.venue || '—'}</td>
+                        <td style="white-space: nowrap; color: #475569;">${p.date || '—'}</td>
+                        <td style="white-space: nowrap; color: #475569;">${p.endDate || p.lastDate || '—'}</td>
+                        <td style="text-align: center;"><span class="badge-registered">Yes</span></td>
+                        <td style="text-align: center; font-weight: 600; color: #1e293b;">${attnStr}</td>
+                        <td style="text-align: center; font-weight: 700; color: #0D6EFC;">${attnPctStr}</td>
+                        <td style="text-align: center;"><span class="placement-status-badge ${statusClass}">${statusLabel}</span></td>
+                    `;
+                    trainingTbody.appendChild(tr);
+                });
+            }
+
+            // 3. Placement Activities (Non-recruitment registered by student)
+            const studentPlacementActs = allActivities.filter(a => (a.type === 'placement' || !a.type) && (a.registrations || []).includes(regNo));
+            const actsTbody = document.getElementById('reportActivitiesTableBody');
+            const actsEmpty = document.getElementById('reportActivitiesEmpty');
+            const actsBadge = document.getElementById('reportActivitiesCountBadge');
+
+            if (actsBadge) actsBadge.textContent = `${studentPlacementActs.length} Registered`;
+            if (actsTbody) actsTbody.innerHTML = '';
+
+            let totalActRoundsApplicable = 0;
+            let totalActRoundsAttended = 0;
+
+            if (studentPlacementActs.length === 0) {
+                if (actsEmpty) actsEmpty.classList.remove('hidden');
+            } else {
+                if (actsEmpty) actsEmpty.classList.add('hidden');
+
+                studentPlacementActs.forEach(a => {
+                    const phases = a.phases || [];
+                    const hasPhases = phases.length > 0;
+                    let currentPhaseName = 'Registered';
+                    let attendedPhasesCount = 0;
+
+                    if (hasPhases) {
+                        const clearedPhases = phases.filter(ph => (ph.completions || []).includes(regNo));
+                        attendedPhasesCount = clearedPhases.length;
+                        if (clearedPhases.length === phases.length) {
+                            currentPhaseName = phases[phases.length - 1].name;
+                        } else if (clearedPhases.length > 0) {
+                            currentPhaseName = clearedPhases[clearedPhases.length - 1].name;
+                        } else {
+                            currentPhaseName = phases[0].name;
+                        }
+                        totalActRoundsApplicable += phases.length;
+                        totalActRoundsAttended += attendedPhasesCount;
+                    }
+
+                    const numAttendanceStr = hasPhases ? `${attendedPhasesCount} / ${phases.length}` : 'N/A';
+                    const attnPctStr = hasPhases && phases.length > 0 ? `${Math.round((attendedPhasesCount / phases.length) * 100)}%` : 'N/A';
+
+                    let statusLabel = 'Upcoming';
+                    let statusClass = 'status-badge-upcoming';
+
+                    if (a.lastDate && today > a.lastDate) {
+                        statusLabel = 'Completed';
+                        statusClass = 'status-badge-completed';
+                    } else if (a.date && today >= a.date) {
+                        statusLabel = 'In-Progress';
+                        statusClass = 'status-badge-progress';
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight: 600; color: #0f172a;">${a.name || '—'}</td>
+                        <td style="white-space: nowrap; color: #475569;">${a.date || '—'}</td>
+                        <td><span style="font-weight: 600; color: #4338ca; background: #eef2ff; padding: 3px 8px; border-radius: 6px; font-size: 11px;">${currentPhaseName}</span></td>
+                        <td style="text-align: center;"><span class="badge-registered">Yes</span></td>
+                        <td style="text-align: center; font-weight: 600; color: #1e293b;">${numAttendanceStr}</td>
+                        <td style="text-align: center; font-weight: 700; color: #0D6EFC;">${attnPctStr}</td>
+                        <td style="text-align: center;"><span class="placement-status-badge ${statusClass}">${statusLabel}</span></td>
+                    `;
+                    actsTbody.appendChild(tr);
+                });
+            }
+
+            // 4. Recruitment Activities (Registered by student)
+            const studentRecruitments = allActivities.filter(a => a.type === 'recruitment' && (a.registrations || []).includes(regNo));
+            const recTbody = document.getElementById('reportRecruitmentTableBody');
+            const recEmpty = document.getElementById('reportRecruitmentEmpty');
+            const recBadge = document.getElementById('reportRecruitmentCountBadge');
+
+            if (recBadge) recBadge.textContent = `${studentRecruitments.length} Registered`;
+            if (recTbody) recTbody.innerHTML = '';
+
+            let countTotalPlacements = 0;
+            let countProcessing = 0;
+            let countNotPlaced = 0;
+            let countCompaniesAttended = 0;
+            let placedCompanyDetails = [];
+
+            if (studentRecruitments.length === 0) {
+                if (recEmpty) recEmpty.classList.remove('hidden');
+            } else {
+                if (recEmpty) recEmpty.classList.add('hidden');
+
+                studentRecruitments.forEach(a => {
+                    const phases = a.phases || [];
+                    const hasPhases = phases.length > 0;
+
+                    let isPlaced = false;
+                    let isProcessing = false;
+                    let isNotPlaced = false;
+                    let currentStageName = 'Registered';
+                    let attendedRounds = 0;
+
+                    if (hasPhases) {
+                        const finalPhase = phases[phases.length - 1];
+                        isPlaced = (finalPhase.completions || []).includes(regNo);
+
+                        const clearedPhases = phases.filter(ph => (ph.completions || []).includes(regNo));
+                        attendedRounds = clearedPhases.length;
+                        if (attendedRounds > 0) countCompaniesAttended++;
+
+                        if (isPlaced) {
+                            currentStageName = finalPhase.name || 'Selected';
+                        } else {
+                            // Find highest cleared phase
+                            let highestClearedIdx = -1;
+                            for (let i = 0; i < phases.length; i++) {
+                                if ((phases[i].completions || []).includes(regNo)) {
+                                    highestClearedIdx = i;
+                                }
+                            }
+
+                            if (highestClearedIdx >= 0) {
+                                const nextPhaseIdx = highestClearedIdx + 1;
+                                if (nextPhaseIdx < phases.length) {
+                                    const nextPhase = phases[nextPhaseIdx];
+                                    const nextHasResults = (nextPhase.completions || []).length > 0;
+                                    currentStageName = nextPhase.name;
+                                    if (nextHasResults) {
+                                        isNotPlaced = true;
+                                    } else {
+                                        isProcessing = true;
+                                    }
+                                } else {
+                                    isPlaced = true;
+                                }
+                            } else {
+                                const firstPhase = phases[0];
+                                const firstHasResults = (firstPhase.completions || []).length > 0;
+                                currentStageName = firstPhase.name || 'Registered';
+                                if (firstHasResults) {
+                                    isNotPlaced = true;
+                                } else {
+                                    isProcessing = true;
+                                }
+                            }
+                        }
+                    } else {
+                        currentStageName = 'Registered';
+                        isProcessing = true;
+                    }
+
+                    if (isPlaced) {
+                        countTotalPlacements++;
+                        placedCompanyDetails.push(`${a.name} (${a.venue || 'Position N/A'})`);
+                    } else if (isNotPlaced) {
+                        countNotPlaced++;
+                    } else {
+                        isProcessing = true;
+                        countProcessing++;
+                    }
+
+                    const numAttendanceStr = hasPhases ? `${attendedRounds} / ${phases.length}` : 'N/A';
+                    const attnPctStr = hasPhases && phases.length > 0 ? `${Math.round((attendedRounds / phases.length) * 100)}%` : 'N/A';
+
+                    let statusBadgeHtml = '';
+                    if (isPlaced) {
+                        statusBadgeHtml = `<span class="badge-placed"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Placed</span>`;
+                    } else if (isProcessing) {
+                        statusBadgeHtml = `<span class="badge-processing"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg> Processing</span>`;
+                    } else {
+                        statusBadgeHtml = `<span class="badge-not-placed"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Not Placed</span>`;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight: 600; color: #0f172a;">${a.name || '—'}</td>
+                        <td><span class="jobrole-pill">${a.venue || '—'}</span></td>
+                        <td style="text-align: center;"><span class="badge-registered">Yes</span></td>
+                        <td style="text-align: center; font-weight: 600; color: #1e293b;">${numAttendanceStr}</td>
+                        <td style="text-align: center; font-weight: 700; color: #0D6EFC;">${attnPctStr}</td>
+                        <td style="text-align: center; font-weight: 700; color: ${isPlaced ? '#10b981' : '#64748b'};">${isPlaced ? '1' : '0'}</td>
+                        <td><span style="font-weight: 600; color: #334155; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-size: 11px;">${currentStageName}</span></td>
+                        <td style="text-align: center;">${statusBadgeHtml}</td>
+                    `;
+                    recTbody.appendChild(tr);
+                });
+            }
+
+            // Recruitment Summary Numbers
+            setText('sumRecRegistrations', studentRecruitments.length);
+            setText('sumCompaniesAttended', countCompaniesAttended);
+            setText('sumTotalPlacements', countTotalPlacements);
+            setText('sumCurrentlyProcessing', countProcessing);
+            setText('sumNotPlaced', countNotPlaced);
+
+            // Prominent Placed Callout
+            const placedBanner = document.getElementById('prominentPlacedBanner');
+            if (placedBanner) {
+                if (countTotalPlacements > 0) {
+                    placedBanner.classList.remove('hidden');
+                    const detailsEl = document.getElementById('placedBannerDetails');
+                    if (detailsEl) detailsEl.textContent = placedCompanyDetails.join(' | ');
+                } else {
+                    placedBanner.classList.add('hidden');
+                }
+            }
+
+            // 5. Overall Student Performance Summary Cards (Top 6 cards)
+            const totalTrainingsCount = studentTrainings.length;
+            const overallTrainingAttnPct = totalTrainingSessionsApplicable > 0 ?
+                Math.round((totalTrainingSessionsAttended / totalTrainingSessionsApplicable) * 100) + '%' :
+                'N/A';
+
+            const totalPlacementActsCount = studentPlacementActs.length;
+            const overallActAttnPct = totalActRoundsApplicable > 0 ?
+                Math.round((totalActRoundsAttended / totalActRoundsApplicable) * 100) + '%' :
+                'N/A';
+
+            const totalRecRegistrationsCount = studentRecruitments.length;
+
+            setText('kpiTotalTrainings', totalTrainingsCount);
+            setText('kpiTrainingAttendance', overallTrainingAttnPct);
+            setText('kpiPlacementActivities', totalPlacementActsCount);
+            setText('kpiActivityAttendance', overallActAttnPct);
+            setText('kpiRecruitmentRegistrations', totalRecRegistrationsCount);
+            setText('kpiTotalPlacements', countTotalPlacements);
+
+            if (loadingEl) loadingEl.classList.add('hidden');
+            if (contentEl) contentEl.classList.remove('hidden');
+        } catch (err) {
+            console.error("Failed to load student report:", err);
+            if (loadingEl) loadingEl.classList.add('hidden');
+            if (errorEl) {
+                errorEl.classList.remove('hidden');
+                const msgEl = document.getElementById('studentReportErrorMessage');
+                if (msgEl) msgEl.textContent = err.message || 'Could not load student report';
+            }
+        }
+    };
+
+    window.closeStudentReportModal = () => {
+        const modal = document.getElementById('studentReportModal');
+        if (modal) modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    };
+
+    // Close modal when clicking outside or pressing Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('studentReportModal');
+            if (modal && !modal.classList.contains('hidden')) {
+                closeStudentReportModal();
+            }
+        }
+    });
+
+    const reportModalEl = document.getElementById('studentReportModal');
+    if (reportModalEl) {
+        reportModalEl.addEventListener('click', (e) => {
+            if (e.target === reportModalEl) {
+                closeStudentReportModal();
+            }
+        });
+    }
 
     // Toggle password visibility (mask <-> reveal)
     window.togglePw = (el) => {

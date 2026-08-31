@@ -13,6 +13,7 @@ const Permissions = {
             update_phase_results: true,
             post_announcements: true,
             view_analytics: true,
+            view_reports: true,
             system_settings: true
         },
         teacherCoordinator: {
@@ -25,6 +26,7 @@ const Permissions = {
             update_phase_results: true,
             post_announcements: true,
             view_analytics: true,
+            view_reports: true,
             system_settings: false
         },
         studentCoordinator: {
@@ -36,6 +38,7 @@ const Permissions = {
             update_phase_results: true,
             post_announcements: true,
             view_analytics: true,
+            view_reports: true,
             system_settings: false
         },
         student: {
@@ -47,6 +50,7 @@ const Permissions = {
             update_phase_results: false,
             post_announcements: false,
             view_analytics: false,
+            view_reports: false,
             system_settings: false
         }
     },
