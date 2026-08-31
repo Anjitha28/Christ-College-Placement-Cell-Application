@@ -306,6 +306,91 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tableBody.appendChild(tr);
             });
         }
+
+        // --- Render Course & Gender Chart for Teacher Dashboard ---
+        const sampleCourseGenderData = [
+            { course: 'MSc Data Analytics', male: 14, female: 18, other: 0 },
+            { course: 'BSc Computer Science', male: 22, female: 20, other: 0 },
+            { course: 'BCom', male: 18, female: 24, other: 0 },
+            { course: 'BBA', male: 16, female: 15, other: 0 },
+            { course: 'BA English', male: 8, female: 16, other: 0 },
+            { course: 'BSc Mathematics', male: 10, female: 14, other: 0 }
+        ];
+
+        let labels = [];
+        let maleData = [];
+        let femaleData = [];
+        let otherData = [];
+
+        if (hasRealPlacements) {
+            const courseGenderStats = {};
+            const placedStudentsRaw = students.filter(s => studentPlacementMap[s.registerNumber]);
+            
+            placedStudentsRaw.forEach(s => {
+                const course = s.course || 'Unknown';
+                const gender = (s.gender || 'Other').toLowerCase();
+                if (!courseGenderStats[course]) courseGenderStats[course] = { male: 0, female: 0, other: 0 };
+                
+                if (gender === 'male') courseGenderStats[course].male++;
+                else if (gender === 'female') courseGenderStats[course].female++;
+                else courseGenderStats[course].other++;
+            });
+
+            labels = Object.keys(courseGenderStats);
+            maleData = labels.map(c => courseGenderStats[c].male);
+            femaleData = labels.map(c => courseGenderStats[c].female);
+            otherData = labels.map(c => courseGenderStats[c].other);
+        }
+
+        if (labels.length === 0) {
+            labels = sampleCourseGenderData.map(item => item.course);
+            maleData = sampleCourseGenderData.map(item => item.male);
+            femaleData = sampleCourseGenderData.map(item => item.female);
+            otherData = sampleCourseGenderData.map(item => item.other);
+        }
+
+        const cgCtx = document.getElementById('courseGenderChart');
+        if (cgCtx) {
+            if (window.courseGenderChartInst) window.courseGenderChartInst.destroy();
+            window.courseGenderChartInst = new Chart(cgCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Male',
+                            data: maleData,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Female',
+                            data: femaleData,
+                            backgroundColor: '#ec4899',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Other',
+                            data: otherData,
+                            backgroundColor: '#f59e0b',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { stacked: false, grid: { display: false } },
+                        y: { stacked: false, beginAtZero: true, ticks: { stepSize: 5 } }
+                    }
+                }
+            });
+        }
     }
 
     const dashCourseSelect = document.getElementById('dashFilterCourse');
