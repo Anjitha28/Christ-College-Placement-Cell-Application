@@ -2647,25 +2647,312 @@ select.form-control { cursor: pointer; }
 }
 
 /* ==========================================================================
-   USER REPORT & STUDENT PERFORMANCE REPORT STYLING
+   USER REPORT & STUDENT PERFORMANCE REPORT - RESPONSIVE STYLING
    ========================================================================== */
+
+/* User Report Tab Card Container */
+.user-report-tab-container {
+    padding: 1.75rem !important;
+    background: #ffffff !important;
+    border-radius: 14px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* User Report Header */
+.user-report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.user-report-title-area {
+    flex: 1;
+    min-width: 240px;
+}
+
+.user-report-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 0.25rem 0;
+    letter-spacing: -0.01em;
+}
+
+.user-report-subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.user-report-badge {
+    background: #eef2ff !important;
+    color: #4338ca !important;
+    font-weight: 700 !important;
+    font-size: 0.775rem !important;
+    padding: 0.45rem 0.95rem !important;
+    border-radius: 8px !important;
+    border: 1px solid #c7d2fe !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    box-shadow: 0 1px 2px rgba(67, 56, 202, 0.05) !important;
+}
+
+/* User Report Filter Grid on Laptop / Desktop */
+.user-report-filters {
+    display: grid;
+    grid-template-columns: minmax(280px, 2.2fr) minmax(170px, 1fr) minmax(170px, 1fr) minmax(140px, 1fr) auto;
+    gap: 0.85rem;
+    align-items: end;
+    margin-bottom: 1.25rem;
+}
+
+.user-report-filters .form-label {
+    font-size: 0.725rem !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 0.4rem !important;
+    display: block !important;
+}
+
+.user-report-filters .form-control {
+    height: 42px !important;
+    padding: 0.5rem 0.85rem !important;
+    font-size: 0.875rem !important;
+    border-radius: 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.user-report-filters .form-control:focus {
+    border-color: #0D6EFC !important;
+    box-shadow: 0 0 0 3px rgba(13, 110, 252, 0.15) !important;
+}
+
+.search-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.search-input-wrapper input {
+    padding-left: 36px !important;
+}
+
+.search-input-wrapper svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    fill: #94a3b8;
+}
+
+.filter-col-btn .btn {
+    height: 42px !important;
+    min-width: 90px !important;
+    padding: 0 1.25rem !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}
+
+/* User Report Table Container - Horizontal scrollbar belongs ONLY to the table */
+.user-report-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+}
+
+/* Custom sleek scrollbar for table container */
+.user-report-table-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+.user-report-table-wrapper::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+.user-report-table-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.user-report-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* User Report Table specific column widths & typography */
+#userReportTable {
+    width: 100%;
+    min-width: 1420px !important; /* Total sum of recommended minimum widths */
+    border-collapse: collapse;
+    margin-bottom: 0 !important;
+    table-layout: auto;
+}
+
+#userReportTable th,
+#userReportTable td {
+    padding: 0.95rem 1rem !important;
+    vertical-align: middle !important;
+    font-size: 0.875rem !important;
+    line-height: 1.45 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+#userReportTable thead th {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    white-space: nowrap !important;
+}
+
+#userReportTable tbody tr:hover {
+    background: #f8fafc !important;
+}
+
+/* Individual Column Recommended Minimum Widths & Word Break Controls */
+#userReportTable th:nth-child(1),
+#userReportTable td:nth-child(1) {
+    min-width: 110px !important;
+    width: 110px;
+    white-space: nowrap !important;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+#userReportTable th:nth-child(2),
+#userReportTable td:nth-child(2) {
+    min-width: 180px !important;
+    width: 180px;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    white-space: normal !important;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.35;
+}
+
+#userReportTable th:nth-child(3),
+#userReportTable td:nth-child(3) {
+    min-width: 130px !important;
+    width: 130px;
+    white-space: nowrap !important;
+    color: #475569;
+}
+
+#userReportTable th:nth-child(4),
+#userReportTable td:nth-child(4) {
+    min-width: 220px !important;
+    width: 220px;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    color: #475569;
+    font-size: 0.85rem !important;
+}
+
+#userReportTable th:nth-child(5),
+#userReportTable td:nth-child(5) {
+    min-width: 200px !important;
+    width: 200px;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    white-space: normal !important;
+    color: #334155;
+    line-height: 1.35;
+}
+
+#userReportTable th:nth-child(6),
+#userReportTable td:nth-child(6) {
+    min-width: 150px !important;
+    width: 150px;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    white-space: normal !important;
+    color: #334155;
+}
+
+#userReportTable th:nth-child(7),
+#userReportTable td:nth-child(7) {
+    min-width: 130px !important;
+    width: 130px;
+    text-align: center;
+    white-space: nowrap !important;
+    color: #334155;
+}
+
+#userReportTable th:nth-child(8),
+#userReportTable td:nth-child(8) {
+    min-width: 140px !important;
+    width: 140px;
+    text-align: center;
+    white-space: nowrap !important;
+    color: #334155;
+}
+
+#userReportTable th:nth-child(9),
+#userReportTable td:nth-child(9) {
+    min-width: 100px !important;
+    width: 100px;
+    text-align: center;
+    text-transform: capitalize;
+    white-space: nowrap !important;
+    color: #334155;
+}
+
+#userReportTable th:nth-child(10),
+#userReportTable td:nth-child(10) {
+    min-width: 160px !important;
+    width: 160px;
+    text-align: center;
+    white-space: nowrap !important;
+}
 
 /* User Report Action Button */
 .btn-view-report {
     background: linear-gradient(135deg, #0D6EFC 0%, #0052cc 100%);
     color: #ffffff !important;
     border: none;
-    padding: 0.45rem 0.95rem;
+    padding: 0.5rem 1rem;
     font-size: 0.825rem;
     font-weight: 600;
     border-radius: 8px;
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    justify-content: center;
+    gap: 0.45rem;
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(13, 110, 252, 0.25);
     white-space: nowrap;
+    min-height: 36px;
+    box-sizing: border-box;
 }
 
 .btn-view-report:hover {
@@ -2676,6 +2963,56 @@ select.form-control { cursor: pointer; }
 
 .btn-view-report:active {
     transform: translateY(0);
+}
+
+/* Pagination Controls for User Report Tab */
+.report-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0 0 0;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+#userReportPaginationInfo {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.pagination-btn {
+    padding: 0.4rem 0.85rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #334155;
+    font-size: 0.825rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-btn.active {
+    background: #0D6EFC;
+    color: #ffffff;
+    border-color: #0D6EFC;
 }
 
 /* Modal Overlay */
@@ -2690,8 +3027,8 @@ select.form-control { cursor: pointer; }
     align-items: center;
     justify-content: center;
     padding: 1.25rem;
-    opacity: 1;
-    transition: opacity 0.25s ease;
+    box-sizing: border-box;
+    overflow-y: auto;
 }
 
 .report-modal-overlay.hidden {
@@ -2702,8 +3039,8 @@ select.form-control { cursor: pointer; }
 .report-modal-card {
     background: #ffffff;
     width: 1120px;
-    max-width: 96vw;
-    max-height: 92vh;
+    max-width: 95vw;
+    max-height: 90vh;
     border-radius: 16px;
     box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3);
     display: flex;
@@ -2711,6 +3048,7 @@ select.form-control { cursor: pointer; }
     overflow: hidden;
     border: 1px solid rgba(226, 232, 240, 0.8);
     animation: modalSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
 }
 
 @keyframes modalSlideUp {
@@ -2728,7 +3066,7 @@ select.form-control { cursor: pointer; }
 .report-modal-header {
     background: linear-gradient(135deg, #0a0f1c 0%, #1e3a8a 100%);
     color: #ffffff;
-    padding: 1.35rem 1.75rem;
+    padding: 1.25rem 1.75rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -2736,17 +3074,15 @@ select.form-control { cursor: pointer; }
     top: 0;
     z-index: 10;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
 }
 
 .report-modal-header h2 {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: #ffffff;
     margin: 0;
     letter-spacing: -0.01em;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
 }
 
 .report-modal-close-btn {
@@ -2762,6 +3098,7 @@ select.form-control { cursor: pointer; }
     font-size: 1.1rem;
     cursor: pointer;
     transition: all 0.18s ease;
+    flex-shrink: 0;
 }
 
 .report-modal-close-btn:hover {
@@ -2774,8 +3111,10 @@ select.form-control { cursor: pointer; }
 .report-modal-body {
     padding: 1.75rem;
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
     background: #f8fafc;
+    box-sizing: border-box;
 }
 
 /* Custom Scrollbar for Modal Body */
@@ -2793,7 +3132,7 @@ select.form-control { cursor: pointer; }
     background: #94a3b8;
 }
 
-/* Student Profile Card (Basic Info) */
+/* Student Profile Hero Card */
 .student-profile-hero {
     background: #ffffff;
     border-radius: 12px;
@@ -2801,6 +3140,7 @@ select.form-control { cursor: pointer; }
     border: 1px solid #e2e8f0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     margin-bottom: 1.5rem;
+    box-sizing: border-box;
 }
 
 .student-hero-header {
@@ -2810,6 +3150,7 @@ select.form-control { cursor: pointer; }
     padding-bottom: 1.1rem;
     margin-bottom: 1.1rem;
     border-bottom: 1px solid #f1f5f9;
+    flex-wrap: wrap;
 }
 
 .student-hero-avatar {
@@ -2840,10 +3181,10 @@ select.form-control { cursor: pointer; }
     font-weight: 500;
 }
 
-/* Basic Info Grid */
+/* Student Info Grid */
 .student-info-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 0.9rem 1.25rem;
 }
 
@@ -2876,28 +3217,17 @@ select.form-control { cursor: pointer; }
     margin-bottom: 1.5rem;
 }
 
-@media (max-width: 1024px) {
-    .report-kpi-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (max-width: 640px) {
-    .report-kpi-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
 .report-kpi-card {
     background: #ffffff;
     border-radius: 12px;
-    padding: 1rem 0.9rem;
+    padding: 1rem 0.75rem;
     border: 1px solid #e2e8f0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     text-align: center;
     position: relative;
     overflow: hidden;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
 }
 
 .report-kpi-card:hover {
@@ -2916,7 +3246,7 @@ select.form-control { cursor: pointer; }
 }
 
 .report-kpi-val {
-    font-size: 1.55rem;
+    font-size: 1.45rem;
     font-weight: 800;
     color: var(--kpi-color, #0f172a);
     line-height: 1.2;
@@ -2940,6 +3270,7 @@ select.form-control { cursor: pointer; }
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     margin-bottom: 1.5rem;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .report-section-card:last-child {
@@ -2953,6 +3284,8 @@ select.form-control { cursor: pointer; }
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .report-section-title {
@@ -2968,7 +3301,7 @@ select.form-control { cursor: pointer; }
 .report-section-badge {
     font-size: 0.75rem;
     font-weight: 600;
-    padding: 0.2rem 0.55rem;
+    padding: 0.25rem 0.65rem;
     border-radius: 6px;
     background: #f1f5f9;
     color: #475569;
@@ -2998,13 +3331,13 @@ select.form-control { cursor: pointer; }
     font-size: 0.925rem;
 }
 
-/* Prominent Placed Callout */
+/* Prominent Placed Callout Banner */
 .placed-prominent-banner {
     background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
     border: 1px solid #a7f3d0;
     border-radius: 10px;
     padding: 0.85rem 1.25rem;
-    margin: 1rem 1.35rem 0.25rem 1.35rem;
+    margin: 1rem 1.35rem 0.5rem 1.35rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -3057,6 +3390,7 @@ select.form-control { cursor: pointer; }
     display: inline-flex !important;
     align-items: center !important;
     gap: 0.35rem !important;
+    white-space: nowrap !important;
 }
 
 .badge-processing {
@@ -3070,6 +3404,7 @@ select.form-control { cursor: pointer; }
     display: inline-flex !important;
     align-items: center !important;
     gap: 0.35rem !important;
+    white-space: nowrap !important;
 }
 
 .badge-not-placed {
@@ -3083,6 +3418,7 @@ select.form-control { cursor: pointer; }
     display: inline-flex !important;
     align-items: center !important;
     gap: 0.35rem !important;
+    white-space: nowrap !important;
 }
 
 .badge-registered {
@@ -3095,6 +3431,7 @@ select.form-control { cursor: pointer; }
     font-size: 0.725rem !important;
     display: inline-flex !important;
     align-items: center !important;
+    white-space: nowrap !important;
 }
 
 /* Report Tables Inside Modal */
@@ -3111,7 +3448,7 @@ select.form-control { cursor: pointer; }
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
     border-bottom: 1px solid #e2e8f0;
     text-align: left;
     white-space: nowrap;
@@ -3131,6 +3468,19 @@ select.form-control { cursor: pointer; }
 
 .report-data-table tbody tr:last-child td {
     border-bottom: none;
+}
+
+/* Section Specific Modal Table Minimum Widths inside .table-responsive */
+#reportTrainingTable {
+    min-width: 860px !important;
+}
+
+#reportActivitiesTable {
+    min-width: 820px !important;
+}
+
+#reportRecruitmentTable {
+    min-width: 980px !important;
 }
 
 /* Empty State inside Modal Sections */
@@ -3154,48 +3504,153 @@ select.form-control { cursor: pointer; }
     margin-bottom: 0.25rem;
 }
 
-/* Pagination Controls for User Report Tab */
-.report-pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 0 0 0;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+/* ==========================================================================
+   RESPONSIVE MEDIA QUERIES (TABLET & MOBILE BREAKPOINTS)
+   ========================================================================== */
+
+/* Tablet & Intermediate Screens (<= 1100px) */
+@media (max-width: 1100px) {
+    .user-report-filters {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+    .filter-col-search {
+        grid-column: span 3;
+    }
+    .filter-col-btn {
+        grid-column: span 3;
+        display: flex;
+        justify-content: flex-end;
+    }
 }
 
-.pagination-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
+/* Mobile & Small Tablet Screens (<= 768px) */
+@media (max-width: 768px) {
+    .content-body {
+        padding: 0.85rem 0.75rem !important;
+    }
+
+    .user-report-tab-container {
+        padding: 1rem 0.85rem !important;
+    }
+
+    .user-report-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.65rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .user-report-title {
+        font-size: 1.25rem;
+    }
+
+    .user-report-subtitle {
+        font-size: 0.825rem;
+    }
+
+    .user-report-badge {
+        align-self: flex-start;
+        margin-top: 0.2rem;
+        font-size: 0.725rem !important;
+        padding: 0.35rem 0.75rem !important;
+    }
+
+    /* Stack filters vertically on mobile */
+    .user-report-filters {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+        width: 100%;
+        margin-bottom: 1.25rem;
+    }
+
+    .filter-col-search,
+    .filter-col-select,
+    .filter-col-btn {
+        width: 100%;
+    }
+
+    .filter-col-btn .btn {
+        width: 100% !important;
+    }
+
+    /* Mobile modal adjustments */
+    .report-modal-overlay {
+        padding: 0.75rem;
+    }
+
+    .report-modal-card {
+        width: 100%;
+        max-width: calc(100vw - 20px);
+        max-height: 92vh;
+        margin: 5px auto;
+        border-radius: 12px;
+    }
+
+    .report-modal-header {
+        padding: 1rem 1.25rem;
+    }
+
+    .report-modal-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .report-modal-body {
+        padding: 1rem 0.85rem;
+    }
+
+    .student-profile-hero {
+        padding: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .student-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .report-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.65rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .report-kpi-val {
+        font-size: 1.3rem;
+    }
+
+    .placement-summary-bar {
+        padding: 0.85rem 1rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.65rem;
+    }
+
+    .placed-prominent-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin: 0.85rem 1rem 0.5rem 1rem;
+        padding: 0.85rem 1rem;
+    }
+
+    .report-pagination {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        text-align: center;
+    }
 }
 
-.pagination-btn {
-    padding: 0.4rem 0.85rem;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    color: #334155;
-    font-size: 0.825rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
+/* Extra Small Mobile Screens (<= 480px) */
+@media (max-width: 480px) {
+    .student-info-grid {
+        grid-template-columns: 1fr;
+    }
 
-.pagination-btn:hover:not(:disabled) {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-}
-
-.pagination-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.pagination-btn.active {
-    background: #0D6EFC;
-    color: #ffffff;
-    border-color: #0D6EFC;
+    .placement-summary-bar {
+        grid-template-columns: 1fr;
+    }
 }
 
 

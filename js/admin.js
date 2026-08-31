@@ -682,19 +682,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             const tr = document.createElement('tr');
             const isCoord = s.isCoordinator === true || s.isCoordinator === 'true';
             tr.innerHTML = `
-                <td style="font-weight: 600; color: #0f172a; white-space: nowrap;">${s.registerNumber || '—'}</td>
-                <td style="font-weight: 600; color: #1e293b;">
+                <td>${s.registerNumber || '—'}</td>
+                <td>
                     ${s.name || '—'}
                     ${isCoord ? '<span class="coord-badge" style="font-size: 10px; margin-left: 4px;">Coord</span>' : ''}
                 </td>
-                <td style="white-space: nowrap; color: #475569;">${s.phoneNumber || s.phone || '—'}</td>
-                <td style="color: #475569;">${s.mailId || s.email || '—'}</td>
-                <td style="white-space: nowrap;">${s.course || '—'}</td>
-                <td style="white-space: nowrap;">${s.department || '—'}</td>
-                <td style="white-space: nowrap; text-align: center;">${s.class || '—'}</td>
-                <td style="white-space: nowrap; text-align: center;">${s.admissionYear || '—'}</td>
-                <td style="white-space: nowrap; text-align: center; text-transform: capitalize;">${s.gender || '—'}</td>
-                <td style="text-align: center; white-space: nowrap;">
+                <td>${s.phoneNumber || s.phone || '—'}</td>
+                <td>${s.mailId || s.email || '—'}</td>
+                <td>${s.course || '—'}</td>
+                <td>${s.department || '—'}</td>
+                <td>${s.class || '—'}</td>
+                <td>${s.admissionYear || '—'}</td>
+                <td>${s.gender || '—'}</td>
+                <td>
                     <button type="button" class="btn-view-report" onclick="openStudentReportModal('${s.registerNumber}')" title="View Performance Report for ${s.name || s.registerNumber}">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
                         View Report
