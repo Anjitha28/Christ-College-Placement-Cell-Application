@@ -722,17 +722,11 @@ class Database {
         activity.phases = activity.phases || [];
         activity.phases.push(phase);
         
-        // Optimistic background sync (prevent UI lag)
-        this.sync("Activity", activity).then(res => {
-            if (res.success) {
-                if (typeof showToast === 'function') showToast('Phase synced to cloud.', 'success');
-            } else {
-                console.error("Failed to sync phase to cloud");
-            }
-        });
-        
-        // Return instantly to close modal and update UI
-        return { success: true, message: 'Phase added successfully!' };
+        const res = await this.sync("Activity", activity);
+        if (res.success) {
+            if (typeof showToast === 'function') showToast('Phase added successfully!', 'success');
+        }
+        return res;
     }
 
     async updatePlacementPhase(activityId, phaseId, updatedData) {
@@ -747,6 +741,24 @@ class Database {
         
         const res = await this.sync("Activity", activity);
         if (res.success) showToast('Phase updated successfully!', 'success');
+        return res;
+    }
+
+    async deletePlacementPhase(activityId, phaseId) {
+        const actIndex = this.cache.placementActivities.findIndex(a => a.id === activityId);
+        if (actIndex === -1) return { success: false, message: 'Activity not found.' };
+        
+        const activity = this.cache.placementActivities[actIndex];
+        activity.phases = activity.phases || [];
+        const phIndex = activity.phases.findIndex(p => p.id === phaseId);
+        if (phIndex === -1) return { success: false, message: 'Phase not found.' };
+        
+        activity.phases.splice(phIndex, 1);
+        
+        const res = await this.sync("Activity", activity);
+        if (res.success && typeof showToast === 'function') {
+            showToast('Phase deleted successfully!', 'success');
+        }
         return res;
     }
 

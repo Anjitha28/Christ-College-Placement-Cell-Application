@@ -2961,18 +2961,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.deletePhase = async (id) => {
         if (confirm('Are you sure you want to delete this phase and all student completion data?')) {
-            const result = await db.deletePlacementPhase(currentActivityId, id);
-            if (result.success) {
-                currentActivity = db.getPlacementActivities().find(a => a.id === currentActivityId);
-                const activeTab = document.querySelector('.m-sub-tab.active');
-                if (activeTab) {
-                    const tabId = activeTab.dataset.tab;
-                    if (tabId === 'phases') renderPhases();
-                    else if (tabId === 'funnel') renderFunnel();
-                    else if (tabId === 'students') renderStudentTracking();
+            try {
+                const result = await db.deletePlacementPhase(currentActivityId, id);
+                if (result && result.success) {
+                    currentActivity = db.getPlacementActivities().find(a => a.id === currentActivityId);
+                    const activeTab = document.querySelector('.m-sub-tab.active');
+                    if (activeTab) {
+                        const tabId = activeTab.dataset.tab;
+                        if (tabId === 'phases') renderPhases();
+                        else if (tabId === 'funnel') renderFunnel();
+                        else if (tabId === 'students') renderStudentTracking();
+                    } else {
+                        renderPhases();
+                    }
                 } else {
-                    renderPhases();
+                    alert((result && result.message) || 'Failed to delete phase.');
                 }
+            } catch (err) {
+                console.error("Error deleting phase:", err);
+                alert("An error occurred while deleting the phase. Please try again.");
             }
         }
     };
