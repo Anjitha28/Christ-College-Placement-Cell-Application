@@ -12,11 +12,40 @@ const SUPABASE_KEY = "sb_publishable__scO4pQv-Xft14X53GiO0Q_XoD4VwNz";
 // DATA MAPPING HELPERS (JS camelCase <-> Postgres snake_case)
 // =====================================================================
 
+function sortByNewestFirst(list) {
+    if (!Array.isArray(list)) return [];
+    return [...list].sort((a, b) => {
+        // 1. Check createdAt
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (aTime && bTime && aTime !== bTime) return bTime - aTime;
+        if (aTime && !bTime) return -1;
+        if (!aTime && bTime) return 1;
+
+        // 2. Check numeric timestamp in ID (e.g. PLC1789..., REC1789..., TRN1789...)
+        const aMatch = String(a.id || '').match(/\d{10,}/);
+        const bMatch = String(b.id || '').match(/\d{10,}/);
+        if (aMatch && bMatch && aMatch[0] !== bMatch[0]) {
+            return Number(bMatch[0]) - Number(aMatch[0]);
+        }
+
+        // 3. Fallback: numeric ID descending
+        if (typeof a.id === 'number' && typeof b.id === 'number') {
+            return b.id - a.id;
+        }
+
+        return 0;
+    });
+}
+
 function toSQLStudent(s) {
     if (!s) return null;
     const scoresObj = s.scores || {};
     if (s.admissionYear) {
         scoresObj._admission_year = s.admissionYear;
+    }
+    if (s.createdAt) {
+        scoresObj._createdAt = s.createdAt;
     }
     return {
         name: s.name,
@@ -50,7 +79,8 @@ function toJSStudent(row) {
         isCoordinator: row.is_coordinator,
         forcePasswordReset: row.force_password_reset,
         admissionYear: row.admission_year || (row.scores && row.scores._admission_year) || null,
-        scores: row.scores || {}
+        scores: row.scores || {},
+        createdAt: row.created_at || (row.scores && row.scores._createdAt) || null
     };
 }
 
@@ -115,7 +145,8 @@ function toJSTrainingProgram(row) {
         registrations: row.registrations || [],
         sessions: row.sessions || [],
         batches: row.batches || [],
-        feedbacks: row.feedbacks || []
+        feedbacks: row.feedbacks || [],
+        createdAt: row.created_at || row.createdAt || null
     };
 }
 
@@ -148,7 +179,8 @@ function toJSPlacementActivity(row) {
         type: row.type,
         target: row.target || { type: 'all' },
         registrations: row.registrations || [],
-        phases: row.phases || []
+        phases: row.phases || [],
+        createdAt: row.created_at || row.createdAt || null
     };
 }
 
@@ -407,7 +439,7 @@ class Database {
 
     // --- Students ---
     getStudents() {
-        return this.cache.students;
+        return sortByNewestFirst(this.cache.students);
     }
 
     async addStudent(student) {
@@ -534,7 +566,7 @@ class Database {
 
     // --- Training Programs ---
     getTrainingPrograms() {
-        return this.cache.trainingPrograms;
+        return sortByNewestFirst(this.cache.trainingPrograms);
     }
 
     async addTrainingProgram(program) {
@@ -566,6 +598,16 @@ class Database {
         const res = await this.deleteRecord("Training Program", id);
         if (res.success) showToast('Program deleted.', 'success');
         return res;
+    }
+
+    async deleteAllTrainingPrograms() {
+        this.cache.trainingPrograms = [];
+        if (this.client) {
+            await this.client.from('training_programs').delete().neq('id', '0');
+        }
+        localStorage.setItem('db_cache', JSON.stringify(this.cache));
+        showToast('All programs cleared.', 'success');
+        return { success: true, message: 'All training programs deleted.' };
     }
 
     async toggleRegistration(id) {
@@ -677,22 +719,22 @@ class Database {
 
     // --- Placement Activities ---
     getPlacementActivities() {
-        return this.cache.placementActivities.map(a => ({
+        return sortByNewestFirst(this.cache.placementActivities.map(a => ({
             ...a,
             phases: a.phases || [],
             registrations: a.registrations || [],
             target: a.target || { type: 'all' }
-        }));
+        })));
     }
 
     async addPlacementActivity(activity) {
-        activity.id = 'PLC' + Date.now();
+        activity.id = (activity.type === 'recruitment' ? 'REC' : 'PLC') + Date.now();
         activity.createdAt = activity.createdAt || new Date().toISOString();
         activity.phases = [];
         activity.registrations = [];
         this.cache.placementActivities.unshift(activity);
         const res = await this.sync("Activity", activity);
-        if (res.success) showToast('Placement drive created!', 'success');
+        if (res.success) showToast(activity.type === 'recruitment' ? 'Recruitment drive created!' : 'Placement activity created!', 'success');
         return res;
     }
 
