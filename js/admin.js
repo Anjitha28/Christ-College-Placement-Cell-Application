@@ -1012,19 +1012,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                 studentPlacementActs.forEach(a => {
                     const phases = a.phases || [];
                     const hasPhases = phases.length > 0;
-                    let currentPhaseName = 'Registered';
+                    const selPhase = window.getSelectedPhase(a);
+                    let currentStageName = 'Registered';
                     let attendedPhasesCount = 0;
 
                     if (hasPhases) {
+                        const isSelected = selPhase && (selPhase.completions || []).includes(regNo);
+                        let highestClearedIdx = -1;
+                        for (let i = 0; i < phases.length; i++) {
+                            if ((phases[i].completions || []).includes(regNo)) {
+                                highestClearedIdx = i;
+                            } else {
+                                break;
+                            }
+                        }
+
+                        if (isSelected && selPhase) {
+                            currentStageName = selPhase.name;
+                        } else if (highestClearedIdx === -1) {
+                            currentStageName = phases[0].name;
+                        } else if (highestClearedIdx < phases.length - 1) {
+                            currentStageName = phases[highestClearedIdx + 1].name;
+                        } else {
+                            currentStageName = phases[phases.length - 1].name;
+                        }
+
                         const clearedPhases = phases.filter(ph => (ph.completions || []).includes(regNo));
                         attendedPhasesCount = clearedPhases.length;
-                        if (clearedPhases.length === phases.length) {
-                            currentPhaseName = phases[phases.length - 1].name;
-                        } else if (clearedPhases.length > 0) {
-                            currentPhaseName = clearedPhases[clearedPhases.length - 1].name;
-                        } else {
-                            currentPhaseName = phases[0].name;
-                        }
                         totalActRoundsApplicable += phases.length;
                         totalActRoundsAttended += attendedPhasesCount;
                     }
@@ -1047,6 +1061,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     tr.innerHTML = `
                         <td style="font-weight: 600; color: #0f172a;">${a.name || '—'}</td>
                         <td style="white-space: nowrap; color: #475569;">${a.date || '—'}</td>
+                        <td><span style="font-weight: 600; color: #334155; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-size: 11px;">${currentStageName}</span></td>
                         <td style="text-align: center;"><span class="placement-status-badge ${statusClass}">${statusLabel}</span></td>
                     `;
                     actsTbody.appendChild(tr);
@@ -1164,6 +1179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     tr.innerHTML = `
                         <td style="font-weight: 600; color: #0f172a;">${a.name || '—'}</td>
                         <td><span class="jobrole-pill">${a.venue || '—'}</span></td>
+                        <td style="text-align: center; white-space: nowrap; color: #475569; font-size: 0.85rem;">${a.date || '—'}</td>
                         <td style="text-align: center;"><span class="badge-registered">Yes</span></td>
                         <td><span style="font-weight: 600; color: #334155; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-size: 11px;">${currentStageName}</span></td>
                         <td style="text-align: center;">${statusBadgeHtml}</td>
