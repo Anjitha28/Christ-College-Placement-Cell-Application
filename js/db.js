@@ -417,7 +417,8 @@ class Database {
         }
         student.password = (student.password || 'password').trim();
         student.forcePasswordReset = true;
-        this.cache.students.push(student);
+        student.createdAt = student.createdAt || new Date().toISOString();
+        this.cache.students.unshift(student);
         const res = await this.sync("Students", student);
         if (res.success) showToast('Student added successfully!', 'success');
         return res;
@@ -538,11 +539,12 @@ class Database {
 
     async addTrainingProgram(program) {
         program.id = 'TRN' + Date.now();
+        program.createdAt = program.createdAt || new Date().toISOString();
         program.registrations = [];
         program.sessions = [];
         program.feedbacks = [];
         program.batches = [];
-        this.cache.trainingPrograms.push(program);
+        this.cache.trainingPrograms.unshift(program);
         const res = await this.sync("Training Program", program);
         if (res.success) showToast('Training program created!', 'success');
         return res;
@@ -685,9 +687,10 @@ class Database {
 
     async addPlacementActivity(activity) {
         activity.id = 'PLC' + Date.now();
+        activity.createdAt = activity.createdAt || new Date().toISOString();
         activity.phases = [];
         activity.registrations = [];
-        this.cache.placementActivities.push(activity);
+        this.cache.placementActivities.unshift(activity);
         const res = await this.sync("Activity", activity);
         if (res.success) showToast('Placement drive created!', 'success');
         return res;

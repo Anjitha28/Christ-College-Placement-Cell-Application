@@ -390,17 +390,78 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    function populateFilters(students) {
+        const courseSel = document.getElementById('filterCourse');
+        const deptSel = document.getElementById('filterDept');
+        const yearSel = document.getElementById('filterAdmnYear');
+
+        if (courseSel) {
+            const currentVal = courseSel.value;
+            const courses = [...new Set(students.map(s => s.course).filter(Boolean))].sort();
+            courseSel.innerHTML = '<option value="">All Courses</option>' + courses.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>${c}</option>`).join('');
+        }
+
+        if (deptSel) {
+            const currentVal = deptSel.value;
+            const depts = [...new Set(students.map(s => s.department).filter(Boolean))].sort();
+            deptSel.innerHTML = '<option value="">All Departments</option>' + depts.map(d => `<option value="${d}" ${d === currentVal ? 'selected' : ''}>${d}</option>`).join('');
+        }
+
+        if (yearSel) {
+            const currentVal = yearSel.value;
+            const years = [...new Set(students.map(s => s.admissionYear).filter(Boolean))].sort((a,b) => String(b).localeCompare(String(a)));
+            yearSel.innerHTML = '<option value="">All Years</option>' + years.map(y => `<option value="${y}" ${String(y) === currentVal ? 'selected' : ''}>${y}</option>`).join('');
+        }
+    }
+
+    function initStudentFilterControls() {
+        const filterCourse = document.getElementById('filterCourse');
+        const filterDept = document.getElementById('filterDept');
+        const filterAdmnYear = document.getElementById('filterAdmnYear');
+        const filterDate = document.getElementById('filterStudentDate');
+        const searchInput = document.getElementById('searchStudent');
+        const resetBtn = document.getElementById('resetFiltersBtn');
+
+        [filterCourse, filterDept, filterAdmnYear, filterDate].forEach(el => {
+            if (el && !el.dataset.initialized) {
+                el.dataset.initialized = 'true';
+                el.addEventListener('change', () => renderStudents());
+            }
+        });
+
+        if (searchInput && !searchInput.dataset.initialized) {
+            searchInput.dataset.initialized = 'true';
+            searchInput.addEventListener('input', () => renderStudents());
+        }
+
+        if (resetBtn && !resetBtn.dataset.initialized) {
+            resetBtn.dataset.initialized = 'true';
+            resetBtn.addEventListener('click', () => {
+                if (filterCourse) filterCourse.value = '';
+                if (filterDept) filterDept.value = '';
+                if (filterAdmnYear) filterAdmnYear.value = '';
+                if (filterDate) filterDate.value = '';
+                if (searchInput) searchInput.value = '';
+                renderStudents();
+            });
+        }
+    }
+
     function renderStudents() {
-        const students = db.getStudents();
+        initStudentFilterControls();
+
+        const students = db.getStudents() || [];
         const tbody = document.querySelector('#studentsTable tbody');
+        if (!tbody) return;
         
         // Populate Filter Dropdowns
         populateFilters(students);
 
-        const filterCourse = document.getElementById('filterCourse').value;
-        const filterDept = document.getElementById('filterDept').value;
+        const filterCourse = document.getElementById('filterCourse')?.value || '';
+        const filterDept = document.getElementById('filterDept')?.value || '';
         const filterAdmnYearEl = document.getElementById('filterAdmnYear');
         const filterAdmnYear = filterAdmnYearEl ? filterAdmnYearEl.value : '';
+        const filterStudentDate = document.getElementById('filterStudentDate')?.value || '';
 
         let filteredStudents = students;
         if (filterCourse) {
@@ -410,15 +471,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             filteredStudents = filteredStudents.filter(s => s.department === filterDept);
         }
         if (filterAdmnYear) {
-            filteredStudents = filteredStudents.filter(s => s.admissionYear === filterAdmnYear);
+            filteredStudents = filteredStudents.filter(s => String(s.admissionYear || '') === filterAdmnYear);
+        }
+        if (filterStudentDate) {
+            filteredStudents = filteredStudents.filter(s => {
+                const cDate = (s.createdAt || '').slice(0, 10);
+                const aYear = String(s.admissionYear || '');
+                return cDate === filterStudentDate || (s.admissionDate && s.admissionDate === filterStudentDate) || aYear === filterStudentDate.slice(0, 4);
+            });
         }
 
-        const searchQuery = document.getElementById('searchStudent').value.toLowerCase();
+        const searchInput = document.getElementById('searchStudent');
+        const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
         if (searchQuery) {
             filteredStudents = filteredStudents.filter(s => 
-                s.name.toLowerCase().includes(searchQuery) || 
-                s.registerNumber.toLowerCase().includes(searchQuery) ||
-                (s.admissionYear && s.admissionYear.toLowerCase().includes(searchQuery))
+                (s.name || '').toLowerCase().includes(searchQuery) || 
+                (s.registerNumber || '').toLowerCase().includes(searchQuery) ||
+                (s.admissionYear && String(s.admissionYear).toLowerCase().includes(searchQuery))
             );
         }
 
@@ -1756,10 +1825,103 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    function populateTrainingFilterDropdowns(students, programs) {
+        const studentSel = document.getElementById('trainingFilterStudent');
+        const courseSel = document.getElementById('trainingFilterCourse');
+        const deptSel = document.getElementById('trainingFilterDept');
+
+        if (studentSel) {
+            const curVal = studentSel.value;
+            studentSel.innerHTML = '<option value="">All Students</option>' + students.map(s => `<option value="${s.registerNumber}" ${s.registerNumber === curVal ? 'selected' : ''}>${s.name || s.registerNumber} (${s.registerNumber})</option>`).join('');
+        }
+
+        if (courseSel) {
+            const curVal = courseSel.value;
+            const courses = [...new Set(students.map(s => s.course).filter(Boolean))].sort();
+            courseSel.innerHTML = '<option value="">All Courses</option>' + courses.map(c => `<option value="${c}" ${c === curVal ? 'selected' : ''}>${c}</option>`).join('');
+        }
+
+        if (deptSel) {
+            const curVal = deptSel.value;
+            const depts = [...new Set(students.map(s => s.department).filter(Boolean))].sort();
+            deptSel.innerHTML = '<option value="">All Departments</option>' + depts.map(d => `<option value="${d}" ${d === curVal ? 'selected' : ''}>${d}</option>`).join('');
+        }
+    }
+
+    function initTrainingFilterControls() {
+        const filterStudent = document.getElementById('trainingFilterStudent');
+        const filterCourse = document.getElementById('trainingFilterCourse');
+        const filterDept = document.getElementById('trainingFilterDept');
+        const filterDate = document.getElementById('trainingFilterDate');
+        const resetBtn = document.getElementById('resetTrainingFiltersBtn');
+
+        [filterStudent, filterCourse, filterDept, filterDate].forEach(el => {
+            if (el && !el.dataset.initialized) {
+                el.dataset.initialized = 'true';
+                el.addEventListener('change', () => renderTrainingPrograms());
+            }
+        });
+
+        if (resetBtn && !resetBtn.dataset.initialized) {
+            resetBtn.dataset.initialized = 'true';
+            resetBtn.addEventListener('click', () => {
+                if (filterStudent) filterStudent.value = '';
+                if (filterCourse) filterCourse.value = '';
+                if (filterDept) filterDept.value = '';
+                if (filterDate) filterDate.value = '';
+                renderTrainingPrograms();
+            });
+        }
+    }
+
     function renderTrainingPrograms() {
-        const programs = db.getTrainingPrograms();
+        initTrainingFilterControls();
+
+        const allPrograms = db.getTrainingPrograms() || [];
+        const students = db.getStudents() || [];
         const tbody = document.querySelector('#trainingTable tbody');
         if(!tbody) return;
+
+        populateTrainingFilterDropdowns(students, allPrograms);
+
+        const filterStudent = document.getElementById('trainingFilterStudent')?.value || '';
+        const filterCourse = document.getElementById('trainingFilterCourse')?.value || '';
+        const filterDept = document.getElementById('trainingFilterDept')?.value || '';
+        const filterDate = document.getElementById('trainingFilterDate')?.value || '';
+
+        let programs = allPrograms;
+
+        if (filterStudent) {
+            programs = programs.filter(p => (p.registrations || []).includes(filterStudent));
+        }
+        if (filterCourse) {
+            programs = programs.filter(p => {
+                const targetMatch = p.target.type === 'all' || (p.target.type === 'course' && (p.target.courses || []).includes(filterCourse));
+                const regMatch = (p.registrations || []).some(reg => {
+                    const st = students.find(s => s.registerNumber === reg);
+                    return st && st.course === filterCourse;
+                });
+                return targetMatch || regMatch;
+            });
+        }
+        if (filterDept) {
+            programs = programs.filter(p => {
+                const targetMatch = p.target.type === 'all' || (p.target.type === 'dept' && (p.target.depts || []).includes(filterDept));
+                const regMatch = (p.registrations || []).some(reg => {
+                    const st = students.find(s => s.registerNumber === reg);
+                    return st && st.department === filterDept;
+                });
+                return targetMatch || regMatch;
+            });
+        }
+        if (filterDate) {
+            programs = programs.filter(p => {
+                if (p.date === filterDate || p.endDate === filterDate) return true;
+                if (p.date && p.endDate && p.date <= filterDate && p.endDate >= filterDate) return true;
+                return false;
+            });
+        }
+
         tbody.innerHTML = '';
 
         if (programs.length === 0) {
@@ -2290,11 +2452,201 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    function populatePlacementFilterDropdowns(students, activities) {
+        const actCourseSel = document.getElementById('actFilterCourse');
+        const actDeptSel = document.getElementById('actFilterDept');
+        const actStudentSel = document.getElementById('actFilterStudent');
+
+        const recCourseSel = document.getElementById('recFilterCourse');
+        const recDeptSel = document.getElementById('recFilterDept');
+        const recStudentSel = document.getElementById('recFilterStudent');
+
+        const courses = [...new Set(students.map(s => s.course).filter(Boolean))].sort();
+        const depts = [...new Set(students.map(s => s.department).filter(Boolean))].sort();
+        const studentOpts = '<option value="">All Students</option>' + students.map(s => `<option value="${s.registerNumber}">${s.name || s.registerNumber} (${s.registerNumber})</option>`).join('');
+        const courseOpts = '<option value="">All Courses</option>' + courses.map(c => `<option value="${c}">${c}</option>`).join('');
+        const deptOpts = '<option value="">All Departments</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
+
+        if (actCourseSel) {
+            const val = actCourseSel.value;
+            actCourseSel.innerHTML = courseOpts;
+            if (val) actCourseSel.value = val;
+        }
+        if (actDeptSel) {
+            const val = actDeptSel.value;
+            actDeptSel.innerHTML = deptOpts;
+            if (val) actDeptSel.value = val;
+        }
+        if (actStudentSel) {
+            const val = actStudentSel.value;
+            actStudentSel.innerHTML = studentOpts;
+            if (val) actStudentSel.value = val;
+        }
+
+        if (recCourseSel) {
+            const val = recCourseSel.value;
+            recCourseSel.innerHTML = courseOpts;
+            if (val) recCourseSel.value = val;
+        }
+        if (recDeptSel) {
+            const val = recDeptSel.value;
+            recDeptSel.innerHTML = deptOpts;
+            if (val) recDeptSel.value = val;
+        }
+        if (recStudentSel) {
+            const val = recStudentSel.value;
+            recStudentSel.innerHTML = studentOpts;
+            if (val) recStudentSel.value = val;
+        }
+    }
+
+    function initPlacementFilterControls() {
+        const actEligibility = document.getElementById('actFilterEligibility');
+        const actCourse = document.getElementById('actFilterCourse');
+        const actDept = document.getElementById('actFilterDept');
+        const actStudent = document.getElementById('actFilterStudent');
+        const actDate = document.getElementById('actFilterDate');
+        const resetActBtn = document.getElementById('resetActFiltersBtn');
+
+        const recEligibility = document.getElementById('recFilterEligibility');
+        const recCourse = document.getElementById('recFilterCourse');
+        const recDept = document.getElementById('recFilterDept');
+        const recStudent = document.getElementById('recFilterStudent');
+        const recDate = document.getElementById('recFilterDate');
+        const resetRecBtn = document.getElementById('resetRecFiltersBtn');
+
+        [actEligibility, actCourse, actDept, actStudent, actDate].forEach(el => {
+            if (el && !el.dataset.initialized) {
+                el.dataset.initialized = 'true';
+                el.addEventListener('change', () => renderPlacementActivities());
+            }
+        });
+
+        if (resetActBtn && !resetActBtn.dataset.initialized) {
+            resetActBtn.dataset.initialized = 'true';
+            resetActBtn.addEventListener('click', () => {
+                if (actEligibility) actEligibility.value = '';
+                if (actCourse) actCourse.value = '';
+                if (actDept) actDept.value = '';
+                if (actStudent) actStudent.value = '';
+                if (actDate) actDate.value = '';
+                renderPlacementActivities();
+            });
+        }
+
+        [recEligibility, recCourse, recDept, recStudent, recDate].forEach(el => {
+            if (el && !el.dataset.initialized) {
+                el.dataset.initialized = 'true';
+                el.addEventListener('change', () => renderPlacementActivities());
+            }
+        });
+
+        if (resetRecBtn && !resetRecBtn.dataset.initialized) {
+            resetRecBtn.dataset.initialized = 'true';
+            resetRecBtn.addEventListener('click', () => {
+                if (recEligibility) recEligibility.value = '';
+                if (recCourse) recCourse.value = '';
+                if (recDept) recDept.value = '';
+                if (recStudent) recStudent.value = '';
+                if (recDate) recDate.value = '';
+                renderPlacementActivities();
+            });
+        }
+    }
+
     function renderPlacementActivities() {
+        initPlacementFilterControls();
+
         const activities = db.getPlacementActivities() || [];
-        
-        const placementList = activities.filter(a => a.type === 'placement' || !a.type);
-        const recruitmentList = activities.filter(a => a.type === 'recruitment');
+        const students = db.getStudents() || [];
+
+        populatePlacementFilterDropdowns(students, activities);
+
+        const actEligibility = document.getElementById('actFilterEligibility')?.value || '';
+        const actCourse = document.getElementById('actFilterCourse')?.value || '';
+        const actDept = document.getElementById('actFilterDept')?.value || '';
+        const actStudent = document.getElementById('actFilterStudent')?.value || '';
+        const actDate = document.getElementById('actFilterDate')?.value || '';
+
+        let placementList = activities.filter(a => a.type === 'placement' || !a.type);
+        if (actEligibility) {
+            if (actEligibility === 'all_eligible') placementList = placementList.filter(a => a.target.type === 'all');
+            else if (actEligibility === 'targeted') placementList = placementList.filter(a => a.target.type !== 'all');
+            else if (actEligibility === 'registered') placementList = placementList.filter(a => (a.registrations || []).length > 0);
+        }
+        if (actCourse) {
+            placementList = placementList.filter(a => {
+                const targetMatch = a.target.type === 'all' || (a.target.type === 'course' && (a.target.courses || []).includes(actCourse));
+                const regMatch = (a.registrations || []).some(reg => {
+                    const st = students.find(s => s.registerNumber === reg);
+                    return st && st.course === actCourse;
+                });
+                return targetMatch || regMatch;
+            });
+        }
+        if (actDept) {
+            placementList = placementList.filter(a => {
+                const targetMatch = a.target.type === 'all' || (a.target.type === 'dept' && (a.target.depts || []).includes(actDept));
+                const regMatch = (a.registrations || []).some(reg => {
+                    const st = students.find(s => s.registerNumber === reg);
+                    return st && st.department === actDept;
+                });
+                return targetMatch || regMatch;
+            });
+        }
+        if (actStudent) {
+            placementList = placementList.filter(a => (a.registrations || []).includes(actStudent) || (a.target.type === 'students' && (a.target.students || []).includes(actStudent)));
+        }
+        if (actDate) {
+            placementList = placementList.filter(a => {
+                if (a.date === actDate || a.lastDate === actDate) return true;
+                if (a.date && a.lastDate && a.date <= actDate && a.lastDate >= actDate) return true;
+                return false;
+            });
+        }
+
+        const recEligibility = document.getElementById('recFilterEligibility')?.value || '';
+        const recCourse = document.getElementById('recFilterCourse')?.value || '';
+        const recDept = document.getElementById('recFilterDept')?.value || '';
+        const recStudent = document.getElementById('recFilterStudent')?.value || '';
+        const recDate = document.getElementById('recFilterDate')?.value || '';
+
+        let recruitmentList = activities.filter(a => a.type === 'recruitment');
+        if (recEligibility) {
+            if (recEligibility === 'all_eligible') recruitmentList = recruitmentList.filter(a => a.target.type === 'all');
+            else if (recEligibility === 'targeted') recruitmentList = recruitmentList.filter(a => a.target.type !== 'all');
+            else if (recEligibility === 'registered') recruitmentList = recruitmentList.filter(a => (a.registrations || []).length > 0);
+        }
+        if (recCourse) {
+            recruitmentList = recruitmentList.filter(a => {
+                const targetMatch = a.target.type === 'all' || (a.target.type === 'course' && (a.target.courses || []).includes(recCourse));
+                const regMatch = (a.registrations || []).some(reg => {
+                    const st = students.find(s => s.registerNumber === reg);
+                    return st && st.course === recCourse;
+                });
+                return targetMatch || regMatch;
+            });
+        }
+        if (recDept) {
+            recruitmentList = recruitmentList.filter(a => {
+                const targetMatch = a.target.type === 'all' || (a.target.type === 'dept' && (a.target.depts || []).includes(recDept));
+                const regMatch = (a.registrations || []).some(reg => {
+                    const st = students.find(s => s.registerNumber === reg);
+                    return st && st.department === recDept;
+                });
+                return targetMatch || regMatch;
+            });
+        }
+        if (recStudent) {
+            recruitmentList = recruitmentList.filter(a => (a.registrations || []).includes(recStudent) || (a.target.type === 'students' && (a.target.students || []).includes(recStudent)));
+        }
+        if (recDate) {
+            recruitmentList = recruitmentList.filter(a => {
+                if (a.date === recDate || a.lastDate === recDate) return true;
+                if (a.date && a.lastDate && a.date <= recDate && a.lastDate >= recDate) return true;
+                return false;
+            });
+        }
 
         const actTbody = document.querySelector('#activityTable tbody');
         const recTbody = document.querySelector('#recruitmentTable tbody');
@@ -2370,7 +2722,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (recTbody) {
             if (recruitmentList.length === 0) {
-                recTbody.innerHTML = `<tr><td colspan="6" class="text-center">No recruitments found.</td></tr>`;
+                recTbody.innerHTML = `<tr><td colspan="7" class="text-center">No recruitments found.</td></tr>`;
             } else {
                 recTbody.innerHTML = recruitmentList.map(a => createRow(a)).join('');
             }

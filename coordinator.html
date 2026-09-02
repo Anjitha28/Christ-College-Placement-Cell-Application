@@ -328,29 +328,35 @@
                 <div id="adminAlert" class="alert hidden mb-3"></div>
 
                 <!-- Filters Section -->
-                <div class="d-flex gap-3 mb-4 align-items-center">
-                    <div style="flex: 1; max-width: 250px;">
+                <div class="filter-grid mb-4">
+                    <div>
                         <label class="form-label" style="font-size: 0.75rem;">Filter by Course</label>
                         <select id="filterCourse" class="form-control">
                             <option value="">All Courses</option>
                         </select>
                     </div>
-                    <div style="flex: 1; max-width: 250px;">
+                    <div>
                         <label class="form-label" style="font-size: 0.75rem;">Filter by Department</label>
                         <select id="filterDept" class="form-control">
                             <option value="">All Departments</option>
                         </select>
                     </div>
-                    <div style="flex: 1; max-width: 300px;">
+                    <div>
+                        <label class="form-label" style="font-size: 0.75rem;">Filter by Admission Year</label>
+                        <select id="filterAdmnYear" class="form-control">
+                            <option value="">All Years</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size: 0.75rem;">Date</label>
+                        <input type="date" id="filterStudentDate" class="form-control">
+                    </div>
+                    <div>
                         <label class="form-label" style="font-size: 0.75rem;">Search Student</label>
                         <input type="text" id="searchStudent" class="form-control" placeholder="Name or Register No..." autocomplete="off">
                     </div>
-                    <div style="margin-top: auto;">
+                    <div>
                         <button class="btn btn-secondary btn-sm" id="resetFiltersBtn">Reset</button>
-                    </div>
-                </div>
-
-                
                     </div>
                 </div>
 
@@ -618,6 +624,35 @@
                     </div>
                 </div>
 
+                <!-- Training Filters Section -->
+                <div class="filter-grid mb-4">
+                    <div>
+                        <label class="form-label" style="font-size: 0.75rem;">Students</label>
+                        <select id="trainingFilterStudent" class="form-control">
+                            <option value="">All Students</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size: 0.75rem;">Specific Courses</label>
+                        <select id="trainingFilterCourse" class="form-control">
+                            <option value="">All Courses</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size: 0.75rem;">Specific Departments</label>
+                        <select id="trainingFilterDept" class="form-control">
+                            <option value="">All Departments</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size: 0.75rem;">Date</label>
+                        <input type="date" id="trainingFilterDate" class="form-control">
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary btn-sm" id="resetTrainingFiltersBtn">Reset</button>
+                    </div>
+                </div>
+
                 <!-- Training Programs Table -->
                 <div class="table-responsive">
                     <table class="table" id="trainingTable">
@@ -750,6 +785,45 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Placement Activities Filters Section -->
+                    <div class="filter-grid mb-4">
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">All Students</label>
+                            <select id="actFilterEligibility" class="form-control">
+                                <option value="">All Students</option>
+                                <option value="all_eligible">Open to All Students</option>
+                                <option value="targeted">Targeted Students Only</option>
+                                <option value="registered">Registered Students</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">Specific Courses</label>
+                            <select id="actFilterCourse" class="form-control">
+                                <option value="">All Courses</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">Specific Departments</label>
+                            <select id="actFilterDept" class="form-control">
+                                <option value="">All Departments</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">Specific Students</label>
+                            <select id="actFilterStudent" class="form-control">
+                                <option value="">All Students</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">Date</label>
+                            <input type="date" id="actFilterDate" class="form-control">
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary btn-sm" id="resetActFiltersBtn">Reset</button>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table placement-table" id="activityTable">
                             <thead>
@@ -781,6 +855,45 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Recruitment Filters Section -->
+                    <div class="filter-grid mb-4">
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">All Students</label>
+                            <select id="recFilterEligibility" class="form-control">
+                                <option value="">All Students</option>
+                                <option value="all_eligible">Open to All Students</option>
+                                <option value="targeted">Targeted Students Only</option>
+                                <option value="registered">Registered Students</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">Specific Courses</label>
+                            <select id="recFilterCourse" class="form-control">
+                                <option value="">All Courses</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">Specific Departments</label>
+                            <select id="recFilterDept" class="form-control">
+                                <option value="">All Departments</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">Specific Students</label>
+                            <select id="recFilterStudent" class="form-control">
+                                <option value="">All Students</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">Date</label>
+                            <input type="date" id="recFilterDate" class="form-control">
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary btn-sm" id="resetRecFiltersBtn">Reset</button>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table placement-table" id="recruitmentTable">
                             <thead>

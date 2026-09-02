@@ -191,7 +191,7 @@
             <div style="padding: 2rem; max-height: 75vh; overflow-y: auto;">
                 <div class="mb-4">
                     <h6 class="small text-muted mb-2 fw-bold" style="font-size: 10px; letter-spacing: 1px;">DESCRIPTION</h6>
-                    <p id="pModalDesc" style="color: #4b5563; line-height: 1.6; font-size: 1rem;"></p>
+                    <div id="pModalDesc" class="rich-text-content" style="color: #4b5563; line-height: 1.6; font-size: 1rem; word-break: break-word;"></div>
                 </div>
                 <div class="d-flex gap-4 mb-4 pt-3 border-top" style="border-color: #f3f4f6;">
                     <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 0.85rem;">
@@ -220,7 +220,7 @@
             <div style="padding: 1.5rem;">
                 <div class="mb-4">
                     <label class="small text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 1px;">Description</label>
-                    <p id="pPhaseDesc" class="mt-1" style="color: #4b5563; font-size: 0.95rem; line-height: 1.6;"></p>
+                    <div id="pPhaseDesc" class="mt-1 rich-text-content" style="color: #4b5563; font-size: 0.95rem; line-height: 1.6; word-break: break-word;"></div>
                 </div>
                 <div class="d-flex gap-3 mb-4">
                     <div class="flex-grow-1 p-3 rounded-lg" style="background: #f9fafb; border: 1px solid #f3f4f6;">
@@ -923,16 +923,64 @@
                 });
             }
 
+            function sanitizeHtml(dirty) {
+                if (!dirty) return '';
+                const doc = new DOMParser().parseFromString(dirty, 'text/html');
+                const allowedTags = new Set([
+                    'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'FONT', 'SPAN', 'P', 'BR', 'HR',
+                    'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'LI', 'BLOCKQUOTE',
+                    'A', 'CODE', 'PRE', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD', 'SUB', 'SUP'
+                ]);
+                const allowedAttrs = new Set(['color', 'size', 'face', 'style', 'href', 'target', 'title', 'class', 'align']);
+
+                function cleanNode(node) {
+                    const toRemove = [];
+                    for (let child of Array.from(node.childNodes)) {
+                        if (child.nodeType === Node.ELEMENT_NODE) {
+                            if (!allowedTags.has(child.tagName)) {
+                                if (['SCRIPT', 'IFRAME', 'OBJECT', 'EMBED', 'STYLE', 'LINK'].includes(child.tagName)) {
+                                    toRemove.push(child);
+                                } else {
+                                    const fragment = document.createDocumentFragment();
+                                    while (child.firstChild) {
+                                        fragment.appendChild(child.firstChild);
+                                    }
+                                    node.replaceChild(fragment, child);
+                                }
+                            } else {
+                                for (let attr of Array.from(child.attributes)) {
+                                    const attrName = attr.name.toLowerCase();
+                                    if (!allowedAttrs.has(attrName) || attrName.startsWith('on')) {
+                                        child.removeAttribute(attr.name);
+                                    } else if (attrName === 'href') {
+                                        const val = attr.value.trim().toLowerCase();
+                                        if (val.startsWith('javascript:') || val.startsWith('data:') || val.startsWith('vbscript:')) {
+                                            child.removeAttribute('href');
+                                        }
+                                    }
+                                }
+                                cleanNode(child);
+                            }
+                        }
+                    }
+                    toRemove.forEach(el => el.remove());
+                }
+
+                cleanNode(doc.body);
+                return doc.body.innerHTML;
+            }
+
             window.openPlacementDetails = (id) => {
                 const a = db.getPlacementActivities().find(act => act.actId === id || act.id === id);
+                if (!a) return;
                 const isRegistered = (a.registrations || []).includes(user.registerNumber);
 
                 document.getElementById('pModalHeader').style.background = a.type === 'recruitment' ? 'linear-gradient(135deg, #059669 0%, #065f46 100%)' : 'linear-gradient(135deg, #4f46e5 0%, #0D6EFC 100%)';
                 document.getElementById('pModalType').textContent = a.type || 'Placement';
                 document.getElementById('pModalName').textContent = a.name;
-                document.getElementById('pModalDesc').textContent = a.description;
-                document.getElementById('pModalVenue').textContent = a.venue;
-                document.getElementById('pModalDate').textContent = a.date;
+                document.getElementById('pModalDesc').innerHTML = sanitizeHtml(a.description || '<span class="text-muted">No description provided.</span>');
+                document.getElementById('pModalVenue').textContent = a.venue || '—';
+                document.getElementById('pModalDate').textContent = a.date || '—';
 
                 let progressHtml = '';
                 if (!isRegistered) {
@@ -989,7 +1037,9 @@
 
             window.openPhaseModal = (activityId, phaseId) => {
                 const activity = db.getPlacementActivities().find(a => a.id === activityId);
+                if (!activity) return;
                 const phaseIdx = activity.phases.findIndex(p => p.id === phaseId);
+                if (phaseIdx === -1) return;
                 const phase = activity.phases[phaseIdx];
                 const isDone = (phase.completions || []).includes(user.registerNumber);
                 
@@ -999,8 +1049,8 @@
                 }
 
                 document.getElementById('pPhaseName').textContent = phase.name;
-                document.getElementById('pPhaseDesc').textContent = phase.description;
-                document.getElementById('pPhaseDate').textContent = phase.lastDate;
+                document.getElementById('pPhaseDesc').innerHTML = sanitizeHtml(phase.description || '<span class="text-muted">No details provided.</span>');
+                document.getElementById('pPhaseDate').textContent = phase.lastDate || '—';
                 document.getElementById('pPhaseMode').textContent = phase.mode === 'self' ? 'Student Declaration' : 'Admin Selection';
                 
                 const statusEl = document.getElementById('pPhaseStatus');

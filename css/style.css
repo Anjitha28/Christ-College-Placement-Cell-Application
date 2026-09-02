@@ -3767,15 +3767,49 @@ select.form-control { cursor: pointer; }
     }
 }
 
-/* Extra Small Mobile Screens (<= 480px) */
-@media (max-width: 480px) {
-    .student-info-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .placement-summary-bar {
-        grid-template-columns: 1fr;
-    }
+/* Rich-Text Description Display Styles */
+.rich-text-content {
+    line-height: 1.65;
+    color: #374151;
+    font-size: 0.95rem;
+    word-break: break-word;
 }
+
+.rich-text-content p {
+    margin-bottom: 0.65rem;
+}
+
+.rich-text-content p:last-child {
+    margin-bottom: 0;
+}
+
+.rich-text-content ul,
+.rich-text-content ol {
+    margin: 0.5rem 0 0.75rem 1.5rem;
+    padding-left: 0.5rem;
+}
+
+.rich-text-content li {
+    margin-bottom: 0.25rem;
+}
+
+.rich-text-content b,
+.rich-text-content strong {
+    font-weight: 700;
+}
+
+.rich-text-content a {
+    color: #0D6EFC;
+    text-decoration: underline;
+}
+
+.rich-text-content font[size="1"] { font-size: 0.75rem; }
+.rich-text-content font[size="2"] { font-size: 0.85rem; }
+.rich-text-content font[size="3"] { font-size: 0.95rem; }
+.rich-text-content font[size="4"] { font-size: 1.15rem; }
+.rich-text-content font[size="5"] { font-size: 1.35rem; }
+.rich-text-content font[size="6"] { font-size: 1.65rem; }
+.rich-text-content font[size="7"] { font-size: 2rem; }
+
 
 
