@@ -979,13 +979,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td style="font-weight: 600; color: #0f172a;">${p.name || '—'}</td>
-                        <td style="color: #475569;">${p.trainer || p.venue || '—'}</td>
-                        <td style="white-space: nowrap; color: #475569;">${p.date || '—'}</td>
-                        <td style="white-space: nowrap; color: #475569;">${p.endDate || p.lastDate || '—'}</td>
-                        <td style="text-align: center; font-weight: 600; color: #1e293b;">${attnStr}</td>
-                        <td style="text-align: center; font-weight: 700; color: #0D6EFC;">${attnPctStr}</td>
-                        <td style="text-align: center;"><span class="placement-status-badge ${statusClass}">${statusLabel}</span></td>
+                        <td style="font-weight: 600; color: #0f172a; vertical-align: middle;">
+                            <div style="font-size: 0.9rem; line-height: 1.35;">${p.name || '—'}</div>
+                        </td>
+                        <td style="color: #475569; vertical-align: middle;">${p.trainer || p.venue || '—'}</td>
+                        <td style="text-align: center; white-space: nowrap; color: #475569; font-size: 0.85rem; vertical-align: middle;">${p.date || '—'}</td>
+                        <td style="text-align: center; white-space: nowrap; color: #475569; font-size: 0.85rem; vertical-align: middle;">${p.endDate || p.lastDate || '—'}</td>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <span style="font-weight: 600; color: #1e293b; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 6px; font-size: 0.825rem; display: inline-block;">${attnStr}</span>
+                        </td>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <span style="font-weight: 700; color: #0D6EFC; font-size: 0.875rem;">${attnPctStr}</span>
+                        </td>
+                        <td style="text-align: center; vertical-align: middle;"><span class="placement-status-badge ${statusClass}">${statusLabel}</span></td>
                     `;
                     trainingTbody.appendChild(tr);
                 });
@@ -1058,10 +1064,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td style="font-weight: 600; color: #0f172a;">${a.name || '—'}</td>
-                        <td style="white-space: nowrap; color: #475569;">${a.date || '—'}</td>
-                        <td><span style="font-weight: 600; color: #334155; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-size: 11px;">${currentStageName}</span></td>
-                        <td style="text-align: center;"><span class="placement-status-badge ${statusClass}">${statusLabel}</span></td>
+                        <td style="font-weight: 600; color: #0f172a; vertical-align: middle;">
+                            <div style="font-size: 0.9rem; line-height: 1.35;">${a.name || '—'}</div>
+                        </td>
+                        <td style="text-align: center; white-space: nowrap; color: #475569; font-size: 0.85rem; vertical-align: middle;">${a.date || '—'}</td>
+                        <td style="vertical-align: middle;">
+                            <span class="report-stage-badge">${currentStageName}</span>
+                        </td>
+                        <td style="text-align: center; vertical-align: middle;"><span class="placement-status-badge ${statusClass}">${statusLabel}</span></td>
                     `;
                     actsTbody.appendChild(tr);
                 });
@@ -1176,11 +1186,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td style="font-weight: 600; color: #0f172a;">${a.name || '—'}</td>
-                        <td><span class="jobrole-pill">${a.venue || '—'}</span></td>
-                        <td style="text-align: center; white-space: nowrap; color: #475569; font-size: 0.85rem;">${a.date || '—'}</td>
-                        <td><span style="font-weight: 600; color: #334155; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-size: 11px;">${currentStageName}</span></td>
-                        <td style="text-align: center;">${statusBadgeHtml}</td>
+                        <td style="font-weight: 600; color: #0f172a; vertical-align: middle;">
+                            <div style="font-size: 0.9rem; line-height: 1.35;">${a.name || '—'}</div>
+                        </td>
+                        <td style="vertical-align: middle;"><span class="jobrole-pill">${a.venue || '—'}</span></td>
+                        <td style="text-align: center; white-space: nowrap; color: #475569; font-size: 0.85rem; vertical-align: middle;">${a.date || '—'}</td>
+                        <td style="vertical-align: middle;">
+                            <span class="report-stage-badge">${currentStageName}</span>
+                        </td>
+                        <td style="text-align: center; vertical-align: middle;">${statusBadgeHtml}</td>
                     `;
                     recTbody.appendChild(tr);
                 });

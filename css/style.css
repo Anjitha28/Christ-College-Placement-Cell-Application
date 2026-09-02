@@ -3551,6 +3551,21 @@ select.form-control { cursor: pointer; }
     white-space: nowrap !important;
 }
 
+/* Report Stage Badge */
+.report-stage-badge {
+    font-weight: 600;
+    color: #1e293b;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
 /* Report Tables Inside Modal */
 .report-data-table {
     width: 100%;
@@ -3565,14 +3580,13 @@ select.form-control { cursor: pointer; }
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    padding: 0.85rem 1rem;
+    padding: 0.9rem 1.15rem;
     border-bottom: 1px solid #e2e8f0;
-    text-align: left;
     white-space: nowrap;
 }
 
 .report-data-table td {
-    padding: 0.85rem 1rem;
+    padding: 0.9rem 1.15rem;
     border-bottom: 1px solid #f1f5f9;
     font-size: 0.85rem;
     color: #1e293b;
@@ -3589,15 +3603,15 @@ select.form-control { cursor: pointer; }
 
 /* Section Specific Modal Table Minimum Widths inside .table-responsive */
 #reportTrainingTable {
-    min-width: 860px !important;
+    min-width: 820px !important;
 }
 
 #reportActivitiesTable {
-    min-width: 500px !important;
+    min-width: 620px !important;
 }
 
 #reportRecruitmentTable {
-    min-width: 650px !important;
+    min-width: 760px !important;
 }
 
 /* Empty State inside Modal Sections */
