@@ -2848,7 +2848,7 @@ select.form-control { cursor: pointer; }
 /* User Report Table specific column widths & typography */
 #userReportTable {
     width: 100%;
-    min-width: 860px;
+    min-width: 960px;
     border-collapse: collapse;
     margin-bottom: 0 !important;
     table-layout: auto;
@@ -2856,11 +2856,12 @@ select.form-control { cursor: pointer; }
 
 #userReportTable th,
 #userReportTable td {
-    padding: 0.95rem 1rem !important;
+    padding: 0.95rem 1.15rem !important;
     vertical-align: middle !important;
     font-size: 0.875rem !important;
     line-height: 1.45 !important;
     border-bottom: 1px solid #f1f5f9 !important;
+    text-align: left !important;
 }
 
 #userReportTable thead th {
@@ -2872,22 +2873,25 @@ select.form-control { cursor: pointer; }
     letter-spacing: 0.05em !important;
     border-bottom: 2px solid #e2e8f0 !important;
     white-space: nowrap !important;
+    text-align: left !important;
 }
 
 #userReportTable tbody tr:hover {
     background: #f8fafc !important;
 }
 
-/* Individual Column Widths & Word Break Controls */
+/* Individual Column Widths & Left Alignments */
 #userReportTable .ur-col-reg {
-    width: 130px;
-    min-width: 120px;
+    width: 14%;
+    min-width: 130px;
     white-space: nowrap !important;
     font-weight: 600;
     color: #0f172a;
+    text-align: left !important;
 }
 
 #userReportTable .ur-col-name {
+    width: 20%;
     min-width: 180px;
     word-break: normal !important;
     overflow-wrap: normal !important;
@@ -2895,42 +2899,47 @@ select.form-control { cursor: pointer; }
     font-weight: 600;
     color: #1e293b;
     line-height: 1.35;
+    text-align: left !important;
 }
 
 #userReportTable .ur-col-phone {
-    width: 140px;
-    min-width: 130px;
+    width: 14%;
+    min-width: 135px;
     white-space: nowrap !important;
     color: #475569;
+    text-align: left !important;
 }
 
 #userReportTable .ur-col-mail {
+    width: 22%;
     min-width: 200px;
     word-break: break-word !important;
     overflow-wrap: anywhere !important;
     color: #475569;
     font-size: 0.85rem !important;
+    text-align: left !important;
 }
 
 #userReportTable .ur-col-class {
-    width: 110px;
-    min-width: 100px;
+    width: 12%;
+    min-width: 120px;
     white-space: nowrap !important;
     color: #334155;
+    text-align: left !important;
 }
 
 #userReportTable .ur-col-year {
-    width: 100px;
+    width: 8%;
     min-width: 90px;
     white-space: nowrap !important;
     color: #334155;
-    text-align: center;
+    text-align: left !important;
 }
 
 #userReportTable .ur-col-action {
-    width: 150px;
-    min-width: 140px;
-    text-align: center;
+    width: 10%;
+    min-width: 135px;
+    text-align: left !important;
     white-space: nowrap !important;
 }
 
@@ -3703,7 +3712,7 @@ select.form-control { cursor: pointer; }
     #userReportTable .ur-col-action {
         min-width: 0 !important;
         width: auto !important;
-        text-align: center !important;
+        text-align: left !important;
     }
 
     .btn-view-report {
