@@ -64,6 +64,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         modal.style.opacity = '1';
     };
 
+    // Selection Phase identification helpers
+    window.isSelectedPhase = function(phase) {
+        if (!phase) return false;
+        if (phase.isSelectedPhase === true || phase.isSelectedPhase === 'true') return true;
+        const name = (phase.name || '').trim().toLowerCase();
+        return name === 'selected phase' || name === 'selected' || name === 'final selection' || name === 'final selected phase';
+    };
+
+    window.getSelectedPhase = function(activity) {
+        if (!activity || !activity.phases || activity.phases.length === 0) return null;
+        return activity.phases.find(p => window.isSelectedPhase(p)) || null;
+    };
+
     window.closeModal = function(modal) {
         if (!modal) return;
         modal.style.opacity = '0';
@@ -1063,6 +1076,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 studentRecruitments.forEach(a => {
                     const phases = a.phases || [];
                     const hasPhases = phases.length > 0;
+                    const selPhase = window.getSelectedPhase(a);
 
                     let isPlaced = false;
                     let isProcessing = false;
@@ -1071,47 +1085,52 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let attendedRounds = 0;
 
                     if (hasPhases) {
-                        const finalPhase = phases[phases.length - 1];
-                        isPlaced = (finalPhase.completions || []).includes(regNo);
+                        if (selPhase) {
+                            isPlaced = (selPhase.completions || []).includes(regNo);
+                        } else {
+                            isPlaced = false;
+                        }
 
                         const clearedPhases = phases.filter(ph => (ph.completions || []).includes(regNo));
                         attendedRounds = clearedPhases.length;
                         if (attendedRounds > 0) countCompaniesAttended++;
 
-                        if (isPlaced) {
-                            currentStageName = finalPhase.name || 'Selected';
+                        if (isPlaced && selPhase) {
+                            currentStageName = selPhase.name || 'Selected Phase';
                         } else {
                             // Find highest cleared phase
                             let highestClearedIdx = -1;
                             for (let i = 0; i < phases.length; i++) {
                                 if ((phases[i].completions || []).includes(regNo)) {
                                     highestClearedIdx = i;
+                                } else {
+                                    break;
                                 }
                             }
 
-                            if (highestClearedIdx >= 0) {
-                                const nextPhaseIdx = highestClearedIdx + 1;
-                                if (nextPhaseIdx < phases.length) {
-                                    const nextPhase = phases[nextPhaseIdx];
-                                    const nextHasResults = (nextPhase.completions || []).length > 0;
-                                    currentStageName = nextPhase.name;
-                                    if (nextHasResults) {
-                                        isNotPlaced = true;
-                                    } else {
-                                        isProcessing = true;
-                                    }
-                                } else {
-                                    isPlaced = true;
-                                }
-                            } else {
+                            if (highestClearedIdx === -1) {
                                 const firstPhase = phases[0];
                                 const firstHasResults = (firstPhase.completions || []).length > 0;
                                 currentStageName = firstPhase.name || 'Registered';
-                                if (firstHasResults) {
+                                if (firstHasResults && !(firstPhase.completions || []).includes(regNo)) {
                                     isNotPlaced = true;
                                 } else {
                                     isProcessing = true;
                                 }
+                            } else if (highestClearedIdx < phases.length - 1) {
+                                const nextPhaseIdx = highestClearedIdx + 1;
+                                const nextPhase = phases[nextPhaseIdx];
+                                currentStageName = nextPhase.name;
+                                const nextHasResults = (nextPhase.completions || []).length > 0;
+                                if (nextHasResults && !(nextPhase.completions || []).includes(regNo)) {
+                                    isNotPlaced = true;
+                                } else {
+                                    isProcessing = true;
+                                }
+                            } else {
+                                // Cleared all phases, but no Selected Phase configured/passed
+                                currentStageName = phases[phases.length - 1].name;
+                                isProcessing = true;
                             }
                         }
                     } else {
@@ -2843,11 +2862,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         recruitmentActivities.forEach(a => {
             const hasPhases = a.phases && a.phases.length > 0;
             if (hasPhases) {
-                const finalPhase = a.phases[a.phases.length - 1];
-                (finalPhase.completions || []).forEach(reg => placedSet.add(reg));
+                const selPhase = window.getSelectedPhase(a);
+                if (selPhase) {
+                    (selPhase.completions || []).forEach(reg => placedSet.add(reg));
+                }
                 
                 a.phases.forEach(ph => {
-                    if (ph !== finalPhase) {
+                    if (!selPhase || ph.id !== selPhase.id) {
                         (ph.completions || []).forEach(reg => {
                             if (!placedSet.has(reg)) inProcessSet.add(reg);
                         });
@@ -2902,11 +2923,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 
                 if (a.phases && a.phases.length > 0) {
-                    const finalPhase = a.phases[a.phases.length - 1];
-                    (finalPhase.completions || []).forEach(reg => {
-                        if (!studentPlacementMap[reg]) studentPlacementMap[reg] = [];
-                        if (!studentPlacementMap[reg].includes(a.name)) studentPlacementMap[reg].push(a.name);
-                    });
+                    const selPhase = window.getSelectedPhase(a);
+                    if (selPhase) {
+                        (selPhase.completions || []).forEach(reg => {
+                            if (!studentPlacementMap[reg]) studentPlacementMap[reg] = [];
+                            if (!studentPlacementMap[reg].includes(a.name)) studentPlacementMap[reg].push(a.name);
+                        });
+                    }
                 }
             });
 
@@ -3309,6 +3332,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (form) form.reset();
             const desc = document.getElementById('phaseDesc');
             if (desc) desc.innerHTML = '';
+            const selCb = document.getElementById('phaseIsSelectedPhase');
+            if (selCb) selCb.checked = false;
             document.getElementById('modalTitle').textContent = 'Add Selection Phase';
             
             // Ensure submit button is re-enabled if previously stuck
@@ -3328,11 +3353,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             try {
                 const phaseModeInput = document.querySelector('input[name="phaseMode"]:checked');
+                const phaseNameVal = document.getElementById('phaseName').value;
+                const isSelectedChecked = document.getElementById('phaseIsSelectedPhase')?.checked || false;
+                const isSelPhase = isSelectedChecked || window.isSelectedPhase({ name: phaseNameVal });
+
                 const phase = {
-                    name: document.getElementById('phaseName').value,
+                    name: phaseNameVal,
                     description: document.getElementById('phaseDesc').innerHTML,
                     lastDate: document.getElementById('phaseLastDate').value,
-                    mode: phaseModeInput ? phaseModeInput.value : 'admin'
+                    mode: phaseModeInput ? phaseModeInput.value : 'admin',
+                    isSelectedPhase: isSelPhase
                 };
 
                 let result;
@@ -3349,6 +3379,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     phaseForm.reset();
                     document.getElementById('phaseDesc').innerHTML = '';
+                    const selCb = document.getElementById('phaseIsSelectedPhase');
+                    if (selCb) selCb.checked = false;
                     closeModal(document.getElementById('phaseModal'));
                     
                     const activeTab = document.querySelector('.m-sub-tab.active');
@@ -3380,6 +3412,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('phaseLastDate').value = p.lastDate;
         const radios = document.querySelectorAll('input[name="phaseMode"]');
         radios.forEach(r => { if(r.value === p.mode) r.checked = true; });
+
+        const selCb = document.getElementById('phaseIsSelectedPhase');
+        if (selCb) {
+            selCb.checked = window.isSelectedPhase(p);
+        }
 
         document.getElementById('modalTitle').textContent = 'Edit Selection Phase';
         openModal(document.getElementById('phaseModal'));
@@ -3524,9 +3561,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         currentActivity.phases.forEach((p, idx) => {
+            const isFinalSelected = window.isSelectedPhase(p);
             const card = document.createElement('div');
             card.className = 'phase-card-item';
-            card.style.borderLeft = `5px solid ${idx % 2 === 0 ? '#0D6EFC' : '#6366f1'}`;
+            card.style.borderLeft = isFinalSelected ? '5px solid #10b981' : `5px solid ${idx % 2 === 0 ? '#0D6EFC' : '#6366f1'}`;
             
             card.innerHTML = `
                 <div class="phase-card-grid">
@@ -3535,6 +3573,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
                             <span class="badge bg-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">Phase ${idx + 1}</span>
                             <strong style="color: #111827; font-size: 0.95rem;">${p.name}</strong>
+                            ${isFinalSelected ? '<span class="badge" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 700;">★ Final Selection (Selected Phase)</span>' : ''}
                         </div>
                         <div class="text-muted small" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35;">${p.description || 'No description provided.'}</div>
                     </div>
@@ -3556,7 +3595,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <!-- Column 4: Qualified -->
                     <div>
                         <div style="font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 2px;">QUALIFIED</div>
-                        <div style="font-size: 1rem; font-weight: 700; color: #0D6EFC;">${(p.completions || []).length}</div>
+                        <div style="font-size: 1rem; font-weight: 700; color: ${isFinalSelected ? '#047857' : '#0D6EFC'};">${(p.completions || []).length}</div>
                     </div>
 
                     <!-- Column 5: Actions -->
@@ -3631,28 +3670,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const phases = currentActivity.phases || [];
+        const selPhase = (phases || []).find(p => window.isSelectedPhase(p));
+        const selPhaseIdx = selPhase ? phases.findIndex(p => p.id === selPhase.id) : -1;
 
         registered.forEach(s => {
             let highestClearedIdx = -1;
-            phases.forEach((p, idx) => {
-                if ((p.completions || []).includes(s.registerNumber)) {
-                    highestClearedIdx = idx;
+            for (let i = 0; i < phases.length; i++) {
+                if ((phases[i].completions || []).includes(s.registerNumber)) {
+                    highestClearedIdx = i;
+                } else {
+                    break;
                 }
-            });
+            }
 
             let currentStage = 'Registered';
-            let status = 'Registered';
+            let status = 'In Progress';
             let statusClass = 'status-pending';
             let stagePillClass = 'stage-pill-registered';
 
             if (phases.length === 0) {
                 currentStage = 'Registered';
-                status = 'Registered';
+                status = 'In Progress';
                 statusClass = 'status-pending';
                 stagePillClass = 'stage-pill-registered';
-            } else if (highestClearedIdx === phases.length - 1) {
-                // All phases completed
-                currentStage = phases[phases.length - 1].name;
+            } else if (selPhaseIdx !== -1 && highestClearedIdx >= selPhaseIdx) {
+                // Student has passed the explicitly configured Selected Phase!
+                currentStage = selPhase.name;
                 status = 'Final Qualified';
                 statusClass = 'status-qualified';
                 stagePillClass = 'stage-pill-final';
@@ -3668,13 +3711,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     status = 'In Progress';
                     statusClass = 'status-pending';
-                    stagePillClass = '';
+                    stagePillClass = window.isSelectedPhase(phases[0]) ? 'stage-pill-selected-phase' : '';
                 }
-            } else {
+            } else if (highestClearedIdx < phases.length - 1) {
                 // Cleared highestClearedIdx, currently in next active phase
                 const nextPhaseIdx = highestClearedIdx + 1;
-                currentStage = phases[nextPhaseIdx].name;
-                const nextPhaseCompletions = phases[nextPhaseIdx].completions || [];
+                const nextPhase = phases[nextPhaseIdx];
+                currentStage = nextPhase.name;
+                const nextPhaseCompletions = nextPhase.completions || [];
                 const laterDeclarations = phases.slice(nextPhaseIdx).some(p => (p.completions || []).length > 0);
                 if (laterDeclarations && !nextPhaseCompletions.includes(s.registerNumber)) {
                     status = 'Rejected';
@@ -3683,8 +3727,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     status = 'In Progress';
                     statusClass = 'status-pending';
-                    stagePillClass = '';
+                    stagePillClass = window.isSelectedPhase(nextPhase) ? 'stage-pill-selected-phase' : '';
                 }
+            } else {
+                // Cleared all normal phases, but no Selected Phase was configured or passed
+                currentStage = phases[phases.length - 1].name;
+                status = 'In Progress';
+                statusClass = 'status-pending';
+                stagePillClass = '';
             }
 
             const tr = document.createElement('tr');

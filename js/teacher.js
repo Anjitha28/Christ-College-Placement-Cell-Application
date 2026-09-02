@@ -174,12 +174,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (a.phases && a.phases.length > 0) {
-            const finalPhase = a.phases[a.phases.length - 1];
-            (finalPhase.completions || []).forEach(reg => {
-                if(students.find(s => s.registerNumber === reg)) {
-                    placedSet.add(reg);
-                }
-            });
+            const selPhase = (a.phases || []).find(p => p.isSelectedPhase === true || p.isSelectedPhase === 'true' || (p.name || '').trim().toLowerCase() === 'selected phase' || (p.name || '').trim().toLowerCase() === 'selected');
+            if (selPhase) {
+                (selPhase.completions || []).forEach(reg => {
+                    if(students.find(s => s.registerNumber === reg)) {
+                        placedSet.add(reg);
+                    }
+                });
+            }
         }
         (a.registeredStudents || a.registrations || []).forEach(reg => {
             if(students.find(s => s.registerNumber === reg)) {
@@ -302,11 +304,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 else studentActivitiesCount[reg] = (studentActivitiesCount[reg] || 0) + 1;
             });
             if (a.phases && a.phases.length > 0) {
-                const finalPhase = a.phases[a.phases.length - 1];
-                (finalPhase.completions || []).forEach(reg => {
-                    if (!studentPlacementMap[reg]) studentPlacementMap[reg] = [];
-                    if (!studentPlacementMap[reg].includes(a.name)) studentPlacementMap[reg].push(a.name);
-                });
+                const selPhase = (a.phases || []).find(p => p.isSelectedPhase === true || p.isSelectedPhase === 'true' || (p.name || '').trim().toLowerCase() === 'selected phase' || (p.name || '').trim().toLowerCase() === 'selected');
+                if (selPhase) {
+                    (selPhase.completions || []).forEach(reg => {
+                        if (!studentPlacementMap[reg]) studentPlacementMap[reg] = [];
+                        if (!studentPlacementMap[reg].includes(a.name)) studentPlacementMap[reg].push(a.name);
+                    });
+                }
             }
         });
 

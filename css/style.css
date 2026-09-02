@@ -1128,6 +1128,12 @@ h3 {
     border: 1px solid #a7f3d0;
 }
 
+.stage-pill-selected-phase {
+    background: #f0fdf4 !important;
+    color: #15803d !important;
+    border: 1px solid #86efac;
+}
+
 .stage-pill-dropped {
     background: #fef2f2 !important;
     color: #991b1b !important;

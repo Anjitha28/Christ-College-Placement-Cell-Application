@@ -719,10 +719,16 @@ class Database {
         if (index === -1) return { success: false, message: 'Activity not found.' };
         
         phase.id = 'PHS' + Date.now();
-        phase.completions = [];
+        phase.completions = phase.completions || [];
         
         const activity = this.cache.placementActivities[index];
         activity.phases = activity.phases || [];
+
+        // If newly added phase is marked as Selected Phase, unmark others
+        if (phase.isSelectedPhase) {
+            activity.phases.forEach(p => { p.isSelectedPhase = false; });
+        }
+        
         activity.phases.push(phase);
         
         const res = await this.sync("Activity", activity);
@@ -739,6 +745,13 @@ class Database {
         const activity = this.cache.placementActivities[actIndex];
         const phIndex = activity.phases.findIndex(p => p.id === phaseId);
         if (phIndex === -1) return { success: false, message: 'Phase not found.' };
+
+        // If updated phase is marked as Selected Phase, unmark others
+        if (updatedData.isSelectedPhase) {
+            activity.phases.forEach(p => {
+                if (p.id !== phaseId) p.isSelectedPhase = false;
+            });
+        }
         
         activity.phases[phIndex] = { ...activity.phases[phIndex], ...updatedData };
         
