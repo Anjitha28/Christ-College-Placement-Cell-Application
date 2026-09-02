@@ -3532,11 +3532,11 @@ select.form-control { cursor: pointer; }
 }
 
 #reportActivitiesTable {
-    min-width: 820px !important;
+    min-width: 500px !important;
 }
 
 #reportRecruitmentTable {
-    min-width: 980px !important;
+    min-width: 650px !important;
 }
 
 /* Empty State inside Modal Sections */
