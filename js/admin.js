@@ -449,7 +449,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${s.gender}</td>
                 <td>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-secondary btn-sm" onclick="viewStudent('${s.registerNumber}')" title="View">
+                        <button class="btn btn-secondary btn-sm btn-action-eye" onclick="viewStudent('${s.registerNumber}')" title="View Student Details">
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
                         </button>
                         <button class="btn btn-secondary btn-sm" onclick="editStudent('${s.registerNumber}')" title="Edit">
@@ -500,23 +500,69 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // View Student Function
+    // Close Student Detail Modal
+    window.closeStudentDetailModal = () => {
+        const modal = document.getElementById('studentDetailModal');
+        if (modal) modal.classList.add('hidden');
+    };
+
+    // View Student Function (Eye icon in User Management -> Action)
     window.viewStudent = (regNo) => {
         const students = db.getStudents();
         const s = students.find(std => std.registerNumber === regNo);
-        if(s) {
+        if (s) {
+            const nameEl = document.getElementById('studentDetailModalName');
+            const subEl = document.getElementById('studentDetailModalSub');
+            if (nameEl) nameEl.textContent = s.name || 'Student Profile';
+            if (subEl) subEl.textContent = `Reg No: ${s.registerNumber || '—'}${s.isCoordinator === true || s.isCoordinator === 'true' ? ' • [Student Coordinator]' : ''}`;
+
             const container = document.getElementById('studentDetailContent');
-            container.innerHTML = `
-                <div><label class="small text-muted">Full Name</label><p><strong>${s.name}</strong></p></div>
-                <div><label class="small text-muted">Register No</label><p><strong>${s.registerNumber}</strong></p></div>
-                <div><label class="small text-muted">Course</label><p><strong>${s.course}</strong></p></div>
-                <div><label class="small text-muted">Department</label><p><strong>${s.department}</strong></p></div>
-                <div><label class="small text-muted">Admission Year</label><p><strong>${s.admissionYear || '—'}</strong></p></div>
-                <div><label class="small text-muted">Phone</label><p><strong>${s.phoneNumber}</strong></p></div>
-                <div><label class="small text-muted">Email</label><p><strong>${s.mailId}</strong></p></div>
-                <div><label class="small text-muted">Gender</label><p><strong>${s.gender}</strong></p></div>
-            `;
-            openModal(document.getElementById('studentDetailModal'));
+            if (container) {
+                container.innerHTML = `
+                    <div class="student-info-grid">
+                        <div class="student-info-tile">
+                            <span class="info-tile-label">Registration No</span>
+                            <span class="info-tile-val">${s.registerNumber || '—'}</span>
+                        </div>
+                        <div class="student-info-tile">
+                            <span class="info-tile-label">Full Name</span>
+                            <span class="info-tile-val">${s.name || '—'}</span>
+                        </div>
+                        <div class="student-info-tile">
+                            <span class="info-tile-label">Course</span>
+                            <span class="info-tile-val">${s.course || '—'}</span>
+                        </div>
+                        <div class="student-info-tile">
+                            <span class="info-tile-label">Department</span>
+                            <span class="info-tile-val">${s.department || '—'}</span>
+                        </div>
+                        <div class="student-info-tile">
+                            <span class="info-tile-label">Class / Section</span>
+                            <span class="info-tile-val">${s.class || '—'}</span>
+                        </div>
+                        <div class="student-info-tile">
+                            <span class="info-tile-label">Admission Year</span>
+                            <span class="info-tile-val">${s.admissionYear || '—'}</span>
+                        </div>
+                        <div class="student-info-tile">
+                            <span class="info-tile-label">Email Address</span>
+                            <span class="info-tile-val" style="word-break: break-all;">${s.mailId || s.email || '—'}</span>
+                        </div>
+                        <div class="student-info-tile">
+                            <span class="info-tile-label">Phone Number</span>
+                            <span class="info-tile-val">${s.phoneNumber || s.phone || '—'}</span>
+                        </div>
+                        <div class="student-info-tile span-2">
+                            <span class="info-tile-label">Gender</span>
+                            <span class="info-tile-val" style="text-transform: capitalize;">${s.gender || '—'}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            const modal = document.getElementById('studentDetailModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
         }
     };
 
@@ -656,7 +702,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (filtered.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="10" class="text-center py-5">
+                    <td colspan="7" class="text-center py-5">
                         <div class="report-empty-state">
                             <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/><path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z"/></svg>
                             <h5 style="color: #1e293b; font-weight: 600; margin-bottom: 0.25rem;">No Student Records Found</h5>
@@ -682,19 +728,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             const tr = document.createElement('tr');
             const isCoord = s.isCoordinator === true || s.isCoordinator === 'true';
             tr.innerHTML = `
-                <td>${s.registerNumber || '—'}</td>
-                <td>
-                    ${s.name || '—'}
+                <td class="ur-col-reg">${s.registerNumber || '—'}</td>
+                <td class="ur-col-name">
+                    <span style="font-weight: 600; color: #0f172a;">${s.name || '—'}</span>
                     ${isCoord ? '<span class="coord-badge" style="font-size: 10px; margin-left: 4px;">Coord</span>' : ''}
                 </td>
-                <td>${s.phoneNumber || s.phone || '—'}</td>
-                <td>${s.mailId || s.email || '—'}</td>
-                <td>${s.course || '—'}</td>
-                <td>${s.department || '—'}</td>
-                <td>${s.class || '—'}</td>
-                <td>${s.admissionYear || '—'}</td>
-                <td>${s.gender || '—'}</td>
-                <td>
+                <td class="ur-col-phone">${s.phoneNumber || s.phone || '—'}</td>
+                <td class="ur-col-mail">${s.mailId || s.email || '—'}</td>
+                <td class="ur-col-class">${s.class || '—'}</td>
+                <td class="ur-col-year">${s.admissionYear || '—'}</td>
+                <td class="ur-col-action">
                     <button type="button" class="btn-view-report" onclick="openStudentReportModal('${s.registerNumber}')" title="View Performance Report for ${s.name || s.registerNumber}">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
                         View Report
@@ -1102,9 +1145,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Close modal when clicking outside or pressing Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            const modal = document.getElementById('studentReportModal');
-            if (modal && !modal.classList.contains('hidden')) {
+            const reportModal = document.getElementById('studentReportModal');
+            if (reportModal && !reportModal.classList.contains('hidden')) {
                 closeStudentReportModal();
+            }
+            const detailModal = document.getElementById('studentDetailModal');
+            if (detailModal && !detailModal.classList.contains('hidden')) {
+                closeStudentDetailModal();
             }
         }
     });
@@ -1114,6 +1161,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         reportModalEl.addEventListener('click', (e) => {
             if (e.target === reportModalEl) {
                 closeStudentReportModal();
+            }
+        });
+    }
+
+    const detailModalEl = document.getElementById('studentDetailModal');
+    if (detailModalEl) {
+        detailModalEl.addEventListener('click', (e) => {
+            if (e.target === detailModalEl) {
+                closeStudentDetailModal();
             }
         });
     }

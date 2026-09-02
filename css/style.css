@@ -2807,7 +2807,7 @@ select.form-control { cursor: pointer; }
 /* User Report Table specific column widths & typography */
 #userReportTable {
     width: 100%;
-    min-width: 1420px !important; /* Total sum of recommended minimum widths */
+    min-width: 860px;
     border-collapse: collapse;
     margin-bottom: 0 !important;
     table-layout: auto;
@@ -2837,20 +2837,17 @@ select.form-control { cursor: pointer; }
     background: #f8fafc !important;
 }
 
-/* Individual Column Recommended Minimum Widths & Word Break Controls */
-#userReportTable th:nth-child(1),
-#userReportTable td:nth-child(1) {
-    min-width: 110px !important;
-    width: 110px;
+/* Individual Column Widths & Word Break Controls */
+#userReportTable .ur-col-reg {
+    width: 130px;
+    min-width: 120px;
     white-space: nowrap !important;
     font-weight: 600;
     color: #0f172a;
 }
 
-#userReportTable th:nth-child(2),
-#userReportTable td:nth-child(2) {
-    min-width: 180px !important;
-    width: 180px;
+#userReportTable .ur-col-name {
+    min-width: 180px;
     word-break: normal !important;
     overflow-wrap: normal !important;
     white-space: normal !important;
@@ -2859,79 +2856,102 @@ select.form-control { cursor: pointer; }
     line-height: 1.35;
 }
 
-#userReportTable th:nth-child(3),
-#userReportTable td:nth-child(3) {
-    min-width: 130px !important;
-    width: 130px;
+#userReportTable .ur-col-phone {
+    width: 140px;
+    min-width: 130px;
     white-space: nowrap !important;
     color: #475569;
 }
 
-#userReportTable th:nth-child(4),
-#userReportTable td:nth-child(4) {
-    min-width: 220px !important;
-    width: 220px;
+#userReportTable .ur-col-mail {
+    min-width: 200px;
     word-break: break-word !important;
     overflow-wrap: anywhere !important;
     color: #475569;
     font-size: 0.85rem !important;
 }
 
-#userReportTable th:nth-child(5),
-#userReportTable td:nth-child(5) {
-    min-width: 200px !important;
-    width: 200px;
-    word-break: normal !important;
-    overflow-wrap: normal !important;
-    white-space: normal !important;
-    color: #334155;
-    line-height: 1.35;
-}
-
-#userReportTable th:nth-child(6),
-#userReportTable td:nth-child(6) {
-    min-width: 150px !important;
-    width: 150px;
-    word-break: normal !important;
-    overflow-wrap: normal !important;
-    white-space: normal !important;
-    color: #334155;
-}
-
-#userReportTable th:nth-child(7),
-#userReportTable td:nth-child(7) {
-    min-width: 130px !important;
-    width: 130px;
-    text-align: center;
+#userReportTable .ur-col-class {
+    width: 110px;
+    min-width: 100px;
     white-space: nowrap !important;
     color: #334155;
 }
 
-#userReportTable th:nth-child(8),
-#userReportTable td:nth-child(8) {
-    min-width: 140px !important;
-    width: 140px;
-    text-align: center;
-    white-space: nowrap !important;
-    color: #334155;
-}
-
-#userReportTable th:nth-child(9),
-#userReportTable td:nth-child(9) {
-    min-width: 100px !important;
+#userReportTable .ur-col-year {
     width: 100px;
-    text-align: center;
-    text-transform: capitalize;
+    min-width: 90px;
     white-space: nowrap !important;
     color: #334155;
+    text-align: center;
 }
 
-#userReportTable th:nth-child(10),
-#userReportTable td:nth-child(10) {
-    min-width: 160px !important;
-    width: 160px;
+#userReportTable .ur-col-action {
+    width: 150px;
+    min-width: 140px;
     text-align: center;
     white-space: nowrap !important;
+}
+
+/* User Management Eye Action Button */
+.btn-action-eye {
+    background: #eef2ff !important;
+    color: #4f46e5 !important;
+    border: 1px solid #c7d2fe !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.btn-action-eye:hover {
+    background: #4f46e5 !important;
+    color: #ffffff !important;
+    border-color: #4f46e5 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.25);
+}
+
+/* Student Detail Modal (User Management -> Action -> Eye Icon) */
+.student-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+}
+
+.student-info-tile {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    transition: all 0.15s ease;
+}
+
+.student-info-tile:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.student-info-tile.span-2 {
+    grid-column: span 2;
+}
+
+.info-tile-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+.info-tile-val {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.35;
 }
 
 /* User Report Action Button */
@@ -3587,6 +3607,55 @@ select.form-control { cursor: pointer; }
 
     .user-report-tab-container {
         padding: 1rem 0.85rem !important;
+    }
+
+    /* User Report Mobile Table - Only Name, Phone Number, Action */
+    .user-report-table-wrapper {
+        overflow-x: auto !important;
+        border-radius: 8px;
+    }
+
+    #userReportTable {
+        min-width: 100% !important;
+        width: 100% !important;
+        table-layout: auto !important;
+    }
+
+    .ur-col-reg,
+    .ur-col-mail,
+    .ur-col-class,
+    .ur-col-year {
+        display: none !important;
+    }
+
+    #userReportTable th,
+    #userReportTable td {
+        padding: 0.75rem 0.5rem !important;
+    }
+
+    #userReportTable .ur-col-name {
+        min-width: 0 !important;
+        font-size: 0.85rem !important;
+    }
+
+    #userReportTable .ur-col-phone {
+        min-width: 0 !important;
+        font-size: 0.8rem !important;
+        width: auto !important;
+        white-space: nowrap !important;
+    }
+
+    #userReportTable .ur-col-action {
+        min-width: 0 !important;
+        width: auto !important;
+        text-align: center !important;
+    }
+
+    .btn-view-report {
+        padding: 0.4rem 0.65rem !important;
+        font-size: 0.75rem !important;
+        min-height: 32px !important;
+        gap: 0.25rem !important;
     }
 
     .user-report-header {
