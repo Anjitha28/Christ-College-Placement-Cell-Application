@@ -3421,7 +3421,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const result = await db.updatePhaseCompletions(currentActivityId, phaseId, selected);
             if (result.success) {
                 closeModal(document.getElementById('declarationModal'));
-                openManagePlacementView(currentActivityId);
+                const activities = db.getPlacementActivities() || [];
+                currentActivity = activities.find(a => a.id === currentActivityId);
+                
+                const activeTab = document.querySelector('.m-sub-tab.active');
+                if (activeTab) {
+                    const tabId = activeTab.dataset.tab;
+                    if (tabId === 'phases') renderPhases();
+                    else if (tabId === 'funnel') renderFunnel();
+                    else if (tabId === 'students') renderStudentTracking();
+                } else {
+                    renderPhases();
+                }
             } else {
                 alert(result.message || 'Error updating qualifications.');
             }
@@ -3577,39 +3588,98 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(!list) return;
         list.innerHTML = '';
         
-        const students = db.getStudents();
+        // Refresh currentActivity from latest DB cache
+        if (currentActivityId) {
+            const activities = db.getPlacementActivities() || [];
+            const found = activities.find(a => a.id === currentActivityId);
+            if (found) currentActivity = found;
+        }
+
+        if (!currentActivity) return;
+
+        const students = db.getStudents() || [];
         const registered = students.filter(s => (currentActivity.registrations || []).includes(s.registerNumber));
 
         if (registered.length === 0) {
-            list.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-5">No registered students yet for this activity.</td></tr>';
+            list.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-5"><div class="empty-state"><svg viewBox="0 0 24 24" width="36" height="36" fill="#9ca3af"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg><h5 class="mt-2 mb-1" style="font-size: 0.95rem; color: #4b5563;">No Registered Students Found</h5><p class="small text-muted mb-0">No students have registered for this activity yet.</p></div></td></tr>';
             return;
         }
 
+        const phases = currentActivity.phases || [];
+
         registered.forEach(s => {
-            let currentPhaseIdx = -1;
-            (currentActivity.phases || []).forEach((p, i) => {
-                if ((p.completions || []).includes(s.registerNumber)) currentPhaseIdx = i;
+            let highestClearedIdx = -1;
+            phases.forEach((p, idx) => {
+                if ((p.completions || []).includes(s.registerNumber)) {
+                    highestClearedIdx = idx;
+                }
             });
 
-            const isQualified = currentActivity.phases && currentActivity.phases.length > 0 && currentPhaseIdx === currentActivity.phases.length - 1;
+            let currentStage = 'Registered';
+            let status = 'Registered';
+            let statusClass = 'status-pending';
+            let stagePillClass = 'stage-pill-registered';
+
+            if (phases.length === 0) {
+                currentStage = 'Registered';
+                status = 'Registered';
+                statusClass = 'status-pending';
+                stagePillClass = 'stage-pill-registered';
+            } else if (highestClearedIdx === phases.length - 1) {
+                // All phases completed
+                currentStage = phases[phases.length - 1].name;
+                status = 'Final Qualified';
+                statusClass = 'status-qualified';
+                stagePillClass = 'stage-pill-final';
+            } else if (highestClearedIdx === -1) {
+                // Registered, awaiting phase 0
+                currentStage = phases[0].name;
+                const phase0Completions = phases[0].completions || [];
+                const anyLaterDeclarations = phases.some(p => (p.completions || []).length > 0);
+                if (anyLaterDeclarations && !phase0Completions.includes(s.registerNumber)) {
+                    status = 'Rejected';
+                    statusClass = 'status-dropped';
+                    stagePillClass = 'stage-pill-dropped';
+                } else {
+                    status = 'In Progress';
+                    statusClass = 'status-pending';
+                    stagePillClass = '';
+                }
+            } else {
+                // Cleared highestClearedIdx, currently in next active phase
+                const nextPhaseIdx = highestClearedIdx + 1;
+                currentStage = phases[nextPhaseIdx].name;
+                const nextPhaseCompletions = phases[nextPhaseIdx].completions || [];
+                const laterDeclarations = phases.slice(nextPhaseIdx).some(p => (p.completions || []).length > 0);
+                if (laterDeclarations && !nextPhaseCompletions.includes(s.registerNumber)) {
+                    status = 'Rejected';
+                    statusClass = 'status-dropped';
+                    stagePillClass = 'stage-pill-dropped';
+                } else {
+                    status = 'In Progress';
+                    statusClass = 'status-pending';
+                    stagePillClass = '';
+                }
+            }
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
-                    <div style="font-weight: 600; color: #111827;">${s.name}</div>
+                    <div style="font-weight: 600; color: #111827; font-size: 0.92rem;">${s.name}</div>
                     <div class="text-muted small">${s.registerNumber}</div>
                 </td>
                 <td>
-                    <div class="small fw-semibold" style="color: #374151;">${s.course}</div>
-                    <div class="text-muted" style="font-size: 11px;">${s.department}</div>
+                    <div class="small fw-semibold" style="color: #374151;">${s.course || '—'}</div>
+                    <div class="text-muted" style="font-size: 11px;">${s.department || '—'}</div>
                 </td>
                 <td>
-                    <span class="badge ${currentPhaseIdx === -1 ? 'bg-light text-dark' : 'bg-primary-light text-primary'}" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">
-                        ${currentPhaseIdx === -1 ? 'Registered' : currentActivity.phases[currentPhaseIdx].name}
+                    <span class="stage-pill ${stagePillClass}">
+                        ${currentStage}
                     </span>
                 </td>
                 <td>
-                    <span class="status-pill ${isQualified ? 'status-qualified' : (currentPhaseIdx === -1 ? 'status-dropped' : 'status-pending')}">
-                        ${isQualified ? 'Final Qualified' : (currentPhaseIdx === -1 ? 'Registered' : 'In Progress')}
+                    <span class="status-pill ${statusClass}">
+                        ${status}
                     </span>
                 </td>
             `;
