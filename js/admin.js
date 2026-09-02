@@ -1826,14 +1826,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function populateTrainingFilterDropdowns(students, programs) {
-        const studentSel = document.getElementById('trainingFilterStudent');
         const courseSel = document.getElementById('trainingFilterCourse');
         const deptSel = document.getElementById('trainingFilterDept');
-
-        if (studentSel) {
-            const curVal = studentSel.value;
-            studentSel.innerHTML = '<option value="">All Students</option>' + students.map(s => `<option value="${s.registerNumber}" ${s.registerNumber === curVal ? 'selected' : ''}>${s.name || s.registerNumber} (${s.registerNumber})</option>`).join('');
-        }
 
         if (courseSel) {
             const curVal = courseSel.value;
@@ -1849,13 +1843,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function initTrainingFilterControls() {
-        const filterStudent = document.getElementById('trainingFilterStudent');
+        const searchStudent = document.getElementById('trainingSearchStudent');
         const filterCourse = document.getElementById('trainingFilterCourse');
         const filterDept = document.getElementById('trainingFilterDept');
         const filterDate = document.getElementById('trainingFilterDate');
         const resetBtn = document.getElementById('resetTrainingFiltersBtn');
 
-        [filterStudent, filterCourse, filterDept, filterDate].forEach(el => {
+        if (searchStudent && !searchStudent.dataset.initialized) {
+            searchStudent.dataset.initialized = 'true';
+            searchStudent.addEventListener('input', () => renderTrainingPrograms());
+        }
+
+        [filterCourse, filterDept, filterDate].forEach(el => {
             if (el && !el.dataset.initialized) {
                 el.dataset.initialized = 'true';
                 el.addEventListener('change', () => renderTrainingPrograms());
@@ -1865,7 +1864,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (resetBtn && !resetBtn.dataset.initialized) {
             resetBtn.dataset.initialized = 'true';
             resetBtn.addEventListener('click', () => {
-                if (filterStudent) filterStudent.value = '';
+                if (searchStudent) searchStudent.value = '';
                 if (filterCourse) filterCourse.value = '';
                 if (filterDept) filterDept.value = '';
                 if (filterDate) filterDate.value = '';
@@ -1884,15 +1883,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         populateTrainingFilterDropdowns(students, allPrograms);
 
-        const filterStudent = document.getElementById('trainingFilterStudent')?.value || '';
+        const searchStudent = (document.getElementById('trainingSearchStudent')?.value || '').toLowerCase().trim();
         const filterCourse = document.getElementById('trainingFilterCourse')?.value || '';
         const filterDept = document.getElementById('trainingFilterDept')?.value || '';
         const filterDate = document.getElementById('trainingFilterDate')?.value || '';
 
         let programs = allPrograms;
 
-        if (filterStudent) {
-            programs = programs.filter(p => (p.registrations || []).includes(filterStudent));
+        if (searchStudent) {
+            programs = programs.filter(p => {
+                const nameMatch = (p.name || '').toLowerCase().includes(searchStudent);
+                const regMatch = (p.registrations || []).some(reg => {
+                    const s = students.find(std => std.registerNumber === reg);
+                    return (s && (s.name || '').toLowerCase().includes(searchStudent)) || reg.toLowerCase().includes(searchStudent);
+                });
+                return nameMatch || regMatch;
+            });
         }
         if (filterCourse) {
             programs = programs.filter(p => {
@@ -2455,15 +2461,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     function populatePlacementFilterDropdowns(students, activities) {
         const actCourseSel = document.getElementById('actFilterCourse');
         const actDeptSel = document.getElementById('actFilterDept');
-        const actStudentSel = document.getElementById('actFilterStudent');
 
         const recCourseSel = document.getElementById('recFilterCourse');
         const recDeptSel = document.getElementById('recFilterDept');
-        const recStudentSel = document.getElementById('recFilterStudent');
 
         const courses = [...new Set(students.map(s => s.course).filter(Boolean))].sort();
         const depts = [...new Set(students.map(s => s.department).filter(Boolean))].sort();
-        const studentOpts = '<option value="">All Students</option>' + students.map(s => `<option value="${s.registerNumber}">${s.name || s.registerNumber} (${s.registerNumber})</option>`).join('');
         const courseOpts = '<option value="">All Courses</option>' + courses.map(c => `<option value="${c}">${c}</option>`).join('');
         const deptOpts = '<option value="">All Departments</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
 
@@ -2477,11 +2480,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             actDeptSel.innerHTML = deptOpts;
             if (val) actDeptSel.value = val;
         }
-        if (actStudentSel) {
-            const val = actStudentSel.value;
-            actStudentSel.innerHTML = studentOpts;
-            if (val) actStudentSel.value = val;
-        }
 
         if (recCourseSel) {
             const val = recCourseSel.value;
@@ -2493,29 +2491,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             recDeptSel.innerHTML = deptOpts;
             if (val) recDeptSel.value = val;
         }
-        if (recStudentSel) {
-            const val = recStudentSel.value;
-            recStudentSel.innerHTML = studentOpts;
-            if (val) recStudentSel.value = val;
-        }
     }
 
     function initPlacementFilterControls() {
+        const actSearch = document.getElementById('actSearchStudent');
         const actEligibility = document.getElementById('actFilterEligibility');
         const actCourse = document.getElementById('actFilterCourse');
         const actDept = document.getElementById('actFilterDept');
-        const actStudent = document.getElementById('actFilterStudent');
         const actDate = document.getElementById('actFilterDate');
         const resetActBtn = document.getElementById('resetActFiltersBtn');
 
+        const recSearch = document.getElementById('recSearchStudent');
         const recEligibility = document.getElementById('recFilterEligibility');
         const recCourse = document.getElementById('recFilterCourse');
         const recDept = document.getElementById('recFilterDept');
-        const recStudent = document.getElementById('recFilterStudent');
         const recDate = document.getElementById('recFilterDate');
         const resetRecBtn = document.getElementById('resetRecFiltersBtn');
 
-        [actEligibility, actCourse, actDept, actStudent, actDate].forEach(el => {
+        if (actSearch && !actSearch.dataset.initialized) {
+            actSearch.dataset.initialized = 'true';
+            actSearch.addEventListener('input', () => renderPlacementActivities());
+        }
+
+        [actEligibility, actCourse, actDept, actDate].forEach(el => {
             if (el && !el.dataset.initialized) {
                 el.dataset.initialized = 'true';
                 el.addEventListener('change', () => renderPlacementActivities());
@@ -2525,16 +2523,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (resetActBtn && !resetActBtn.dataset.initialized) {
             resetActBtn.dataset.initialized = 'true';
             resetActBtn.addEventListener('click', () => {
+                if (actSearch) actSearch.value = '';
                 if (actEligibility) actEligibility.value = '';
                 if (actCourse) actCourse.value = '';
                 if (actDept) actDept.value = '';
-                if (actStudent) actStudent.value = '';
                 if (actDate) actDate.value = '';
                 renderPlacementActivities();
             });
         }
 
-        [recEligibility, recCourse, recDept, recStudent, recDate].forEach(el => {
+        if (recSearch && !recSearch.dataset.initialized) {
+            recSearch.dataset.initialized = 'true';
+            recSearch.addEventListener('input', () => renderPlacementActivities());
+        }
+
+        [recEligibility, recCourse, recDept, recDate].forEach(el => {
             if (el && !el.dataset.initialized) {
                 el.dataset.initialized = 'true';
                 el.addEventListener('change', () => renderPlacementActivities());
@@ -2544,10 +2547,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (resetRecBtn && !resetRecBtn.dataset.initialized) {
             resetRecBtn.dataset.initialized = 'true';
             resetRecBtn.addEventListener('click', () => {
+                if (recSearch) recSearch.value = '';
                 if (recEligibility) recEligibility.value = '';
                 if (recCourse) recCourse.value = '';
                 if (recDept) recDept.value = '';
-                if (recStudent) recStudent.value = '';
                 if (recDate) recDate.value = '';
                 renderPlacementActivities();
             });
@@ -2562,13 +2565,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         populatePlacementFilterDropdowns(students, activities);
 
+        const actSearch = (document.getElementById('actSearchStudent')?.value || '').toLowerCase().trim();
         const actEligibility = document.getElementById('actFilterEligibility')?.value || '';
         const actCourse = document.getElementById('actFilterCourse')?.value || '';
         const actDept = document.getElementById('actFilterDept')?.value || '';
-        const actStudent = document.getElementById('actFilterStudent')?.value || '';
         const actDate = document.getElementById('actFilterDate')?.value || '';
 
         let placementList = activities.filter(a => a.type === 'placement' || !a.type);
+        if (actSearch) {
+            placementList = placementList.filter(a => {
+                const nameMatch = (a.name || '').toLowerCase().includes(actSearch);
+                const regMatch = (a.registrations || []).some(reg => {
+                    const s = students.find(std => std.registerNumber === reg);
+                    return (s && (s.name || '').toLowerCase().includes(actSearch)) || reg.toLowerCase().includes(actSearch);
+                });
+                const targetStudentMatch = a.target?.type === 'students' && (a.target.students || []).some(reg => {
+                    const s = students.find(std => std.registerNumber === reg);
+                    return (s && (s.name || '').toLowerCase().includes(actSearch)) || reg.toLowerCase().includes(actSearch);
+                });
+                return nameMatch || regMatch || targetStudentMatch;
+            });
+        }
         if (actEligibility) {
             if (actEligibility === 'all_eligible') placementList = placementList.filter(a => a.target.type === 'all');
             else if (actEligibility === 'targeted') placementList = placementList.filter(a => a.target.type !== 'all');
@@ -2594,9 +2611,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return targetMatch || regMatch;
             });
         }
-        if (actStudent) {
-            placementList = placementList.filter(a => (a.registrations || []).includes(actStudent) || (a.target.type === 'students' && (a.target.students || []).includes(actStudent)));
-        }
         if (actDate) {
             placementList = placementList.filter(a => {
                 if (a.date === actDate || a.lastDate === actDate) return true;
@@ -2605,13 +2619,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
+        const recSearch = (document.getElementById('recSearchStudent')?.value || '').toLowerCase().trim();
         const recEligibility = document.getElementById('recFilterEligibility')?.value || '';
         const recCourse = document.getElementById('recFilterCourse')?.value || '';
         const recDept = document.getElementById('recFilterDept')?.value || '';
-        const recStudent = document.getElementById('recFilterStudent')?.value || '';
         const recDate = document.getElementById('recFilterDate')?.value || '';
 
         let recruitmentList = activities.filter(a => a.type === 'recruitment');
+        if (recSearch) {
+            recruitmentList = recruitmentList.filter(a => {
+                const nameMatch = (a.name || '').toLowerCase().includes(recSearch) || (a.venue || '').toLowerCase().includes(recSearch);
+                const regMatch = (a.registrations || []).some(reg => {
+                    const s = students.find(std => std.registerNumber === reg);
+                    return (s && (s.name || '').toLowerCase().includes(recSearch)) || reg.toLowerCase().includes(recSearch);
+                });
+                const targetStudentMatch = a.target?.type === 'students' && (a.target.students || []).some(reg => {
+                    const s = students.find(std => std.registerNumber === reg);
+                    return (s && (s.name || '').toLowerCase().includes(recSearch)) || reg.toLowerCase().includes(recSearch);
+                });
+                return nameMatch || regMatch || targetStudentMatch;
+            });
+        }
         if (recEligibility) {
             if (recEligibility === 'all_eligible') recruitmentList = recruitmentList.filter(a => a.target.type === 'all');
             else if (recEligibility === 'targeted') recruitmentList = recruitmentList.filter(a => a.target.type !== 'all');
@@ -2636,9 +2664,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 return targetMatch || regMatch;
             });
-        }
-        if (recStudent) {
-            recruitmentList = recruitmentList.filter(a => (a.registrations || []).includes(recStudent) || (a.target.type === 'students' && (a.target.students || []).includes(recStudent)));
         }
         if (recDate) {
             recruitmentList = recruitmentList.filter(a => {
