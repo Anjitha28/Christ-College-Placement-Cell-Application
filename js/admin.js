@@ -983,7 +983,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <td style="color: #475569;">${p.trainer || p.venue || '—'}</td>
                         <td style="white-space: nowrap; color: #475569;">${p.date || '—'}</td>
                         <td style="white-space: nowrap; color: #475569;">${p.endDate || p.lastDate || '—'}</td>
-                        <td style="text-align: center;"><span class="badge-registered">Yes</span></td>
                         <td style="text-align: center; font-weight: 600; color: #1e293b;">${attnStr}</td>
                         <td style="text-align: center; font-weight: 700; color: #0D6EFC;">${attnPctStr}</td>
                         <td style="text-align: center;"><span class="placement-status-badge ${statusClass}">${statusLabel}</span></td>
@@ -1180,7 +1179,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <td style="font-weight: 600; color: #0f172a;">${a.name || '—'}</td>
                         <td><span class="jobrole-pill">${a.venue || '—'}</span></td>
                         <td style="text-align: center; white-space: nowrap; color: #475569; font-size: 0.85rem;">${a.date || '—'}</td>
-                        <td style="text-align: center;"><span class="badge-registered">Yes</span></td>
                         <td><span style="font-weight: 600; color: #334155; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-size: 11px;">${currentStageName}</span></td>
                         <td style="text-align: center;">${statusBadgeHtml}</td>
                     `;
