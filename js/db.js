@@ -232,6 +232,13 @@ function toJSClassIncharge(row) {
 class Database {
     constructor() {
         this.client = null;
+        const DB_VERSION = 'v2_clean_slate';
+        if (typeof localStorage !== 'undefined') {
+            if (localStorage.getItem('db_version') !== DB_VERSION) {
+                localStorage.removeItem('db_cache');
+                localStorage.setItem('db_version', DB_VERSION);
+            }
+        }
         this.cache = {
             students: [],
             teachers: [],
@@ -309,11 +316,6 @@ class Database {
             this.cache.exams = (examsData || []).map(toJSExam);
             this.cache.examAttempts = attemptsData || [];
 
-            if (this.cache.students.length === 0 && this.cache.teachers.length === 0) {
-                console.warn("Supabase returned empty tables, loading sample data for testing.");
-                this.loadSampleData();
-            }
-
             console.log("Supabase initialization complete.");
             
             // Backup to LocalStorage
@@ -332,12 +334,6 @@ class Database {
             try {
                 this.cache = JSON.parse(backup);
             } catch(e) {}
-        }
-        
-        // If cache is still empty after checking local storage, load sample data
-        if (!this.cache || !this.cache.students || this.cache.students.length === 0 || !this.cache.teachers || this.cache.teachers.length === 0) {
-            console.log("Cache is empty. Seeding sample data...");
-            this.loadSampleData();
         }
     }
 
@@ -1359,45 +1355,7 @@ class Database {
 
     // --- Seeding ---
     loadSampleData() {
-        this.cache.students = [
-            { name: "Arjun Mehta", registerNumber: "CC_CS_01", phoneNumber: "9876500001", mailId: "arjun@christ.edu", course: "BCA", department: "Computer Science", class: "1 BCA A", gender: "Male", password: "password", isCoordinator: true },
-            { name: "Diya Sharma", registerNumber: "CC_CS_02", phoneNumber: "9876500002", mailId: "diya@christ.edu", course: "B.Sc CS", department: "Computer Science", class: "2 BSc CS A", gender: "Female", password: "password", isCoordinator: false },
-            { name: "Meera Nair", registerNumber: "CC_CS_04", phoneNumber: "9876500004", mailId: "meera@christ.edu", course: "B.Sc CS", department: "Computer Science", class: "2 BSc CS A", gender: "Female", password: "password", isCoordinator: false },
-            { name: "Siddharth V", registerNumber: "CC_CM_01", phoneNumber: "9876500005", mailId: "sid@christ.edu", course: "B.Com", department: "Commerce", class: "3 BCom B", gender: "Male", password: "password", isCoordinator: false },
-            { name: "Ananya S", registerNumber: "CC_CM_04", phoneNumber: "9876500008", mailId: "ananya@christ.edu", course: "B.Com", department: "Commerce", class: "3 BCom B", gender: "Female", password: "password", isCoordinator: false }
-        ];
-
-        this.cache.teachers = [
-            { name: "Dr. Mahesh Kumar", phoneNumber: "9876599999", mailId: "mahesh@christ.edu", department: "Computer Science", password: "password", isCoordinator: true },
-            { name: "Prof. Priya Sen", phoneNumber: "9876588888", mailId: "priya@christ.edu", department: "Commerce", password: "password", isCoordinator: false }
-        ];
-
-        this.cache.trainingPrograms = [
-            {
-                id: 'TRN_001', name: 'Soft Skills Mastery', venue: 'Auditorium', date: '2026-06-01', endDate: '2026-06-05',
-                description: '<b>Corporate communication</b> training.', target: { type: 'all' },
-                registrations: ['CC_CS_01', 'CC_CS_02', 'CC_CM_01'],
-                sessions: [{ id: 'sess_1', date: '2026-06-01', time: '10:00 AM', attendance: ['CC_CS_01', 'CC_CS_02'] }],
-                batches: [], feedbacks: []
-            }
-        ];
-
-        this.cache.placementActivities = [
-            {
-                id: 'PLC_001', name: 'Google Recruitment', venue: 'Virtual', date: '2026-07-15', lastDate: '2026-07-20',
-                description: 'Software Engineer role.', type: 'recruitment', target: { type: 'all' },
-                registrations: ['CC_CS_01', 'CC_CS_02'],
-                phases: [
-                    { id: 'PHS_1', name: 'Technical', completions: ['CC_CS_01', 'CC_CS_02'] },
-                    { id: 'PHS_2', name: 'Final', completions: ['CC_CS_01', 'CC_CS_02'] }
-                ]
-            }
-        ];
-
-        this.cache.classIncharges = [
-            { className: '1 BCA A', incharge: 'Dr. Mahesh Kumar' },
-            { className: '3 BCom B', incharge: 'Prof. Priya Sen' }
-        ];
+        // Disabled: Database starts fresh with clean slate
     }
 }
 
