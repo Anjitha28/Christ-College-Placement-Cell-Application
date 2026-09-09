@@ -186,6 +186,8 @@ function toJSPlacementActivity(row) {
 
 function toSQLExam(e) {
     if (!e) return null;
+    const targetObj = e.target ? { ...e.target } : { type: 'all' };
+    targetObj.allowRetake = e.allowRetake !== false;
     return {
         id: e.id,
         title: e.title,
@@ -193,12 +195,15 @@ function toSQLExam(e) {
         pass_mark: e.passMark ? parseInt(e.passMark) : 40,
         negative: e.negative ? parseFloat(e.negative) : 0,
         questions: e.questions || [],
-        target: e.target || { type: 'all' }
+        target: targetObj
     };
 }
 
 function toJSExam(row) {
     if (!row) return null;
+    const allowRetake = row.allow_retake !== undefined
+        ? (row.allow_retake !== false)
+        : (row.target && row.target.allowRetake !== undefined ? row.target.allowRetake !== false : true);
     return {
         id: row.id,
         title: row.title,
@@ -206,7 +211,8 @@ function toJSExam(row) {
         passMark: row.pass_mark,
         negative: row.negative,
         questions: row.questions || [],
-        target: row.target || { type: 'all' }
+        target: row.target || { type: 'all' },
+        allowRetake: allowRetake
     };
 }
 
@@ -861,7 +867,7 @@ class Database {
             attempt.submitted_at = new Date().toISOString();
             this.cache.examAttempts.push(attempt);
             localStorage.setItem('db_cache', JSON.stringify(this.cache));
-            return { success: true };
+            return { success: true, attempt: attempt };
         }
 
         try {
@@ -877,12 +883,14 @@ class Database {
                 .select();
 
             if (error) throw error;
+            let savedAttempt = attempt;
             if (data && data.length) {
-                this.cache.examAttempts.push(data[0]);
+                savedAttempt = data[0];
+                this.cache.examAttempts.push(savedAttempt);
             }
             localStorage.setItem('db_cache', JSON.stringify(this.cache));
             showToast('Exam attempt submitted successfully!', 'success');
-            return { success: true };
+            return { success: true, attempt: savedAttempt };
         } catch (e) {
             console.error("Submit attempt failed:", e);
             showToast(`Submit failed: ${e.message}`, 'error');

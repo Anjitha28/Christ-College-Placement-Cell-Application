@@ -3615,6 +3615,23 @@ select.form-control { cursor: pointer; }
     min-width: 820px !important;
 }
 
+#reportMCQTable {
+    min-width: 740px !important;
+}
+
+.report-mcq-main-row:hover {
+    background-color: #f8fafc;
+}
+
+.report-mcq-eye-btn:hover {
+    background-color: #eff6ff !important;
+    border-color: #3b82f6 !important;
+}
+
+.report-mcq-history-row td {
+    transition: all 0.25s ease-in-out;
+}
+
 #reportActivitiesTable {
     min-width: 620px !important;
 }

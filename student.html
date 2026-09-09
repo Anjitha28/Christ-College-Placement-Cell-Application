@@ -349,7 +349,7 @@
                     <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 0.15rem;">Time Remaining</div>
                     <div id="fsExamTimer" style="font-weight: 800; color: #0f172a; font-size: 1.25rem; font-family: monospace;">00:00</div>
                 </div>
-                <button class="btn btn-success" style="font-weight: 700; padding: 0.5rem 1.5rem;" onclick="submitFsExam()">Submit Exam</button>
+                <button class="btn btn-success" style="font-weight: 700; padding: 0.5rem 1.5rem;" onclick="openFsSubmitModal()">Submit Exam</button>
             </div>
         </div>
 
@@ -375,6 +375,26 @@
                     <button class="btn btn-warning text-white" id="btnFsReview" style="font-weight: 600; padding: 0.75rem 1.5rem; background: #eab308; border-color: #ca8a04;" onclick="toggleFsReview()">★ Mark for Review</button>
                     <button class="btn btn-primary" id="btnFsNext" style="font-weight: 600; padding: 0.75rem 1.5rem;" onclick="navigateFsQuestion(1)">Next →</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Submission Confirmation Modal -->
+    <div id="examSubmitConfirmModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px);">
+        <div class="glass-card" style="width: 440px; max-width: 92vw; background: white; padding: 2rem; border-radius: 18px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25);">
+            <div class="text-center mb-3">
+                <div style="width: 54px; height: 54px; border-radius: 50%; background: #eff6ff; color: #2563eb; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 0.75rem;">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                </div>
+                <h4 style="font-weight: 800; color: #0f172a; margin: 0;">Submit Exam?</h4>
+                <p style="color: #64748b; font-size: 0.92rem; margin-top: 0.6rem; line-height: 1.5;">
+                    Are you sure you want to submit this exam?<br>
+                    You will not be able to change your answers after submitting.
+                </p>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="button" class="btn btn-secondary" style="flex: 1; padding: 0.7rem; font-weight: 600;" onclick="cancelFsSubmit()">Cancel</button>
+                <button type="button" id="btnConfirmFsSubmit" class="btn btn-primary" style="flex: 1; padding: 0.7rem; font-weight: 700; background: #2563eb; border-color: #1d4ed8;" onclick="confirmFsSubmit()">Confirm Submit</button>
             </div>
         </div>
     </div>
@@ -567,32 +587,43 @@
                 exams.sort((a, b) => {
                     if (a.attempt && !b.attempt) return -1;
                     if (!a.attempt && b.attempt) return 1;
-                    return 0;
-                });
-
-                list.innerHTML = exams.map(e => {
+                    retu                list.innerHTML = exams.map(e => {
                     const total = (e.questions || []).reduce((acc, q) => acc + (Number(q.marks) || 0), 0);
                     const done = e.attempt != null;
                     const prevScore = done ? e.attempt.score : null;
+                    const canRetake = e.allowRetake !== false;
+
+                    let actionBtns = `<button class="btn btn-primary btn-sm" onclick="startExam('${e.id}')">Start Exam</button>`;
+                    if (done) {
+                        actionBtns = `
+                            <div class="d-flex gap-2 align-items-center flex-wrap">
+                                <span class="badge" style="background:${e.attempt.passed ? '#ecfdf5' : '#fef2f2'};color:${e.attempt.passed ? '#059669' : '#dc2626'};padding:6px 14px;border-radius:10px;font-weight:700;">Score: ${prevScore} / ${total} · ${e.attempt.passed ? 'Passed' : 'Failed'}</span>
+                                <button class="btn btn-secondary btn-sm" onclick="viewExplanations('${e.id}')">Review Answers</button>
+                                ${canRetake 
+                                    ? `<button class="btn btn-outline-primary btn-sm" onclick="retakeExam('${e.id}')">Retake Exam</button>` 
+                                    : `<span class="badge" style="background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; padding:6px 12px; border-radius:8px; font-weight:600;">Retakes not permitted</span>`}
+                            </div>
+                        `;
+                    }
+
                     return `<div class="glass-card mb-3">
                         <div class="d-flex justify-content-between align-items-center" style="flex-wrap:wrap;gap:0.5rem;">
                             <div>
                                 <h5 style="margin:0;">${e.title}</h5>
                                 <small class="text-muted">${(e.questions || []).length} questions · ${total} marks · ${e.duration ? `${e.duration} min` : 'Untimed'}</small>
                             </div>
-                            ${done
-                                ? `<div class="d-flex gap-2 align-items-center">
-                                     <span class="badge" style="background:${e.attempt.passed ? '#ecfdf5' : '#fef2f2'};color:${e.attempt.passed ? '#059669' : '#dc2626'};padding:6px 14px;border-radius:10px;">Score: ${prevScore} / ${total} · ${e.attempt.passed ? 'Passed' : 'Failed'}</span>
-                                     <button class="btn btn-secondary btn-sm" onclick="viewExplanations('${e.id}')">Review Answers</button>
-                                     <button class="btn btn-outline-primary btn-sm" onclick="retakeExam('${e.id}')">Retake Exam</button>
-                                   </div>`
-                                : `<button class="btn btn-primary btn-sm" onclick="startExam('${e.id}')">Start Exam</button>`}
+                            ${actionBtns}
                         </div>
                     </div>`;
                 }).join('');
             };
 
             window.retakeExam = async function(examId) {
+                const exam = db.getExams().find(e => e.id === examId);
+                if (exam && exam.allowRetake === false) {
+                    alert("Retake is not permitted for this exam.");
+                    return;
+                }
                 if(confirm("Are you sure you want to retake this exam? This will be recorded as a new attempt.")) {
                     startExam(examId);
                 }
@@ -609,6 +640,13 @@
                 const exam = db.getExams().find(e => e.id === examId);
                 if (!exam) return;
                 
+                // Enforce allowRetake restriction
+                const existingAttempts = db.getExamAttempts().filter(a => a.exam_id === examId && a.register_number === user.registerNumber);
+                if (exam.allowRetake === false && existingAttempts.length > 0) {
+                    alert("You have already submitted this exam. Retakes are not permitted for this exam.");
+                    return;
+                }
+
                 fsCurrentExam = exam;
                 fsCurrentIndex = 0;
                 fsStudentAnswers = {};
@@ -617,7 +655,7 @@
                 document.getElementById('fsExamTitle').textContent = exam.title;
                 document.getElementById('fsExamSubtitle').textContent = `${exam.questions.length} Questions`;
                 
-                document.getElementById('examFullscreenContainer').classList.remove('hidden');
+                document.getElementById('examFullscreenContainer').classList.remove('hidden');ner').classList.remove('hidden');
                 
                 renderFsGrid();
                 renderFsQuestion();
@@ -754,49 +792,76 @@
                     btnReview.style.background = 'white';
                     btnReview.style.borderColor = '#e2e8f0';
                     btnReview.style.color = '#475569';
-                    btnReview.innerHTML = '☆ Mark for Review';
+                    btnReview.innerHTML = '☆ Mark for Review';            window.openFsSubmitModal = function () {
+                const modal = document.getElementById('examSubmitConfirmModal');
+                if (modal) {
+                    const btn = document.getElementById('btnConfirmFsSubmit');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = 'Confirm Submit';
+                    }
+                    modal.classList.remove('hidden');
                 }
-            }
+            };
 
-            window.submitFsExam = async function () {
-                if(!confirm('Are you sure you want to submit the exam?')) return;
-                
+            window.cancelFsSubmit = function () {
+                const modal = document.getElementById('examSubmitConfirmModal');
+                if (modal) modal.classList.add('hidden');
+            };
+
+            window.confirmFsSubmit = async function () {
+                const btn = document.getElementById('btnConfirmFsSubmit');
+                if (btn) {
+                    if (btn.disabled) return; // Prevent duplicate clicks
+                    btn.disabled = true;
+                    btn.textContent = 'Submitting...';
+                }
+
                 clearInterval(fsTimerInt);
+                const modal = document.getElementById('examSubmitConfirmModal');
+                if (modal) modal.classList.add('hidden');
                 document.getElementById('examFullscreenContainer').classList.add('hidden');
-                
+
                 let score = 0, totalMarks = 0;
-                
+
                 (fsCurrentExam.questions || []).forEach((q, i) => {
-                    totalMarks += Number(q.marks) || 0;
+                    const qMarks = Number(q.marks) || 1;
+                    totalMarks += qMarks;
                     const picked = fsStudentAnswers[i] || [];
-                    
                     const correct = q.correct || [];
-                    const isRight = picked.length === correct.length && picked.every(v => correct.includes(v));
-                    if (isRight) score += Number(q.marks) || 0;
-                    else if (picked.length && fsCurrentExam.negative) score -= Number(fsCurrentExam.negative) || 0;
+                    const isAttempted = picked.length > 0;
+
+                    if (isAttempted) {
+                        const isRight = picked.length === correct.length && picked.every(v => correct.includes(v));
+                        if (isRight) {
+                            score += qMarks;
+                        } else if (fsCurrentExam.negative) {
+                            score -= Number(fsCurrentExam.negative) || 0;
+                        }
+                    }
                 });
-                
+
                 if (score < 0) score = 0;
-                const passed = score >= ((fsCurrentExam.passMark / 100) * totalMarks);
-                
-                const attempt = {
+                const passMark = Number(fsCurrentExam.passMark) || 40;
+                const passed = totalMarks > 0 ? (score >= ((passMark / 100) * totalMarks)) : true;
+
+                const attemptData = {
                     exam_id: fsCurrentExam.id,
                     register_number: user.registerNumber,
                     answers: fsStudentAnswers,
                     score: score,
                     passed: passed
                 };
+
+                const res = await db.addExamAttempt(attemptData);
+                const finalAttempt = (res && res.attempt) ? res.attempt : attemptData;
                 
-                const res = await db.addExamAttempt(attempt);
-                if (res.success) {
-                    alert(`Exam submitted! Your score: ${score} / ${totalMarks} (${passed ? 'Passed' : 'Failed'})`);
-                    renderExams();
-                    showExamReview(fsCurrentExam, fsStudentAnswers, attempt);
-                } else {
-                    alert(res.message || 'Error submitting exam. Please check your connection and try again.');
-                    renderExams();
-                }
+                renderExams();
+                showExamReview(fsCurrentExam, fsStudentAnswers, finalAttempt);
             };
+
+            // Backwards compatibility alias
+            window.submitFsExam = window.openFsSubmitModal;
 
             window.showExamReview = function (exam, studentAnswers, attempt = null) {
                 const list = document.getElementById('examsList');
@@ -843,59 +908,55 @@
                 const percentScore = totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0;
                 const unattendedCount = totalQuestions - attendedCount;
 
+                // Derive retake / attempt number
+                const allStudentAttempts = db.getExamAttempts().filter(a => a.exam_id === exam.id && a.register_number === user.registerNumber);
+                allStudentAttempts.sort((a, b) => {
+                    const tA = new Date(a.created_at || a.submitted_at || 0).getTime();
+                    const tB = new Date(b.created_at || b.submitted_at || 0).getTime();
+                    if (tA && tB && tA !== tB) return tA - tB;
+                    return (Number(a.id) || 0) - (Number(b.id) || 0);
+                });
+
+                let currentAttemptIndex = attempt ? allStudentAttempts.findIndex(a => a.id && attempt.id && a.id === attempt.id) : (allStudentAttempts.length - 1);
+                if (currentAttemptIndex < 0) currentAttemptIndex = Math.max(0, allStudentAttempts.length - 1);
+                const retakeNo = currentAttemptIndex;
+                const totalAttemptsCount = Math.max(1, allStudentAttempts.length);
+
                 const summaryCardsHtml = `
-                    <div class="stat-grid-4 mb-4" style="margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                         <!-- 1. Score -->
-                        <div class="stat-card" style="border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); background: white;">
-                            <div class="stat-icon" style="background: #eff6ff; color: #2563eb; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-                                    <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
-                                </svg>
-                            </div>
-                            <div class="stat-info" style="display: flex; flex-direction: column;">
+                        <div class="stat-card" style="border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); background: white; padding: 1.25rem;">
+                            <div class="stat-info">
                                 <span class="stat-title" style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Score</span>
-                                <div style="display: flex; align-items: baseline; gap: 4px; margin: 2px 0;">
-                                    <span class="stat-value" style="font-size: 1.6rem; font-weight: 800; color: #0f172a;">${score}</span>
-                                    <span style="font-size: 0.9rem; color: #64748b; font-weight: 600;">/ ${totalMarks}</span>
+                                <div style="display: flex; align-items: baseline; gap: 4px; margin: 4px 0;">
+                                    <span class="stat-value" style="font-size: 1.75rem; font-weight: 800; color: #0f172a;">${score}</span>
+                                    <span style="font-size: 0.95rem; color: #64748b; font-weight: 600;">/ ${totalMarks}</span>
                                 </div>
-                                <div>
-                                    <span class="badge" style="font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: 700; background: ${passed ? '#ecfdf5' : '#fef2f2'}; color: ${passed ? '#059669' : '#dc2626'};">
-                                        ${passed ? 'Passed' : 'Failed'} (${percentScore}%)
-                                    </span>
-                                </div>
+                                <span class="badge" style="font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 700; background: ${passed ? '#ecfdf5' : '#fef2f2'}; color: ${passed ? '#059669' : '#dc2626'};">
+                                    ${percentScore}% Overall
+                                </span>
                             </div>
                         </div>
 
-                        <!-- 2. Attended Questions -->
-                        <div class="stat-card" style="border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); background: white;">
-                            <div class="stat-icon" style="background: #f5f3ff; color: #7c3aed; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                                </svg>
-                            </div>
-                            <div class="stat-info" style="display: flex; flex-direction: column;">
-                                <span class="stat-title" style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Attended Questions</span>
-                                <div style="display: flex; align-items: baseline; gap: 4px; margin: 2px 0;">
-                                    <span class="stat-value" style="font-size: 1.6rem; font-weight: 800; color: #0f172a;">${attendedCount}</span>
-                                    <span style="font-size: 0.9rem; color: #64748b; font-weight: 600;">/ ${totalQuestions}</span>
+                        <!-- 2. Result -->
+                        <div class="stat-card" style="border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); background: white; padding: 1.25rem;">
+                            <div class="stat-info">
+                                <span class="stat-title" style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Result</span>
+                                <div style="margin: 4px 0;">
+                                    <span class="stat-value" style="font-size: 1.6rem; font-weight: 800; color: ${passed ? '#059669' : '#dc2626'};">${passed ? 'PASSED' : 'FAILED'}</span>
                                 </div>
                                 <span style="font-size: 0.75rem; color: #64748b; font-weight: 500;">
-                                    ${unattendedCount > 0 ? `${unattendedCount} Unattempted` : 'All Questions Attempted'}
+                                    Pass Mark: ${passMark}%
                                 </span>
                             </div>
                         </div>
 
                         <!-- 3. Correct Answers -->
-                        <div class="stat-card" style="border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); background: white;">
-                            <div class="stat-icon" style="background: #ecfdf5; color: #059669; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                                </svg>
-                            </div>
-                            <div class="stat-info" style="display: flex; flex-direction: column;">
+                        <div class="stat-card" style="border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); background: white; padding: 1.25rem;">
+                            <div class="stat-info">
                                 <span class="stat-title" style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Correct Answers</span>
-                                <div style="margin: 2px 0;">
-                                    <span class="stat-value" style="font-size: 1.6rem; font-weight: 800; color: #059669;">${correctCount}</span>
+                                <div style="margin: 4px 0;">
+                                    <span class="stat-value" style="font-size: 1.75rem; font-weight: 800; color: #059669;">${correctCount}</span>
                                 </div>
                                 <span style="font-size: 0.75rem; color: #059669; font-weight: 600;">
                                     ${totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0}% Accuracy
@@ -904,19 +965,41 @@
                         </div>
 
                         <!-- 4. Wrong Answers -->
-                        <div class="stat-card" style="border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); background: white;">
-                            <div class="stat-icon" style="background: #fef2f2; color: #dc2626; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-                                    <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
-                                </svg>
-                            </div>
-                            <div class="stat-info" style="display: flex; flex-direction: column;">
+                        <div class="stat-card" style="border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); background: white; padding: 1.25rem;">
+                            <div class="stat-info">
                                 <span class="stat-title" style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Wrong Answers</span>
-                                <div style="margin: 2px 0;">
-                                    <span class="stat-value" style="font-size: 1.6rem; font-weight: 800; color: #dc2626;">${wrongCount}</span>
+                                <div style="margin: 4px 0;">
+                                    <span class="stat-value" style="font-size: 1.75rem; font-weight: 800; color: #dc2626;">${wrongCount}</span>
                                 </div>
                                 <span style="font-size: 0.75rem; color: #dc2626; font-weight: 500;">
-                                    ${wrongCount} Incorrect ${unattendedCount > 0 ? `(${unattendedCount} skipped)` : ''}
+                                    ${wrongCount} Incorrect
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- 5. Attended Questions -->
+                        <div class="stat-card" style="border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); background: white; padding: 1.25rem;">
+                            <div class="stat-info">
+                                <span class="stat-title" style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Attended</span>
+                                <div style="display: flex; align-items: baseline; gap: 4px; margin: 4px 0;">
+                                    <span class="stat-value" style="font-size: 1.75rem; font-weight: 800; color: #0f172a;">${attendedCount}</span>
+                                    <span style="font-size: 0.95rem; color: #64748b; font-weight: 600;">/ ${totalQuestions}</span>
+                                </div>
+                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 500;">
+                                    ${unattendedCount > 0 ? `${unattendedCount} Unattempted` : 'All Attempted'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- 6. Attempt / Retake No. -->
+                        <div class="stat-card" style="border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); background: white; padding: 1.25rem;">
+                            <div class="stat-info">
+                                <span class="stat-title" style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Attempt</span>
+                                <div style="margin: 4px 0;">
+                                    <span class="stat-value" style="font-size: 1.6rem; font-weight: 800; color: #6366f1;">Retake No. ${retakeNo}</span>
+                                </div>
+                                <span style="font-size: 0.75rem; color: #6366f1; font-weight: 600;">
+                                    Total Attempts: ${totalAttemptsCount}
                                 </span>
                             </div>
                         </div>
@@ -926,46 +1009,100 @@
                 let qHtml = (exam.questions || []).map((q, i) => {
                     const picked = studentAnswers[i] || [];
                     const correct = q.correct || [];
-                    const isRight = picked.length === correct.length && picked.every(v => correct.includes(v));
-                    
-                    let statusLabel = isRight 
-                        ? `<span class="badge" style="background:#ecfdf5; color:#059669; font-weight:700;">Correct</span>` 
-                        : `<span class="badge" style="background:#fef2f2; color:#dc2626; font-weight:700;">Incorrect</span>`;
-                    
-                    if (picked.length === 0) {
-                        statusLabel = `<span class="badge" style="background:#f1f5f9; color:#64748b; font-weight:700;">Not Attempted</span>`;
+                    const isAttempted = picked.length > 0;
+                    const isRight = isAttempted && picked.length === correct.length && picked.every(v => correct.includes(v));
+
+                    let statusBadge = `<span class="badge" style="background:#ecfdf5; color:#059669; font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:6px;">CORRECT</span>`;
+                    if (!isAttempted) {
+                        statusBadge = `<span class="badge" style="background:#f1f5f9; color:#64748b; font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:6px;">NOT ANSWERED</span>`;
+                    } else if (!isRight) {
+                        statusBadge = `<span class="badge" style="background:#fef2f2; color:#dc2626; font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:6px;">WRONG</span>`;
                     }
 
+                    // Available options
+                    const opts = q.type === 'truefalse' ? ['True', 'False'] : (q.options || []);
+                    const optionsHtml = opts.map(opt => {
+                        const isStudentPick = picked.includes(opt);
+                        const isCorrectOpt = correct.includes(opt);
+
+                        let optStyle = 'background: white; border: 1px solid #e2e8f0; color: #334155;';
+                        let optTag = '';
+
+                        if (isStudentPick && isCorrectOpt) {
+                            optStyle = 'background: #ecfdf5; border: 1.5px solid #10b981; color: #065f46; font-weight: 600;';
+                            optTag = '<span style="color:#059669; font-weight:700; font-size:0.8rem;">✓ Your Answer (Correct)</span>';
+                        } else if (isStudentPick && !isCorrectOpt) {
+                            optStyle = 'background: #fef2f2; border: 1.5px solid #ef4444; color: #991b1b; font-weight: 600;';
+                            optTag = '<span style="color:#dc2626; font-weight:700; font-size:0.8rem;">✕ Your Answer (Wrong)</span>';
+                        } else if (!isStudentPick && isCorrectOpt) {
+                            optStyle = 'background: #f0fdf4; border: 1.5px dashed #10b981; color: #166534; font-weight: 600;';
+                            optTag = '<span style="color:#16a34a; font-weight:700; font-size:0.8rem;">★ Correct Option</span>';
+                        }
+
+                        return `
+                            <div style="padding: 0.75rem 1rem; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; ${optStyle}">
+                                <span>${opt}</span>
+                                ${optTag}
+                            </div>
+                        `;
+                    }).join('');
+
                     let explanationHtml = q.explanation 
-                        ? `<div style="background:#f8fafc; border-left:4px solid #3b82f6; padding:0.75rem; border-radius:4px; margin-top:0.75rem; font-size:0.875rem;">
-                             <strong>Explanation:</strong> ${q.explanation}
+                        ? `<div style="background:#f8fafc; border-left:4px solid #3b82f6; padding:0.85rem 1rem; border-radius:6px; margin-top:1rem; font-size:0.875rem;">
+                             <strong style="color:#1e3a8a;">Explanation:</strong> <span style="color:#334155;">${q.explanation}</span>
                            </div>` 
                         : '';
 
                     return `
-                        <div class="glass-card mb-3">
+                        <div class="glass-card mb-3" style="border: 1px solid ${isRight ? '#bbf7d0' : (!isAttempted ? '#e2e8f0' : '#fecaca')}; background: white; border-radius: 14px; padding: 1.5rem;">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <strong>Q${i + 1}. ${q.text}</strong>
-                                ${statusLabel}
+                                <div class="d-flex align-items-center gap-2">
+                                    <span style="font-weight: 800; color: #0f172a; font-size: 1rem;">Question ${i + 1}</span>
+                                    <span class="badge" style="background:#f1f5f9; color:#475569; font-size:0.75rem;">${q.marks} Mark${Number(q.marks) > 1 ? 's' : ''}</span>
+                                </div>
+                                ${statusBadge}
                             </div>
-                            <div style="font-size:0.875rem;">
-                                <div class="mb-1"><strong>Your Answer:</strong> ${picked.join(', ') || '<span class="text-muted">None</span>'}</div>
-                                <div class="mb-1"><strong>Correct Answer:</strong> ${correct.join(', ')}</div>
+                            <h5 style="font-weight: 700; color: #0f172a; margin-bottom: 1.25rem; line-height: 1.45;">${q.text}</h5>
+                            
+                            <div class="mb-3" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                ${optionsHtml}
+                            </div>
+
+                            <div style="background: #f8fafc; border-radius: 8px; padding: 0.75rem 1rem; border: 1px solid #e2e8f0; font-size: 0.875rem; display: flex; flex-wrap: wrap; gap: 1.5rem;">
+                                <div>
+                                    <span style="color: #64748b; font-weight: 600;">Your Answer:</span> 
+                                    <strong style="color: ${isRight ? '#059669' : (!isAttempted ? '#64748b' : '#dc2626')}; margin-left: 4px;">
+                                        ${picked.length > 0 ? picked.join(', ') : 'Not Answered'}
+                                    </strong>
+                                </div>
+                                <div>
+                                    <span style="color: #64748b; font-weight: 600;">Correct Answer:</span> 
+                                    <strong style="color: #059669; margin-left: 4px;">${correct.join(', ')}</strong>
+                                </div>
                             </div>
                             ${explanationHtml}
                         </div>
                     `;
                 }).join('');
 
+                const canRetake = exam.allowRetake !== false;
+
                 list.innerHTML = `
-                    <div class="glass-card mb-3 d-flex justify-content-between align-items-center">
-                        <h4 style="margin:0;">Exam Review: ${exam.title}</h4>
-                        <button class="btn btn-secondary btn-sm" onclick="renderExams()">Back to Exams</button>
+                    <div class="glass-card mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <h4 style="margin:0; font-weight: 800;">Exam Review: ${exam.title}</h4>
+                            <span class="text-muted small">Completed attempt review and performance breakdown</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-secondary btn-sm" onclick="renderExams()">← Back to Exams</button>
+                            ${canRetake ? `<button class="btn btn-primary btn-sm" onclick="retakeExam('${exam.id}')">Retake Exam</button>` : ''}
+                        </div>
                     </div>
                     ${summaryCardsHtml}
                     ${qHtml}
-                    <div class="text-center mt-4">
-                        <button class="btn btn-primary" onclick="renderExams()">Done</button>
+                    <div class="text-center mt-4 mb-4 d-flex justify-content-center gap-2">
+                        <button class="btn btn-secondary" onclick="renderExams()">Done</button>
+                        ${canRetake ? `<button class="btn btn-primary" onclick="retakeExam('${exam.id}')">Retake Exam</button>` : ''}
                     </div>
                 `;
             };

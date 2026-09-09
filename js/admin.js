@@ -997,6 +997,194 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
+            // 2.5. Section 2 — MCQ Exam (Grouped by unique examId, latest attempt as main row, inline history)
+            const allExams = db.getExams() || [];
+            const studentExamAttempts = (db.getExamAttempts() || []).filter(a => a.register_number === regNo);
+            const mcqTbody = document.getElementById('reportMCQTableBody');
+            const mcqEmpty = document.getElementById('reportMCQEmpty');
+            const mcqBadge = document.getElementById('reportMCQCountBadge');
+
+            // Group attempts by exam_id
+            const attemptsByExam = {};
+            studentExamAttempts.forEach(att => {
+                if (!att.exam_id) return;
+                if (!attemptsByExam[att.exam_id]) attemptsByExam[att.exam_id] = [];
+                attemptsByExam[att.exam_id].push(att);
+            });
+
+            const uniqueExamIds = Object.keys(attemptsByExam);
+
+            if (mcqBadge) mcqBadge.textContent = `${uniqueExamIds.length} Exam${uniqueExamIds.length === 1 ? '' : 's'}`;
+            if (mcqTbody) mcqTbody.innerHTML = '';
+
+            if (uniqueExamIds.length === 0) {
+                if (mcqEmpty) mcqEmpty.classList.remove('hidden');
+            } else {
+                if (mcqEmpty) mcqEmpty.classList.add('hidden');
+
+                uniqueExamIds.forEach(examId => {
+                    const exam = allExams.find(e => e.id === examId) || { id: examId, title: 'MCQ Exam (' + examId + ')', questions: [] };
+                    const examAttempts = attemptsByExam[examId];
+
+                    // Sort chronologically: attempt 0 first, latest attempt last
+                    examAttempts.sort((a, b) => {
+                        const tA = new Date(a.created_at || a.submitted_at || 0).getTime();
+                        const tB = new Date(b.created_at || b.submitted_at || 0).getTime();
+                        if (tA && tB && tA !== tB) return tA - tB;
+                        return (Number(a.id) || 0) - (Number(b.id) || 0);
+                    });
+
+                    const attemptCount = examAttempts.length;
+                    const latestAttempt = examAttempts[examAttempts.length - 1];
+                    const latestRetakeNo = examAttempts.length - 1; // 0-based retake number
+
+                    const totalMarks = (exam.questions || []).reduce((acc, q) => acc + (Number(q.marks) || 1), 0);
+
+                    // Compute correct & wrong for latest attempt
+                    let latestCorrect = 0;
+                    let latestWrong = 0;
+                    (exam.questions || []).forEach((q, i) => {
+                        const picked = (latestAttempt.answers && latestAttempt.answers[i]) || [];
+                        const correct = q.correct || [];
+                        const isRight = picked.length === correct.length && picked.every(v => correct.includes(v));
+                        if (isRight) {
+                            latestCorrect++;
+                        } else if (picked.length > 0) {
+                            latestWrong++;
+                        }
+                    });
+
+                    // 1. Main Row (Latest attempt)
+                    const mainTr = document.createElement('tr');
+                    mainTr.className = 'report-mcq-main-row';
+                    mainTr.innerHTML = `
+                        <td style="font-weight: 600; color: #0f172a; vertical-align: middle;">
+                            <div style="font-size: 0.9rem; line-height: 1.35;">${exam.title}</div>
+                        </td>
+                        <td style="text-align: center; font-weight: 700; color: #0f172a; vertical-align: middle;">
+                            ${latestAttempt.score} / ${totalMarks}
+                        </td>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <span style="font-weight: 700; color: #1e293b; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; display: inline-block;">
+                                ${attemptCount}
+                            </span>
+                        </td>
+                        <td style="text-align: center; font-weight: 700; color: #059669; vertical-align: middle;">
+                            ${latestCorrect}
+                        </td>
+                        <td style="text-align: center; font-weight: 700; color: #dc2626; vertical-align: middle;">
+                            ${latestWrong}
+                        </td>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <span class="badge" style="background:#eef2ff; color:#4f46e5; padding:4px 10px; border-radius:6px; font-weight:700;">
+                                ${latestRetakeNo}
+                            </span>
+                        </td>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <button type="button" class="btn btn-sm btn-light border report-mcq-eye-btn" onclick="toggleReportMCQHistory('${examId}')" title="View Attempt History" style="border-radius: 8px; width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #ffffff; cursor: pointer; transition: all 0.2s;">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="#475569">
+                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                </svg>
+                            </button>
+                        </td>
+                    `;
+                    mcqTbody.appendChild(mainTr);
+
+                    // 2. Inline Collapsible Attempt History Row (Appears directly below main row)
+                    const historyTr = document.createElement('tr');
+                    historyTr.id = `mcqHistoryRow_${examId}`;
+                    historyTr.className = 'report-mcq-history-row hidden';
+
+                    const historyRowsHtml = examAttempts.map((att, idx) => {
+                        let attCorrect = 0;
+                        let attWrong = 0;
+                        (exam.questions || []).forEach((q, i) => {
+                            const picked = (att.answers && att.answers[i]) || [];
+                            const correct = q.correct || [];
+                            const isRight = picked.length === correct.length && picked.every(v => correct.includes(v));
+                            if (isRight) {
+                                attCorrect++;
+                            } else if (picked.length > 0) {
+                                attWrong++;
+                            }
+                        });
+
+                        return `
+                            <tr>
+                                <td style="font-weight: 600; color: #1e293b; vertical-align: middle;">${exam.title}</td>
+                                <td style="text-align: center; font-weight: 700; color: #0f172a; vertical-align: middle;">${att.score} / ${totalMarks}</td>
+                                <td style="text-align: center; vertical-align: middle;"><span class="badge" style="background:#ecfdf5; color:#059669; font-weight:700; padding:4px 10px; border-radius:6px;">Yes</span></td>
+                                <td style="text-align: center; font-weight: 700; color: #059669; vertical-align: middle;">${attCorrect}</td>
+                                <td style="text-align: center; font-weight: 700; color: #dc2626; vertical-align: middle;">${attWrong}</td>
+                                <td style="text-align: center; vertical-align: middle;"><span class="badge" style="background:#f1f5f9; color:#475569; padding:4px 10px; border-radius:6px; font-weight:700;">${idx}</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    historyTr.innerHTML = `
+                        <td colspan="7" style="padding: 0; background: #f8fafc;">
+                            <div style="padding: 1.25rem 1.5rem; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div style="font-weight: 700; color: #1e293b; font-size: 0.95rem;">
+                                        ${exam.title} — Attempt History
+                                    </div>
+                                    <span style="font-size: 0.8rem; font-weight: 600; color: #475569; background: #e2e8f0; padding: 2px 10px; border-radius: 20px;">
+                                        Total Attempts: ${attemptCount}
+                                    </span>
+                                </div>
+                                <div class="table-responsive" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: white;">
+                                    <table class="report-data-table mb-0">
+                                        <thead>
+                                            <tr style="background: #f1f5f9;">
+                                                <th style="min-width: 180px;">Exam</th>
+                                                <th style="width: 120px; text-align: center;">Mark</th>
+                                                <th style="width: 120px; text-align: center;">Attended</th>
+                                                <th style="width: 120px; text-align: center;">Correct</th>
+                                                <th style="width: 120px; text-align: center;">Wrong</th>
+                                                <th style="width: 120px; text-align: center;">Retake No.</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${historyRowsHtml}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                    mcqTbody.appendChild(historyTr);
+                });
+            }
+
+            // Accordion toggle helper for MCQ history
+            window.toggleReportMCQHistory = function(examId) {
+                const targetRow = document.getElementById('mcqHistoryRow_' + examId);
+                if (!targetRow) return;
+
+                const isCurrentlyHidden = targetRow.classList.contains('hidden');
+
+                // Collapse all open history rows
+                document.querySelectorAll('.report-mcq-history-row').forEach(row => {
+                    row.classList.add('hidden');
+                });
+
+                // Reset all eye button styling
+                document.querySelectorAll('.report-mcq-eye-btn').forEach(btn => {
+                    btn.style.background = '#ffffff';
+                    btn.style.borderColor = '#e2e8f0';
+                });
+
+                // Expand selected if it was hidden
+                if (isCurrentlyHidden) {
+                    targetRow.classList.remove('hidden');
+                    const btn = targetRow.previousElementSibling ? targetRow.previousElementSibling.querySelector('.report-mcq-eye-btn') : null;
+                    if (btn) {
+                        btn.style.background = '#eff6ff';
+                        btn.style.borderColor = '#3b82f6';
+                    }
+                }
+            };
+
             // 3. Placement Activities (Non-recruitment registered by student)
             const studentPlacementActs = allActivities.filter(a => (a.type === 'placement' || !a.type) && (a.registrations || []).includes(regNo));
             const actsTbody = document.getElementById('reportActivitiesTableBody');
@@ -4076,6 +4264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('exNeg').value = 0;
         if(document.getElementById('exShuffleQuestions')) document.getElementById('exShuffleQuestions').checked = false;
         if(document.getElementById('exShuffleOptions')) document.getElementById('exShuffleOptions').checked = false;
+        if(document.getElementById('exAllowRetake')) document.getElementById('exAllowRetake').checked = true;
 
         // Populate course and class checkboxes
         const students = db.getStudents();
@@ -4246,6 +4435,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             negative: Number(document.getElementById('exNeg').value) || 0,
             shuffleQuestions: document.getElementById('exShuffleQuestions') ? document.getElementById('exShuffleQuestions').checked : false,
             shuffleOptions: document.getElementById('exShuffleOptions') ? document.getElementById('exShuffleOptions').checked : false,
+            allowRetake: document.getElementById('exAllowRetake') ? document.getElementById('exAllowRetake').checked : true,
             questions,
             target
         };
@@ -4276,6 +4466,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('exNeg').value = exam.negative || 0;
         if(document.getElementById('exShuffleQuestions')) document.getElementById('exShuffleQuestions').checked = !!exam.shuffleQuestions;
         if(document.getElementById('exShuffleOptions')) document.getElementById('exShuffleOptions').checked = !!exam.shuffleOptions;
+        if(document.getElementById('exAllowRetake')) document.getElementById('exAllowRetake').checked = exam.allowRetake !== false;
 
         // Populate Courses and Classes Checkboxes
         const students = db.getStudents();
@@ -4467,23 +4658,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         let deptCounts = {};
 
         const rows = targetedStudents.map(s => {
-            const attempt = attempts.find(a => a.register_number === s.registerNumber);
-            const done = attempt != null;
-            if (!done) return null; // Only show students who attended
+            const studentAttempts = attempts.filter(a => a.register_number === s.registerNumber);
+            if (studentAttempts.length === 0) return null; // Only show students who attended
 
-            const score = attempt.score;
-            const passed = attempt.passed;
-            const dateStr = new Date(attempt.submitted_at).toLocaleString();
+            // Sort chronologically: earliest attempt first, latest attempt last
+            studentAttempts.sort((a, b) => {
+                const tA = new Date(a.created_at || a.submitted_at || 0).getTime();
+                const tB = new Date(b.created_at || b.submitted_at || 0).getTime();
+                if (tA && tB && tA !== tB) return tA - tB;
+                return (Number(a.id) || 0) - (Number(b.id) || 0);
+            });
 
-            let status = passed ? 'Passed' : 'Failed';
-            let statusClass = passed ? 'bg-success text-white' : 'bg-danger text-white';
+            const latestAttempt = studentAttempts[studentAttempts.length - 1];
+            const retakeNo = studentAttempts.length - 1;
+
+            let correctCount = 0;
+            let wrongCount = 0;
+            (exam.questions || []).forEach((q, i) => {
+                const picked = (latestAttempt.answers && latestAttempt.answers[i]) || [];
+                const correct = q.correct || [];
+                const isRight = picked.length === correct.length && picked.every(v => correct.includes(v));
+                if (isRight) {
+                    correctCount++;
+                } else if (picked.length > 0) {
+                    wrongCount++;
+                }
+            });
 
             // Filters
             if (courseVal && s.course !== courseVal) return null;
             if (searchVal && !s.name.toLowerCase().includes(searchVal) && !s.registerNumber.toLowerCase().includes(searchVal)) return null;
             if (statusVal) {
-                if (statusVal === 'passed' && !passed) return null;
-                if (statusVal === 'failed' && passed) return null;
+                if (statusVal === 'passed' && !latestAttempt.passed) return null;
+                if (statusVal === 'failed' && latestAttempt.passed) return null;
             }
 
             // Track department attendance for chart
@@ -4491,17 +4698,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             deptCounts[dept] = (deptCounts[dept] || 0) + 1;
 
             return `<tr>
-                <td><strong>${s.name}</strong></td>
-                <td>${s.registerNumber}</td>
-                <td>${s.course || '—'}</td>
-                <td>${s.class || '—'}</td>
-                <td><span class="badge ${statusClass}" style="padding:4px 8px; border-radius:6px; font-weight:700;">${status}</span></td>
-                <td>${score} / ${totalMarks}</td>
-                <td>${dateStr}</td>
+                <td style="vertical-align: middle;">
+                    <div style="font-weight: 700; color: #0f172a;">${s.name}</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">${s.registerNumber} ${s.course ? `· ${s.course}` : ''}</div>
+                </td>
+                <td style="text-align: center; font-weight: 700; color: #0f172a; vertical-align: middle;">${latestAttempt.score} / ${totalMarks}</td>
+                <td style="text-align: center; vertical-align: middle;"><span class="badge" style="background:#ecfdf5; color:#059669; font-weight:700; padding:4px 10px; border-radius:6px;">Yes</span></td>
+                <td style="text-align: center; font-weight: 700; color: #059669; vertical-align: middle;">${correctCount}</td>
+                <td style="text-align: center; font-weight: 700; color: #dc2626; vertical-align: middle;">${wrongCount}</td>
+                <td style="text-align: center; font-weight: 700; vertical-align: middle;"><span class="badge" style="background:#eef2ff; color:#4f46e5; padding:4px 10px; border-radius:6px; font-weight:700;">${retakeNo}</span></td>
             </tr>`;
         }).filter(Boolean).join('');
 
-        tbody.innerHTML = rows || '<tr><td colspan="7" class="text-center text-muted">No students found matching filters.</td></tr>';
+        tbody.innerHTML = rows || '<tr><td colspan="6" class="text-center text-muted py-4">No students found matching filters.</td></tr>';
 
         // Update Chart
         const ctx = document.getElementById('reportDeptChart');
