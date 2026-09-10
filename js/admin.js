@@ -3218,17 +3218,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             tableBody.innerHTML = '';
             if (placedStudentsData.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No placed students found matching filters.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No placed students found matching filters.</td></tr>';
             } else {
                 placedStudentsData.forEach(s => {
+                    const names = (s.name || 'Student').trim().split(/\s+/);
+                    const initials = names.length > 1 ? (names[0][0] + names[names.length - 1][0]).toUpperCase() : names[0].slice(0, 2).toUpperCase();
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td><strong>${s.name}</strong></td>
-                        <td>${s.department || '—'}</td>
-                        <td>${s.course || '—'}</td>
-                        <td><span class="badge bg-primary" style="font-size: 11px;">${s.activities || 0}</span></td>
-                        <td><span class="badge bg-secondary" style="font-size: 11px;">${s.recruitments || 0}</span></td>
-                        <td><span class="badge bg-success" style="font-size: 11px;">${s.placedRecruitment || 'Placed'}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="avatar-initials-badge">${initials}</span>
+                                <strong style="color: #0f172a; font-weight: 700;">${s.name}</strong>
+                            </div>
+                        </td>
+                        <td><span style="color: #475569; font-weight: 500;">${s.department || '—'}</span></td>
+                        <td><span style="color: #475569; font-weight: 500;">${s.course || '—'}</span></td>
+                        <td><span class="badge-pill-soft badge-soft-blue">${s.activities || 0}</span></td>
+                        <td><span class="badge-pill-soft badge-soft-blue">${s.recruitments || 0}</span></td>
+                        <td><span class="badge-pill-soft badge-soft-green">${s.placedRecruitment || 'Placed'}</span></td>
+                        <td style="text-align: center;">
+                            <button type="button" class="btn-action-more" data-tooltip="More Actions" title="More Actions" aria-label="More Actions for ${s.name}">
+                                <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                            </button>
+                        </td>
                     `;
                     tableBody.appendChild(tr);
                 });
@@ -4797,6 +4809,174 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
     };
+
+    // =========================================================================
+    // Sidebar Collapse & Expand Engine
+    // =========================================================================
+    function initSidebarCollapse() {
+        const appContainer = document.querySelector('.app-container');
+        if (!appContainer) return;
+
+        // Restore persisted collapse state
+        const savedCollapsed = localStorage.getItem('beintrack_sidebar_collapsed');
+        if (savedCollapsed === 'true' && window.innerWidth > 992) {
+            appContainer.classList.add('collapsed');
+        }
+
+        window.toggleSidebarCollapse = function() {
+            if (window.innerWidth <= 768) {
+                // On mobile, toggle drawer
+                const sidebar = document.querySelector('.sidebar');
+                const overlay = document.getElementById('mobileOverlay');
+                if (sidebar) sidebar.classList.toggle('open');
+                if (overlay) overlay.classList.toggle('active');
+            } else {
+                // On desktop, toggle collapse
+                const isNowCollapsed = appContainer.classList.toggle('collapsed');
+                localStorage.setItem('beintrack_sidebar_collapsed', isNowCollapsed);
+                
+                // Smoothly trigger chart resize after sidebar animation completes
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                    if (window.placementChartInst && typeof window.placementChartInst.resize === 'function') window.placementChartInst.resize();
+                    if (window.trainingChartInst && typeof window.trainingChartInst.resize === 'function') window.trainingChartInst.resize();
+                    if (window.activityAttendanceChartInst && typeof window.activityAttendanceChartInst.resize === 'function') window.activityAttendanceChartInst.resize();
+                    if (window.courseGenderChartInst && typeof window.courseGenderChartInst.resize === 'function') window.courseGenderChartInst.resize();
+                }, 300);
+            }
+        };
+
+        window.toggleSidebar = window.toggleSidebarCollapse; // backward-compatibility with mobile button
+    }
+    initSidebarCollapse();
+
+    // =========================================================================
+    // Global Portal Tooltip System (Zero clipping by table overflow / cards)
+    // =========================================================================
+    function initGlobalTooltipSystem() {
+        let tooltipEl = document.getElementById('globalPortalTooltip');
+        if (!tooltipEl) {
+            tooltipEl = document.createElement('div');
+            tooltipEl.id = 'globalPortalTooltip';
+            document.body.appendChild(tooltipEl);
+        }
+
+        let currentTarget = null;
+
+        function showTooltip(el) {
+            let text = el.getAttribute('data-tooltip') || el.getAttribute('title') || el.getAttribute('aria-label');
+            if (!text) return;
+
+            // If it had a title attribute, move to data-tooltip to avoid ugly native tooltip duplication
+            if (el.hasAttribute('title')) {
+                el.setAttribute('data-tooltip', text);
+                el.removeAttribute('title');
+            }
+
+            currentTarget = el;
+            tooltipEl.textContent = text;
+            tooltipEl.className = '';
+            
+            const rect = el.getBoundingClientRect();
+            const isSidebarItem = el.closest('.sidebar');
+            const isSidebarCollapsed = document.querySelector('.app-container')?.classList.contains('collapsed');
+
+            let pos = el.getAttribute('data-tooltip-pos');
+            if (!pos) {
+                if (isSidebarItem && isSidebarCollapsed) {
+                    pos = 'right';
+                } else {
+                    pos = 'top';
+                }
+            }
+
+            tooltipEl.setAttribute('data-pos', pos);
+            tooltipEl.style.display = 'block';
+            tooltipEl.classList.add('visible');
+
+            const tipRect = tooltipEl.getBoundingClientRect();
+            let top = 0;
+            let left = 0;
+
+            if (pos === 'right') {
+                top = rect.top + (rect.height - tipRect.height) / 2;
+                left = rect.right + 10;
+            } else if (pos === 'bottom') {
+                top = rect.bottom + 8;
+                left = rect.left + (rect.width - tipRect.width) / 2;
+            } else if (pos === 'left') {
+                top = rect.top + (rect.height - tipRect.height) / 2;
+                left = rect.left - tipRect.width - 10;
+            } else {
+                // top
+                top = rect.top - tipRect.height - 8;
+                left = rect.left + (rect.width - tipRect.width) / 2;
+            }
+
+            // Boundary checks
+            if (left < 8) left = 8;
+            if (left + tipRect.width > window.innerWidth - 8) {
+                left = window.innerWidth - tipRect.width - 8;
+            }
+            if (top < 8) {
+                top = rect.bottom + 8;
+                tooltipEl.setAttribute('data-pos', 'bottom');
+            }
+
+            tooltipEl.style.top = `${top}px`;
+            tooltipEl.style.left = `${left}px`;
+        }
+
+        function hideTooltip() {
+            currentTarget = null;
+            tooltipEl.classList.remove('visible');
+        }
+
+        // Delegated event listeners on document.body for seamless handling of dynamic tables & pagination
+        const tooltipSelector = '[data-tooltip], [title], button[aria-label], a[aria-label], .btn-action-more, .report-mcq-eye-btn, .btn-view-report, .btn-action-eye, .action-btn';
+        document.body.addEventListener('pointerenter', (e) => {
+            const target = e.target.closest(tooltipSelector);
+            if (target && !target.disabled) {
+                showTooltip(target);
+            }
+        }, true);
+
+        document.body.addEventListener('pointerleave', (e) => {
+            const target = e.target.closest(tooltipSelector);
+            if (target && target === currentTarget) {
+                hideTooltip();
+            }
+        }, true);
+
+        // Hide on scroll, click, or escape
+        window.addEventListener('scroll', hideTooltip, { passive: true });
+        window.addEventListener('click', hideTooltip, true);
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') hideTooltip();
+        });
+    }
+    initGlobalTooltipSystem();
+
+    // Bind current user profile to top header
+    try {
+        const headerUserNameEl = document.querySelector('.header-user-name');
+        const headerUserRoleEl = document.querySelector('.header-user-role');
+        const headerAvatarEl = document.querySelector('.header-user-avatar');
+        if (headerUserNameEl && currentUser && (currentUser.name || currentUser.username)) {
+            const name = currentUser.name || currentUser.username;
+            headerUserNameEl.textContent = name;
+            const names = name.trim().split(/\s+/);
+            const initials = names.length > 1 ? (names[0][0] + names[names.length - 1][0]).toUpperCase() : names[0].slice(0, 2).toUpperCase();
+            if (headerAvatarEl) headerAvatarEl.textContent = initials;
+            const welcomeHeading = document.getElementById('dashWelcomeHeading');
+            if (welcomeHeading) welcomeHeading.textContent = `Welcome Back, ${names[0]}!`;
+        }
+        if (headerUserRoleEl && userRole) {
+            headerUserRoleEl.textContent = userRole === 'admin' ? 'Administrator' : userRole;
+        }
+    } catch(e) {
+        console.warn('Header user profile update error:', e);
+    }
 
     try {
         handleRouting(false); // Render data now that DB is loaded
