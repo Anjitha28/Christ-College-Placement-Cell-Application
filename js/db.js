@@ -255,6 +255,7 @@ class Database {
             classIncharges: [],
             admin: { username: 'admin', password: 'Admin@1234' }
         };
+        this.isReady = false;
         this.ready = this.init();
     }
 
@@ -265,6 +266,7 @@ class Database {
         if (typeof supabase === 'undefined' || SUPABASE_URL.includes("YOUR_SUPABASE") || SUPABASE_KEY.includes("YOUR_SUPABASE")) {
             console.warn("Supabase client or credentials not configured yet. Falling back to LocalStorage backup.");
             this.loadLocalStorageBackup();
+            this.isReady = true;
             return false;
         }
 
@@ -326,10 +328,12 @@ class Database {
             
             // Backup to LocalStorage
             localStorage.setItem('db_cache', JSON.stringify(this.cache));
+            this.isReady = true;
             return true;
         } catch (error) {
             console.error("Supabase load failed, using LocalStorage backup:", error);
             this.loadLocalStorageBackup();
+            this.isReady = true;
             return false;
         }
     }
@@ -820,6 +824,131 @@ class Database {
             showToast('Phase deleted successfully!', 'success');
         }
         return res;
+    }
+
+    // --- Placement Phase & Status Evaluation Engine ---
+    isSelectedPhase(phase) {
+        if (!phase) return false;
+        if (phase.isSelectedPhase === true || phase.isSelectedPhase === 'true') return true;
+        const name = (phase.name || '').trim().toLowerCase();
+        return name === 'selected phase' || name === 'selected' || name === 'final selected phase' || name === 'final selection';
+    }
+
+    evaluateStudentPhases(activity, regNo) {
+        if (!activity) {
+            return { isRegistered: false, phases: [], overallStatus: 'Not Registered', isPlaced: false, isEliminated: false };
+        }
+        const regs = activity.registrations || activity.registeredStudents || [];
+        const isRegistered = regs.includes(regNo);
+        if (!isRegistered) {
+            return { isRegistered: false, phases: [], overallStatus: 'Not Registered', isPlaced: false, isEliminated: false };
+        }
+
+        const phases = activity.phases || [];
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        let previousPhaseCleared = true;
+        let studentEliminated = false;
+        let isPlaced = false;
+
+        const evaluatedPhases = phases.map((p, idx) => {
+            const isDone = (p.completions || []).includes(regNo);
+            const isFinal = this.isSelectedPhase(p);
+            const dueDate = p.lastDate || activity.lastDate || activity.date || '';
+            const isPastDue = dueDate ? (dueDate < todayStr) : false;
+
+            let status = 'Pending';
+            let canComplete = false;
+
+            if (studentEliminated) {
+                // An earlier phase resulted in elimination; upcoming phases remain Locked
+                status = 'Locked';
+            } else if (!previousPhaseCleared) {
+                // An earlier phase is still pending/uncompleted; upcoming phases remain Locked
+                status = 'Locked';
+            } else {
+                // Student has cleared all previous phases, so this phase is currently reachable
+                if (isFinal) {
+                    // Special Final Phase Type: "Selected Phase"
+                    if (isDone) {
+                        status = 'Placed';
+                        isPlaced = true;
+                    } else if (isPastDue) {
+                        // Due date passed and Admin did not select student -> Eliminated
+                        status = 'Eliminated';
+                        studentEliminated = true;
+                    } else {
+                        // Due date not passed -> remains Pending/active
+                        status = 'Pending';
+                    }
+                } else {
+                    // Regular Earlier Phase
+                    if (isDone) {
+                        status = 'Passed';
+                        previousPhaseCleared = true;
+                    } else if (isPastDue) {
+                        // Due date passed and student didn't complete -> Eliminated
+                        status = 'Eliminated';
+                        studentEliminated = true;
+                        previousPhaseCleared = false;
+                    } else {
+                        // Active pending phase before due date
+                        status = 'Pending';
+                        canComplete = (p.mode === 'self');
+                        previousPhaseCleared = false;
+                    }
+                }
+            }
+
+            return {
+                phase: p,
+                id: p.id,
+                name: p.name,
+                lastDate: p.lastDate || dueDate,
+                mode: p.mode,
+                status, // 'Passed' | 'Pending' | 'Locked' | 'Eliminated' | 'Placed'
+                canComplete,
+                isDone,
+                isFinal
+            };
+        });
+
+        let overallStatus = 'In Process';
+        if (isPlaced) {
+            overallStatus = 'Placed';
+        } else if (studentEliminated) {
+            overallStatus = 'Eliminated';
+        } else if (phases.length > 0 && evaluatedPhases.every(r => r.status === 'Passed')) {
+            overallStatus = 'Completed';
+        }
+
+        return {
+            isRegistered: true,
+            phases: evaluatedPhases,
+            overallStatus,
+            isPlaced,
+            isEliminated: studentEliminated
+        };
+    }
+
+    isStudentPlaced(regNo) {
+        const activities = this.getPlacementActivities() || [];
+        return activities.some(a => {
+            const evalRes = this.evaluateStudentPhases(a, regNo);
+            return evalRes.isPlaced;
+        });
+    }
+
+    getStudentPlacementDetails(regNo) {
+        const activities = this.getPlacementActivities() || [];
+        const placedActivities = [];
+        activities.forEach(a => {
+            const evalRes = this.evaluateStudentPhases(a, regNo);
+            if (evalRes.isPlaced && !placedActivities.includes(a.name)) {
+                placedActivities.push(a.name);
+            }
+        });
+        return placedActivities;
     }
 
     // --- Auth & Generic ---
@@ -1421,3 +1550,7 @@ window.showToast = function(message, type = 'success') {
 };
 
 const db = new Database();
+window.db = db;
+window.isSelectedPhase = (p) => db.isSelectedPhase(p);
+window.evaluateStudentPhases = (a, r) => db.evaluateStudentPhases(a, r);
+window.isStudentPlaced = (r) => db.isStudentPlaced(r);

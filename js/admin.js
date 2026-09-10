@@ -239,7 +239,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.hash = tab.dataset.tab;
+            const targetTab = tab.dataset.tab;
+            if (window.location.hash === '#' + targetTab) {
+                handleRouting(false);
+            } else {
+                window.location.hash = targetTab;
+            }
         });
     });
 
@@ -708,12 +713,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function renderUserReport() {
+    async function renderUserReport() {
         initUserReportControls();
 
-        const students = db.getStudents() || [];
         const tbody = document.getElementById('userReportTableBody');
         if (!tbody) return;
+
+        // 1. Show loading state if DB is not ready yet
+        if (!db.isReady) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <div class="spinner-border text-primary mb-2" role="status" style="width: 2.5rem; height: 2.5rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h6 style="color: #1e293b; font-weight: 600; margin-top: 0.5rem;">Loading Student Records...</h6>
+                        <p class="small text-muted mb-0">Retrieving user report data from the database.</p>
+                    </td>
+                </tr>
+            `;
+            const badge = document.getElementById('userReportCountBadge');
+            if (badge) badge.textContent = 'Loading...';
+        }
+
+        try {
+            await db.ready;
+        } catch (err) {
+            console.error("Error awaiting db.ready for User Report:", err);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-danger">
+                        <svg viewBox="0 0 24 24" width="36" height="36" fill="#ef4444" style="margin-bottom: 0.5rem;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        <h6 style="color: #dc2626; font-weight: 600;">Failed to Load User Report</h6>
+                        <p class="small text-muted mb-3">${err.message || 'Unable to load records. Please try again.'}</p>
+                        <button class="btn btn-sm btn-primary" onclick="renderUserReport()">Retry</button>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        // Prevent browser autofill from corrupting search filter
+        const searchInput = document.getElementById('searchUserReport');
+        if (searchInput && (searchInput.value === 'admin' || searchInput.value.toLowerCase() === 'admin')) {
+            searchInput.value = '';
+        }
+
+        const students = db.getStudents() || [];
 
         // Populate dynamic filter dropdowns
         const courseSelect = document.getElementById('urFilterCourse');
@@ -742,7 +788,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const selectedCourse = courseSelect ? courseSelect.value : '';
         const selectedDept = deptSelect ? deptSelect.value : '';
         const selectedYear = yearSelect ? yearSelect.value : '';
-        const searchInput = document.getElementById('searchUserReport');
         const searchQuery = (searchInput ? searchInput.value : '').toLowerCase().trim();
 
         let filtered = students;

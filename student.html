@@ -1252,39 +1252,41 @@
                         </div>
                     `;
                 } else {
+                    const evalRes = db.evaluateStudentPhases(a, user.registerNumber);
                     let phasesHtml = '';
-                    let previousCleared = true;
-                    (a.phases || []).forEach((p, idx) => {
-                        const isDone = (p.completions || []).includes(user.registerNumber);
-                        const canComplete = p.mode === 'self' && !isDone && previousCleared;
+
+                    (evalRes.phases || []).forEach(ep => {
                         let statusBadge = '';
-                        
-                        if (isDone) {
+                        if (ep.status === 'Placed') {
+                            statusBadge = '<span class="badge" style="background: #dcfce7; color: #15803d; font-weight: 700; font-size: 10px; padding: 4px 12px; border-radius: 6px; border: 1px solid #86efac;">★ Placed</span>';
+                        } else if (ep.status === 'Passed') {
                             statusBadge = '<span class="badge" style="background: #ecfdf5; color: #059669; font-weight: 700; font-size: 10px; padding: 4px 12px; border-radius: 6px;">✓ Cleared</span>';
-                        } else if (!previousCleared) {
+                        } else if (ep.status === 'Locked') {
+                            statusBadge = '<span class="badge" style="background: #f1f5f9; color: #64748b; font-weight: 700; font-size: 10px; padding: 4px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">Locked</span>';
+                        } else if (ep.status === 'Eliminated') {
                             statusBadge = '<span class="badge" style="background: #fef2f2; color: #991b1b; font-weight: 700; font-size: 10px; padding: 4px 12px; border-radius: 6px; border: 1px solid #fec2c2;">Eliminated</span>';
-                        } else if (canComplete) {
-                            statusBadge = `<button class="btn btn-primary btn-sm" style="font-size: 10px;" onclick="event.stopPropagation(); declarePhase('${a.id}', '${p.id}')">Complete</button>`;
+                        } else if (ep.canComplete) {
+                            statusBadge = `<button class="btn btn-primary btn-sm" style="font-size: 10px;" onclick="event.stopPropagation(); declarePhase('${a.id}', '${ep.id}')">Complete</button>`;
                         } else {
                             statusBadge = '<span class="badge" style="background: #fffbeb; color: #d97706; font-weight: 700; font-size: 10px; padding: 4px 12px; border-radius: 6px;">Pending</span>';
                         }
                         
                         phasesHtml += `
-                            <tr style="border-bottom: 1px solid #f3f4f6; cursor: pointer;" onclick="openPhaseModal('${a.id}', '${p.id}')">
+                            <tr style="border-bottom: 1px solid #f3f4f6; cursor: pointer;" onclick="openPhaseModal('${a.id}', '${ep.id}')">
                                 <td style="padding: 1rem 0.75rem;">
-                                    <div style="font-weight: 700; font-size: 0.85rem; color: #111827;">${p.name}</div>
+                                    <div style="font-weight: 700; font-size: 0.85rem; color: #111827;">${ep.name}</div>
                                     <div class="text-muted" style="font-size: 0.75rem;">Click for details...</div>
                                 </td>
                                 <td style="padding: 1rem 0.75rem; text-align: center; vertical-align: middle;">
-                                    <div style="font-size: 0.75rem; color: #111827; font-weight: 700;">${p.lastDate}</div>
+                                    <div style="font-size: 0.75rem; color: #111827; font-weight: 700;">${ep.lastDate || '—'}</div>
                                 </td>
                                 <td style="padding: 1rem 0.75rem; text-align: right; vertical-align: middle;">
                                     ${statusBadge}
                                 </td>
                             </tr>
                         `;
-                        previousCleared = isDone;
                     });
+
                     progressHtml = `
                         <h6 class="small text-muted mb-3 text-uppercase" style="letter-spacing: 1.5px; font-size: 11px; font-weight: 800;">STAGE PROGRESS</h6>
                         <table class="table table-sm table-borderless">
@@ -1299,29 +1301,34 @@
             window.openPhaseModal = (activityId, phaseId) => {
                 const activity = db.getPlacementActivities().find(a => a.id === activityId);
                 if (!activity) return;
-                const phaseIdx = activity.phases.findIndex(p => p.id === phaseId);
-                if (phaseIdx === -1) return;
-                const phase = activity.phases[phaseIdx];
-                const isDone = (phase.completions || []).includes(user.registerNumber);
-                
-                let prevCleared = true;
-                if (phaseIdx > 0) {
-                    prevCleared = (activity.phases[phaseIdx - 1].completions || []).includes(user.registerNumber);
-                }
+                const evalRes = db.evaluateStudentPhases(activity, user.registerNumber);
+                const ep = (evalRes.phases || []).find(p => p.id === phaseId);
+                if (!ep) return;
+                const phase = ep.phase || ep;
 
                 document.getElementById('pPhaseName').textContent = phase.name;
                 document.getElementById('pPhaseDesc').innerHTML = sanitizeHtml(phase.description || '<span class="text-muted">No details provided.</span>');
-                document.getElementById('pPhaseDate').textContent = phase.lastDate || '—';
+                document.getElementById('pPhaseDate').textContent = ep.lastDate || phase.lastDate || '—';
                 document.getElementById('pPhaseMode').textContent = phase.mode === 'self' ? 'Student Declaration' : 'Admin Selection';
                 
                 const statusEl = document.getElementById('pPhaseStatus');
-                if (isDone) {
+                if (ep.status === 'Placed') {
+                    statusEl.textContent = 'PLACED / SELECTED';
+                    statusEl.style.background = '#dcfce7';
+                    statusEl.style.color = '#15803d';
+                    statusEl.style.border = '1px solid #86efac';
+                } else if (ep.status === 'Passed') {
                     statusEl.textContent = 'STAGE COMPLETED';
                     statusEl.style.background = '#ecfdf5';
                     statusEl.style.color = '#059669';
                     statusEl.style.border = '1px solid #bbf7d0';
-                } else if (!prevCleared) {
-                    statusEl.textContent = 'ELIMINATED / LOCKED';
+                } else if (ep.status === 'Locked') {
+                    statusEl.textContent = 'LOCKED';
+                    statusEl.style.background = '#f1f5f9';
+                    statusEl.style.color = '#64748b';
+                    statusEl.style.border = '1px solid #cbd5e1';
+                } else if (ep.status === 'Eliminated') {
+                    statusEl.textContent = 'ELIMINATED';
                     statusEl.style.background = '#fef2f2';
                     statusEl.style.color = '#991b1b';
                     statusEl.style.border = '1px solid #fec2c2';

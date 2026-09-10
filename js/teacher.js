@@ -107,7 +107,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (uiOnly) return;
 
         try {
-            if (tabId === 'calendar') {
+            if (tabId === 'dashboard') {
+                renderTeacherDashboard();
+            } else if (tabId === 'calendar') {
                 renderProgramCalendar();
             }
         } catch (e) {
@@ -138,375 +140,380 @@ document.addEventListener('DOMContentLoaded', async () => {
         activateTab(mainTabId, uiOnly);
     }
 
-    // --- Data Calculation for Dashboard (Scoped to Department) ---
-    const students = db.getStudents().filter(s => s.department === user.department);
-    const totalStudents = students.length;
-    document.getElementById('dashTotalStudents').textContent = totalStudents;
+    // --- Department Scope Resolution ---
+    const userDept = (currentTeacher?.department || user.department || '').trim();
+    console.log(`[Teacher Portal] Active Teacher: ${user.name || user.phoneNumber}, Department: "${userDept}"`);
 
-    const allTrainings = db.getTrainingPrograms();
-    const allActivities = db.getPlacementActivities();
-    
-    let deptTrainings = 0;
-    let deptPlacementActs = 0;
-    let deptRecruitments = 0;
-
-    // Check if training targets the department or "all"
-    allTrainings.forEach(t => {
-        const target = t.target || {};
-        if (target.type === 'all' || (target.type === 'dept' && target.depts && target.depts.includes(user.department))) {
-            deptTrainings++;
-        }
-    });
-    document.getElementById('dashTotalTrainings').textContent = deptTrainings;
-
-    // Check placement activities
-    allActivities.forEach(a => {
-        const target = a.target || {};
-        if (target.type === 'all' || (target.type === 'dept' && target.depts && target.depts.includes(user.department))) {
-            if (a.type === 'recruitment') deptRecruitments++;
-            else deptPlacementActs++;
-        }
-    });
-    document.getElementById('dashTotalActivities').textContent = deptPlacementActs;
-    document.getElementById('dashTotalRecruitments').textContent = deptRecruitments;
-
-    // Placement Status
-    let placedSet = new Set();
-    let inProcessSet = new Set();
-    let deptRegisteredRecruitments = 0;
-
-    allActivities.filter(a => a.type === 'recruitment').forEach(a => {
-        const target = a.target || {};
-        const isDept = target.type === 'all' || (target.type === 'dept' && target.depts && target.depts.includes(user.department));
-        const regs = a.registeredStudents || a.registrations || [];
-        const hasDeptRegs = regs.some(reg => students.some(s => s.registerNumber === reg));
-        if (isDept && (regs.length > 0 || hasDeptRegs)) {
-            deptRegisteredRecruitments++;
-        }
-
-        if (a.phases && a.phases.length > 0) {
-            const selPhase = (a.phases || []).find(p => p.isSelectedPhase === true || p.isSelectedPhase === 'true' || (p.name || '').trim().toLowerCase() === 'selected phase' || (p.name || '').trim().toLowerCase() === 'selected');
-            if (selPhase) {
-                (selPhase.completions || []).forEach(reg => {
-                    if(students.find(s => s.registerNumber === reg)) {
-                        placedSet.add(reg);
-                    }
-                });
-            }
-        }
-        (a.registeredStudents || a.registrations || []).forEach(reg => {
-            if(students.find(s => s.registerNumber === reg)) {
-                if (!placedSet.has(reg) && !inProcessSet.has(reg)) {
-                    inProcessSet.add(reg);
-                }
-            }
-        });
-    });
-
-    if (document.getElementById('dashRegisteredRecruitments')) {
-        document.getElementById('dashRegisteredRecruitments').textContent = deptRegisteredRecruitments;
-    }
-    if (document.getElementById('dashPlacedStudents')) {
-        document.getElementById('dashPlacedStudents').textContent = placedSet.size;
+    // Dynamically retrieve department students
+    function getDeptStudents() {
+        return (db.getStudents() || []).filter(s => (s.department || '').trim().toLowerCase() === userDept.toLowerCase());
     }
 
-    const placedCount = placedSet.size;
-    const inProcessCount = inProcessSet.size;
-    const unplacedCount = Math.max(0, totalStudents - placedCount - inProcessCount);
-
-    document.getElementById('dashPlacementTotalText').textContent = `Total: ${totalStudents}`;
-    const placementPercent = totalStudents > 0 ? Math.round((placedCount / totalStudents) * 100) : 0;
-    document.getElementById('placementPercentText').textContent = `${placementPercent}%`;
-
-    const pCtx = document.getElementById('placementStatusChart');
-    if (pCtx) {
-        new Chart(pCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Placed Students', 'In Process', 'Unplaced'],
-                datasets: [{
-                    data: [placedCount, inProcessCount, unplacedCount],
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
-                    borderWidth: 6,
-                    borderColor: '#ffffff',
-                    cutout: '80%',
-                    borderRadius: 20
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { enabled: true } }
-            }
-        });
+    function getDeptCourses() {
+        const dStudents = getDeptStudents();
+        return new Set(dStudents.map(s => s.course).filter(Boolean));
     }
 
-    // Training Status
-    let completedTrainingSet = new Set();
-    let attendingTrainingSet = new Set();
+    function isItemForDept(item) {
+        if (!item) return false;
+        const target = item.target || {};
+        if (!target.type || target.type === 'all') return true;
+        
+        const dCourses = getDeptCourses();
+        const dStudents = getDeptStudents();
+        const dStudentRegNos = new Set(dStudents.map(s => s.registerNumber));
 
-    allTrainings.forEach(p => {
-        const sessionCount = (p.sessions || []).length;
-        if (sessionCount === 0) return;
-        const studentAttendance = {};
-        p.sessions.forEach(s => {
-            (s.attendance || []).forEach(reg => {
-                if(students.find(st => st.registerNumber === reg)) {
-                    studentAttendance[reg] = (studentAttendance[reg] || 0) + 1;
-                    attendingTrainingSet.add(reg);
-                }
-            });
-        });
-        Object.entries(studentAttendance).forEach(([reg, count]) => {
-            if (count === sessionCount) {
-                completedTrainingSet.add(reg);
-            }
-        });
-    });
-
-    completedTrainingSet.forEach(reg => attendingTrainingSet.delete(reg));
-    const completedTrainCount = completedTrainingSet.size;
-    const attendingTrainCount = attendingTrainingSet.size;
-    const notAttendingCount = Math.max(0, totalStudents - completedTrainCount - attendingTrainCount);
-
-    document.getElementById('dashTrainingTotalText').textContent = `Total: ${totalStudents}`;
-    const trainingPercent = totalStudents > 0 ? Math.round((completedTrainCount / totalStudents) * 100) : 0;
-    document.getElementById('trainingPercentText').textContent = `${trainingPercent}%`;
-
-    const tCtx = document.getElementById('trainingStatusChart');
-    if (tCtx) {
-        new Chart(tCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Attending Trainings', 'Completed Trainings', 'Not Attending'],
-                datasets: [{
-                    data: [attendingTrainCount, completedTrainCount, notAttendingCount],
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
-                    borderWidth: 6,
-                    borderColor: '#ffffff',
-                    cutout: '80%',
-                    borderRadius: 20
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { enabled: true } }
-            }
-        });
+        if (target.type === 'dept') {
+            return Array.isArray(target.depts) && target.depts.some(d => (d || '').trim().toLowerCase() === userDept.toLowerCase());
+        }
+        if (target.type === 'course') {
+            return Array.isArray(target.courses) && target.courses.some(c => dCourses.has(c));
+        }
+        if (target.type === 'student') {
+            return Array.isArray(target.students) && target.students.some(reg => dStudentRegNos.has(reg));
+        }
+        return false;
     }
 
-    // --- Placed Students Table ---
-    function renderDashboardPlacedTable() {
-        const tableBody = document.querySelector('#dashboardPlacedTable tbody');
-        if (!tableBody) return;
+    // --- Teacher Dashboard Rendering ---
+    function renderTeacherDashboard() {
+        const deptStudents = getDeptStudents();
+        const totalStudents = deptStudents.length;
+        const deptStudentRegNos = new Set(deptStudents.map(s => s.registerNumber));
+        const deptCourses = getDeptCourses();
 
-        const courseFilter = document.getElementById('dashFilterCourse').value;
-        let filteredStudents = students;
-        if (courseFilter) filteredStudents = filteredStudents.filter(s => s.course === courseFilter);
+        // 1. Total Students Card
+        const totalStudentsEl = document.getElementById('dashTotalStudents');
+        if (totalStudentsEl) totalStudentsEl.textContent = totalStudents;
 
-        const studentPlacementMap = {};
-        const studentActivitiesCount = {};
-        const studentRecruitmentsCount = {};
+        // 2. Fetch scoped trainings and activities
+        const allTrainings = (db.getTrainingPrograms() || []).filter(isItemForDept);
+        const allActivities = (db.getPlacementActivities() || []).filter(isItemForDept);
+        const deptPlacementActs = allActivities.filter(a => a.type !== 'recruitment');
+        const deptRecruitments = allActivities.filter(a => a.type === 'recruitment');
 
-        allActivities.forEach(a => {
-            (a.registrations || []).forEach(reg => {
-                if (a.type === 'recruitment') studentRecruitmentsCount[reg] = (studentRecruitmentsCount[reg] || 0) + 1;
-                else studentActivitiesCount[reg] = (studentActivitiesCount[reg] || 0) + 1;
+        // Card D: Total Trainings
+        const totalTrainingsEl = document.getElementById('dashTotalTrainings');
+        if (totalTrainingsEl) totalTrainingsEl.textContent = allTrainings.length;
+
+        // Card E: Placement Activities
+        const totalActsEl = document.getElementById('dashTotalActivities');
+        if (totalActsEl) totalActsEl.textContent = deptPlacementActs.length;
+
+        // Card F: Total Recruitments
+        const totalRecEl = document.getElementById('dashTotalRecruitments');
+        if (totalRecEl) totalRecEl.textContent = deptRecruitments.length;
+
+        // Card C: Placed Students (Canonical Placement Logic)
+        const placedDeptStudents = deptStudents.filter(s => db.isStudentPlaced(s.registerNumber));
+        const placedDeptStudentRegNos = new Set(placedDeptStudents.map(s => s.registerNumber));
+        const placedCount = placedDeptStudents.length;
+        const placedStudentsEl = document.getElementById('dashPlacedStudents');
+        if (placedStudentsEl) placedStudentsEl.textContent = placedCount;
+
+        // Card B: Registered Recruitments
+        // Count of recruitment drives applicable to department having registered students from teacher's department
+        const deptRegisteredRecruitments = deptRecruitments.filter(a => {
+            const regs = a.registrations || a.registeredStudents || [];
+            return regs.some(reg => deptStudentRegNos.has(reg));
+        }).length;
+        const regRecEl = document.getElementById('dashRegisteredRecruitments');
+        if (regRecEl) regRecEl.textContent = deptRegisteredRecruitments;
+
+        // --- Visualization 1: Placement Status Overview ---
+        const inProcessDeptStudentRegNos = new Set();
+        deptStudents.forEach(s => {
+            if (placedDeptStudentRegNos.has(s.registerNumber)) return;
+            const isRegisteredAndActive = deptRecruitments.some(a => {
+                const regs = a.registrations || a.registeredStudents || [];
+                if (!regs.includes(s.registerNumber)) return false;
+                const evalRes = db.evaluateStudentPhases(a, s.registerNumber);
+                return !evalRes.isEliminated && !evalRes.isPlaced;
             });
-            if (a.phases && a.phases.length > 0) {
-                const selPhase = (a.phases || []).find(p => p.isSelectedPhase === true || p.isSelectedPhase === 'true' || (p.name || '').trim().toLowerCase() === 'selected phase' || (p.name || '').trim().toLowerCase() === 'selected');
-                if (selPhase) {
-                    (selPhase.completions || []).forEach(reg => {
-                        if (!studentPlacementMap[reg]) studentPlacementMap[reg] = [];
-                        if (!studentPlacementMap[reg].includes(a.name)) studentPlacementMap[reg].push(a.name);
-                    });
-                }
+            if (isRegisteredAndActive) {
+                inProcessDeptStudentRegNos.add(s.registerNumber);
             }
         });
 
-        let placedStudentsData = filteredStudents.filter(s => studentPlacementMap[s.registerNumber]).map(s => {
-            return {
-                name: s.name,
-                course: s.course,
-                activities: studentActivitiesCount[s.registerNumber] || 0,
-                recruitments: studentRecruitmentsCount[s.registerNumber] || 0,
-                placedRecruitment: studentPlacementMap[s.registerNumber].join(', ')
-            };
-        });
+        const inProcessCount = inProcessDeptStudentRegNos.size;
+        const unplacedCount = Math.max(0, totalStudents - placedCount - inProcessCount);
 
-        const hasRealPlacements = Object.keys(studentPlacementMap).length > 0;
+        const pTotalEl = document.getElementById('dashPlacementTotalText');
+        if (pTotalEl) pTotalEl.textContent = `Total: ${totalStudents}`;
+        const pPercentEl = document.getElementById('placementPercentText');
+        const placementPercent = totalStudents > 0 ? Math.round((placedCount / totalStudents) * 100) : 0;
+        if (pPercentEl) pPercentEl.textContent = `${placementPercent}%`;
 
-        tableBody.innerHTML = '';
-        if (placedStudentsData.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No placed students found.</td></tr>';
-        } else {
-            placedStudentsData.forEach(s => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${s.name}</strong></td>
-                    <td>${s.course || '—'}</td>
-                    <td><span class="badge bg-primary" style="font-size: 11px;">${s.activities || 0}</span></td>
-                    <td><span class="badge bg-secondary" style="font-size: 11px;">${s.recruitments || 0}</span></td>
-                    <td><span class="badge bg-success" style="font-size: 11px;">${s.placedRecruitment || 'Placed'}</span></td>
-                `;
-                tableBody.appendChild(tr);
-            });
-        }
-
-        // --- Render Course & Gender Chart for Teacher Dashboard ---
-        let labels = [];
-        let maleData = [];
-        let femaleData = [];
-        let otherData = [];
-
-        if (hasRealPlacements) {
-            const courseGenderStats = {};
-            const placedStudentsRaw = students.filter(s => studentPlacementMap[s.registerNumber]);
-            
-            placedStudentsRaw.forEach(s => {
-                const course = s.course || 'Unknown';
-                const gender = (s.gender || 'Other').toLowerCase();
-                if (!courseGenderStats[course]) courseGenderStats[course] = { male: 0, female: 0, other: 0 };
-                
-                if (gender === 'male') courseGenderStats[course].male++;
-                else if (gender === 'female') courseGenderStats[course].female++;
-                else courseGenderStats[course].other++;
-            });
-
-            labels = Object.keys(courseGenderStats);
-            maleData = labels.map(c => courseGenderStats[c].male);
-            femaleData = labels.map(c => courseGenderStats[c].female);
-            otherData = labels.map(c => courseGenderStats[c].other);
-        }
-
-        const cgCtx = document.getElementById('courseGenderChart');
-        if (cgCtx) {
-            if (window.courseGenderChartInst) window.courseGenderChartInst.destroy();
-            window.courseGenderChartInst = new Chart(cgCtx, {
-                type: 'bar',
+        const pCtx = document.getElementById('placementStatusChart');
+        if (pCtx) {
+            if (window.placementStatusChartInst) window.placementStatusChartInst.destroy();
+            window.placementStatusChartInst = new Chart(pCtx, {
+                type: 'doughnut',
                 data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Male',
-                            data: maleData,
-                            backgroundColor: '#3b82f6',
-                            borderRadius: 4
-                        },
-                        {
-                            label: 'Female',
-                            data: femaleData,
-                            backgroundColor: '#ec4899',
-                            borderRadius: 4
-                        },
-                        {
-                            label: 'Other',
-                            data: otherData,
-                            backgroundColor: '#f59e0b',
-                            borderRadius: 4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top' },
-                        tooltip: { mode: 'index', intersect: false }
-                    },
-                    scales: {
-                        x: { stacked: false, grid: { display: false } },
-                        y: { stacked: false, beginAtZero: true, ticks: { stepSize: 5 } }
-                    }
-                }
-            });
-        }
-    }
-
-    const dashCourseSelect = document.getElementById('dashFilterCourse');
-    if (dashCourseSelect && dashCourseSelect.options.length <= 1) {
-        let courses = [...new Set(students.map(s => s.course).filter(c => c))];
-        courses.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c; opt.textContent = c;
-            dashCourseSelect.appendChild(opt);
-        });
-        dashCourseSelect.addEventListener('change', renderDashboardPlacedTable);
-    }
-    renderDashboardPlacedTable();
-
-    // --- Activity Attendance Chart ---
-    const dashActivitySelect = document.getElementById('dashFilterActivity');
-    if (dashActivitySelect && dashActivitySelect.options.length <= 1) {
-        const relevantActs = allActivities.filter(a => {
-            const target = a.target || {};
-            return target.type === 'all' || (target.type === 'dept' && target.depts && target.depts.includes(user.department));
-        });
-        relevantActs.forEach(a => {
-            const opt = document.createElement('option');
-            opt.value = a.id;
-            opt.textContent = a.name;
-            dashActivitySelect.appendChild(opt);
-        });
-
-        if (dashActivitySelect.options.length > 1) {
-            dashActivitySelect.value = dashActivitySelect.options[1].value;
-        }
-        dashActivitySelect.addEventListener('change', renderActivityAttendanceChart);
-    }
-
-    function renderActivityAttendanceChart() {
-        const actId = dashActivitySelect ? dashActivitySelect.value : null;
-        let labels = [];
-        let data = [];
-
-        const selectedAct = allActivities.find(a => a.id === actId);
-        if (selectedAct && Array.isArray(selectedAct.registrations) && selectedAct.registrations.length > 0) {
-            const courseCounts = {};
-            selectedAct.registrations.forEach(reg => {
-                const student = students.find(s => s.registerNumber === reg);
-                if (student) {
-                    const course = student.course || 'Unknown';
-                    courseCounts[course] = (courseCounts[course] || 0) + 1;
-                }
-            });
-            labels = Object.keys(courseCounts);
-            data = labels.map(c => courseCounts[c]);
-        }
-
-        const ctx = document.getElementById('activityAttendanceChart');
-        if (ctx) {
-            if (window.activityAttendanceChartInst) window.activityAttendanceChartInst.destroy();
-            window.activityAttendanceChartInst = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
+                    labels: ['Placed Students', 'In Process', 'Unplaced'],
                     datasets: [{
-                        label: 'Registered / Attended Students',
-                        data: data,
-                        backgroundColor: '#10b981',
-                        borderRadius: 4
+                        data: [placedCount, inProcessCount, unplacedCount],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+                        borderWidth: 6,
+                        borderColor: '#ffffff',
+                        cutout: '80%',
+                        borderRadius: 20
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 10 } }, x: { grid: { display: false } } }
+                    plugins: { legend: { display: false }, tooltip: { enabled: true } }
                 }
             });
         }
-    }
-    renderActivityAttendanceChart();
 
-    // --- Program Calendar Logic ---
+        // --- Visualization 2: Training Status Overview ---
+        let completedTrainingSet = new Set();
+        let attendingTrainingSet = new Set();
+
+        allTrainings.forEach(p => {
+            const sessionCount = (p.sessions || []).length;
+            if (sessionCount === 0) return;
+            const studentAttendance = {};
+            p.sessions.forEach(s => {
+                (s.attendance || []).forEach(reg => {
+                    if (deptStudentRegNos.has(reg)) {
+                        studentAttendance[reg] = (studentAttendance[reg] || 0) + 1;
+                        attendingTrainingSet.add(reg);
+                    }
+                });
+            });
+            Object.entries(studentAttendance).forEach(([reg, count]) => {
+                if (count === sessionCount) {
+                    completedTrainingSet.add(reg);
+                }
+            });
+        });
+
+        completedTrainingSet.forEach(reg => attendingTrainingSet.delete(reg));
+        const completedTrainCount = completedTrainingSet.size;
+        const attendingTrainCount = attendingTrainingSet.size;
+        const notAttendingCount = Math.max(0, totalStudents - completedTrainCount - attendingTrainCount);
+
+        const tTotalEl = document.getElementById('dashTrainingTotalText');
+        if (tTotalEl) tTotalEl.textContent = `Total: ${totalStudents}`;
+        const tPercentEl = document.getElementById('trainingPercentText');
+        const trainingPercent = totalStudents > 0 ? Math.round((completedTrainCount / totalStudents) * 100) : 0;
+        if (tPercentEl) tPercentEl.textContent = `${trainingPercent}%`;
+
+        const tCtx = document.getElementById('trainingStatusChart');
+        if (tCtx) {
+            if (window.trainingStatusChartInst) window.trainingStatusChartInst.destroy();
+            window.trainingStatusChartInst = new Chart(tCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Attending Trainings', 'Completed Trainings', 'Not Attending'],
+                    datasets: [{
+                        data: [attendingTrainCount, completedTrainCount, notAttendingCount],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+                        borderWidth: 6,
+                        borderColor: '#ffffff',
+                        cutout: '80%',
+                        borderRadius: 20
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: true } }
+                }
+            });
+        }
+
+        // --- Visualization 4: Placed Students Overview & Table ---
+        function renderDashboardPlacedTable() {
+            const tableBody = document.querySelector('#dashboardPlacedTable tbody');
+            if (!tableBody) return;
+
+            const courseFilter = document.getElementById('dashFilterCourse')?.value || '';
+            let filteredStudents = placedDeptStudents;
+            if (courseFilter) {
+                filteredStudents = filteredStudents.filter(s => s.course === courseFilter);
+            }
+
+            const studentActivitiesCount = {};
+            const studentRecruitmentsCount = {};
+
+            allActivities.forEach(a => {
+                (a.registrations || a.registeredStudents || []).forEach(reg => {
+                    if (a.type === 'recruitment') {
+                        studentRecruitmentsCount[reg] = (studentRecruitmentsCount[reg] || 0) + 1;
+                    } else {
+                        studentActivitiesCount[reg] = (studentActivitiesCount[reg] || 0) + 1;
+                    }
+                });
+            });
+
+            tableBody.innerHTML = '';
+            if (filteredStudents.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No placed students found for your department.</td></tr>';
+            } else {
+                filteredStudents.forEach(s => {
+                    const tr = document.createElement('tr');
+                    const placedDrives = db.getStudentPlacementDetails(s.registerNumber);
+                    const placedText = placedDrives.length > 0 ? placedDrives.join(', ') : 'Placed';
+                    tr.innerHTML = `
+                        <td><strong>${s.name}</strong></td>
+                        <td>${s.course || '—'}</td>
+                        <td><span class="badge bg-primary" style="font-size: 11px;">${studentActivitiesCount[s.registerNumber] || 0}</span></td>
+                        <td><span class="badge bg-secondary" style="font-size: 11px;">${studentRecruitmentsCount[s.registerNumber] || 0}</span></td>
+                        <td><span class="badge bg-success" style="font-size: 11px;">${placedText}</span></td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            }
+
+            // --- Course & Gender Chart (Scoped to Placed Dept Students) ---
+            const courseGenderStats = {};
+            Array.from(deptCourses).sort().forEach(c => {
+                courseGenderStats[c] = { male: 0, female: 0, other: 0 };
+            });
+
+            placedDeptStudents.forEach(s => {
+                const c = s.course || 'Unknown';
+                const g = (s.gender || 'Other').toLowerCase();
+                if (!courseGenderStats[c]) courseGenderStats[c] = { male: 0, female: 0, other: 0 };
+                if (g === 'male') courseGenderStats[c].male++;
+                else if (g === 'female') courseGenderStats[c].female++;
+                else courseGenderStats[c].other++;
+            });
+
+            const labels = Object.keys(courseGenderStats);
+            const maleData = labels.map(c => courseGenderStats[c].male);
+            const femaleData = labels.map(c => courseGenderStats[c].female);
+            const otherData = labels.map(c => courseGenderStats[c].other);
+
+            const cgCtx = document.getElementById('courseGenderChart');
+            if (cgCtx) {
+                if (window.courseGenderChartInst) window.courseGenderChartInst.destroy();
+                window.courseGenderChartInst = new Chart(cgCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Male', data: maleData, backgroundColor: '#3b82f6', borderRadius: 4 },
+                            { label: 'Female', data: femaleData, backgroundColor: '#ec4899', borderRadius: 4 },
+                            { label: 'Other', data: otherData, backgroundColor: '#f59e0b', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        scales: {
+                            x: { stacked: false, grid: { display: false } },
+                            y: { stacked: false, beginAtZero: true, ticks: { stepSize: 1 } }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Setup Course Filter Dropdown with only teacher's department courses
+        const dashCourseSelect = document.getElementById('dashFilterCourse');
+        if (dashCourseSelect) {
+            const currentSel = dashCourseSelect.value;
+            dashCourseSelect.innerHTML = '<option value="">All Courses</option>';
+            Array.from(deptCourses).sort().forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                if (c === currentSel) opt.selected = true;
+                dashCourseSelect.appendChild(opt);
+            });
+            dashCourseSelect.onchange = renderDashboardPlacedTable;
+        }
+        renderDashboardPlacedTable();
+
+        // --- Visualization 3: Activity Course-wise Attendance ---
+        const dashActivitySelect = document.getElementById('dashFilterActivity');
+        if (dashActivitySelect) {
+            const currentVal = dashActivitySelect.value;
+            dashActivitySelect.innerHTML = '<option value="">Select Activity</option>';
+            allActivities.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.id;
+                opt.textContent = a.name;
+                if (a.id === currentVal) opt.selected = true;
+                dashActivitySelect.appendChild(opt);
+            });
+
+            if (!dashActivitySelect.value && allActivities.length > 0) {
+                dashActivitySelect.value = allActivities[0].id;
+            }
+            dashActivitySelect.onchange = renderActivityAttendanceChart;
+        }
+
+        function renderActivityAttendanceChart() {
+            const actId = dashActivitySelect ? dashActivitySelect.value : null;
+            let labels = Array.from(deptCourses).sort();
+            let data = labels.map(() => 0);
+
+            const selectedAct = allActivities.find(a => a.id === actId);
+            if (selectedAct && Array.isArray(selectedAct.registrations) && selectedAct.registrations.length > 0) {
+                const courseCounts = {};
+                labels.forEach(c => { courseCounts[c] = 0; });
+                selectedAct.registrations.forEach(reg => {
+                    const student = deptStudents.find(s => s.registerNumber === reg);
+                    if (student && student.course) {
+                        courseCounts[student.course] = (courseCounts[student.course] || 0) + 1;
+                    }
+                });
+                data = labels.map(c => courseCounts[c] || 0);
+            }
+
+            const ctx = document.getElementById('activityAttendanceChart');
+            if (ctx) {
+                if (window.activityAttendanceChartInst) window.activityAttendanceChartInst.destroy();
+                window.activityAttendanceChartInst = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Registered / Attended Students',
+                            data: data,
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { grid: { display: false } } }
+                    }
+                });
+            }
+        }
+        renderActivityAttendanceChart();
+    }
+
+    // --- Program Calendar Logic (Replicating Admin Calendar with Dept Scope) ---
+    const programColors = ['#4f46e5', '#059669', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#2563eb'];
+    function getEventColor(id) {
+        let hash = 0;
+        for (let i = 0; i < (id || '').length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+        return programColors[Math.abs(hash) % programColors.length];
+    }
+
     function renderProgramCalendar() {
         const monthSelect = document.getElementById('calMonth');
         const yearSelect = document.getElementById('calYear');
         const container = document.getElementById('calendarContainer');
 
         if (!monthSelect || !yearSelect || !container) return;
+
+        const allTrainings = (db.getTrainingPrograms() || []).filter(isItemForDept);
+        const allActivities = (db.getPlacementActivities() || []).filter(isItemForDept);
 
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         if (monthSelect.options.length === 0) {
@@ -552,33 +559,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 
-                let eventsHtml = '';
-                allTrainings.forEach(p => {
-                    const target = p.target || {};
-                    if (target.type === 'all' || (target.type === 'dept' && target.depts && target.depts.includes(user.department))) {
-                        const sDate = new Date(p.startDate);
-                        const eDate = new Date(p.endDate);
-                        const current = new Date(dateStr);
-                        sDate.setHours(0,0,0,0); eDate.setHours(0,0,0,0); current.setHours(0,0,0,0);
-                        if (current >= sDate && (p.endDate ? current <= eDate : current <= sDate)) {
-                            eventsHtml += `<div style="background:#eef2ff;color:#4f46e5;font-size:10px;padding:2px 4px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${p.name}">📚 ${p.name}</div>`;
-                        }
-                    }
+                // Collect programs/events matching this day
+                const dayTrainings = allTrainings.filter(p => {
+                    const start = p.startDate || p.date;
+                    const end = p.endDate || p.date || p.startDate;
+                    return dateStr >= start && dateStr <= end;
                 });
 
-                allActivities.forEach(p => {
-                    const target = p.target || {};
-                    if (target.type === 'all' || (target.type === 'dept' && target.depts && target.depts.includes(user.department))) {
-                        if (p.startDate === dateStr) {
-                            eventsHtml += `<div style="background:#ecfdf5;color:#059669;font-size:10px;padding:2px 4px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${p.name} Start">💼 ${p.name} Start</div>`;
-                        }
-                    }
+                const dayActivities = allActivities.filter(p => {
+                    const start = p.startDate || p.date;
+                    const end = p.endDate || p.lastDate || p.date || p.startDate;
+                    return dateStr >= start && dateStr <= end;
+                });
+
+                let eventsHtml = '';
+                dayTrainings.forEach(p => {
+                    const color = getEventColor(p.id);
+                    eventsHtml += `<div style="background:#eef2ff;color:${color};font-size:10px;font-weight:600;padding:2px 4px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid ${color};" title="${p.name}">📚 ${p.name}</div>`;
+                });
+                dayActivities.forEach(p => {
+                    const color = p.type === 'recruitment' ? '#059669' : '#0D6EFC';
+                    eventsHtml += `<div style="background:${p.type === 'recruitment' ? '#ecfdf5' : '#eff6ff'};color:${color};font-size:10px;font-weight:600;padding:2px 4px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid ${color};" title="${p.name}">💼 ${p.name}</div>`;
                 });
 
                 const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
                 const bg = isToday ? '#eff6ff' : '#fff';
                 
-                html += `<div style="background:${bg};min-height:100px;padding:8px;display:flex;flex-direction:column;">
+                html += `<div style="background:${bg};min-height:100px;padding:8px;display:flex;flex-direction:column;cursor:pointer;transition:background 0.2s;" onclick="viewTeacherDateEvents('${dateStr}')" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='${bg}'">
                     <div style="text-align:right;font-size:12px;color:${isToday ? '#2563eb' : '#374151'};font-weight:${isToday ? '700' : '500'};margin-bottom:4px;">${day}</div>
                     <div style="flex:1;">${eventsHtml}</div>
                 </div>`;
@@ -596,13 +603,81 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         drawCalendar();
     }
+
+    window.viewTeacherDateEvents = function(dateStr) {
+        const header = document.getElementById('calSelectedDateHeader');
+        const list = document.getElementById('calSelectedEventsList');
+        if (!header || !list) return;
+
+        const allTrainings = (db.getTrainingPrograms() || []).filter(isItemForDept);
+        const allActivities = (db.getPlacementActivities() || []).filter(isItemForDept);
+
+        const dateObj = new Date(dateStr);
+        const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        header.textContent = `Programs on ${formattedDate}`;
+
+        const dayTrainings = allTrainings.filter(p => {
+            const start = p.startDate || p.date;
+            const end = p.endDate || p.date || p.startDate;
+            return dateStr >= start && dateStr <= end;
+        });
+
+        const dayActivities = allActivities.filter(p => {
+            const start = p.startDate || p.date;
+            const end = p.endDate || p.lastDate || p.date || p.startDate;
+            return dateStr >= start && dateStr <= end;
+        });
+
+        if (dayTrainings.length === 0 && dayActivities.length === 0) {
+            list.innerHTML = `<p class="text-muted small">No events scheduled for your department on this day.</p>`;
+        } else {
+            let html = '';
+            dayTrainings.forEach(p => {
+                const color = getEventColor(p.id);
+                html += `
+                    <div style="background: #fff; border-left: 4px solid ${color}; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 8px;">
+                        <div style="font-size: 0.72rem; font-weight: 700; color: ${color}; text-transform: uppercase; margin-bottom: 4px;">Training Program</div>
+                        <h5 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 700; color: #111827;">${p.name}</h5>
+                        ${p.description ? `<div style="margin: 0 0 6px 0; font-size: 0.8rem; color: #4b5563; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${p.description}</div>` : ''}
+                        <div style="font-size: 0.75rem; color: #6b7280;">📅 ${p.date || p.startDate || '—'} ${p.endDate ? `to ${p.endDate}` : ''}</div>
+                    </div>
+                `;
+            });
+            dayActivities.forEach(p => {
+                const color = p.type === 'recruitment' ? '#059669' : '#0D6EFC';
+                html += `
+                    <div style="background: #fff; border-left: 4px solid ${color}; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 8px;">
+                        <div style="font-size: 0.72rem; font-weight: 700; color: ${color}; text-transform: uppercase; margin-bottom: 4px;">${p.type === 'recruitment' ? 'Recruitment Drive' : 'Placement Activity'}</div>
+                        <h5 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 700; color: #111827;">${p.name}</h5>
+                        ${p.description ? `<div style="margin: 0 0 6px 0; font-size: 0.8rem; color: #4b5563; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${p.description}</div>` : ''}
+                        <div style="font-size: 0.75rem; color: #6b7280;">📍 ${p.venue || 'Christ Campus'} | 📅 ${p.date || p.startDate || '—'}</div>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+        }
+
+        // Smooth scroll on smaller devices
+        const rightPanel = document.getElementById('calendarRightPanelWrapper');
+        const calContainer = document.getElementById('calendarContainer');
+        if (rightPanel && calContainer) {
+            const isMobile = window.innerWidth <= 992 || rightPanel.getBoundingClientRect().top > calContainer.getBoundingClientRect().top + 50;
+            if (isMobile) {
+                requestAnimationFrame(() => {
+                    rightPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            }
+        }
+    };
+
+    // Initial render
+    renderTeacherDashboard();
     renderProgramCalendar();
 
-    // 3. Render content after DB is loaded
+    // Route UI after DB is ready
     try {
         handleRouting(false);
     } catch (error) {
         console.error("Teacher portal routing initialization failed:", error);
     }
-
 });
