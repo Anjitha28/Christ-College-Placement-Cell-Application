@@ -19,11 +19,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await db.ready;
 
-    checkAuth('teacher');
+    checkAuth(['teacher', 'teacherCoordinator']);
     const user = JSON.parse(sessionStorage.getItem('currentUser'));
     const userRole = sessionStorage.getItem('userRole');
 
-    if (!user || userRole !== 'teacher') return;
+    if (!user || (userRole !== 'teacher' && userRole !== 'teacherCoordinator')) return;
 
     // Check for forced password reset
     const teachers = db.getTeachers();
@@ -58,7 +58,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const teacherNameEl = document.getElementById('teacherName');
     if (teacherNameEl) teacherNameEl.textContent = `Welcome, ${user.name}`;
     const userRoleEl = document.querySelector('.user-role');
-    if (userRoleEl) userRoleEl.textContent = 'Teacher';
+    const isCoord = userRole === 'teacherCoordinator' || user.isCoordinator === true || user.isCoordinator === 'true';
+    if (userRoleEl) userRoleEl.textContent = isCoord ? 'Teacher Coordinator' : 'Teacher Portal';
+
+    if (isCoord) {
+        const coordLink = document.getElementById('coordPortalLink');
+        if (coordLink) coordLink.classList.remove('hidden');
+    }
 
     // Fill Profile Modal
     const pDeptEl = document.getElementById('pDept');
@@ -113,7 +119,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.hash = tab.dataset.tab;
+            const targetTab = tab.dataset.tab;
+            if (window.location.hash === '#' + targetTab) {
+                activateTab(targetTab, false);
+            } else {
+                window.location.hash = targetTab;
+            }
         });
     });
 

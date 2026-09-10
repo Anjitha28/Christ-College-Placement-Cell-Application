@@ -53,14 +53,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 setTimeout(() => {
                     if (role === 'admin') {
                         window.location.href = 'admin.html';
-                    } else if (role === 'teacherCoordinator') {
-                        window.location.href = 'admin.html';
-                    } else if (role === 'studentCoordinator') {
-                        window.location.href = 'coordinator.html';
-                    } else if (role === 'student') {
-                        window.location.href = 'student.html';
-                    } else if (role === 'teacher') {
+                    } else if (role === 'teacher' || role === 'teacherCoordinator') {
                         window.location.href = 'teacher.html';
+                    } else if (role === 'student' || role === 'studentCoordinator') {
+                        window.location.href = 'student.html';
                     }
                 }, 1000);
             } else {

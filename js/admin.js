@@ -157,6 +157,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const addTeacherBtn = document.getElementById('toggleAddTeacherBtn');
         if (addTeacherBtn) addTeacherBtn.style.display = 'none';
 
+        // Show Teacher Portal link
+        const backLink = document.getElementById('teacherPortalBackLink');
+        if (backLink) backLink.classList.remove('hidden');
+
         // Hide admin-only fields like Promote to Coordinator in modals
         document.querySelectorAll('.admin-only-field').forEach(el => el.style.setProperty('display', 'none', 'important'));
     } else {

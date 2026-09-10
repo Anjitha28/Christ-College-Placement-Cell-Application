@@ -113,19 +113,8 @@
                     </div>
                 </div>
 
-                    <!-- Dashboard Placeholder (was Profile) -->
-                    <div id="profileTab" class="tab-content active">
-                        <div class="alert alert-primary d-flex align-items-center gap-3" style="border-radius: 16px; padding: 2rem;">
-                            <div style="font-size: 2rem;">👋</div>
-                            <div>
-                                <h4 class="mb-1" style="font-weight: 800;">Welcome back!</h4>
-                                <p class="mb-0">Select a tab from the sidebar to manage your trainings and placement activities.</p>
-                            </div>
-                        </div>
-                    </div>
-
                 <!-- Training Tab -->
-                <div id="trainingTab" class="tab-content">
+                <div id="trainingTab" class="tab-content active">
                     <h4 class="mb-4">Training & Programs</h4>
                     <div id="trainingList" class="d-flex flex-column gap-3 w-100">
                         <!-- Populated by JS -->
@@ -539,7 +528,12 @@
             tabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     e.preventDefault();
-                    window.location.hash = tab.dataset.tab;
+                    const targetTab = tab.dataset.tab;
+                    if (window.location.hash === '#' + targetTab) {
+                        activateTab(targetTab, false);
+                    } else {
+                        window.location.hash = targetTab;
+                    }
                 });
             });
 
@@ -587,7 +581,9 @@
                 exams.sort((a, b) => {
                     if (a.attempt && !b.attempt) return -1;
                     if (!a.attempt && b.attempt) return 1;
-                    retu                list.innerHTML = exams.map(e => {
+                    return 0;
+                });
+                list.innerHTML = exams.map(e => {
                     const total = (e.questions || []).reduce((acc, q) => acc + (Number(q.marks) || 0), 0);
                     const done = e.attempt != null;
                     const prevScore = done ? e.attempt.score : null;
@@ -655,7 +651,7 @@
                 document.getElementById('fsExamTitle').textContent = exam.title;
                 document.getElementById('fsExamSubtitle').textContent = `${exam.questions.length} Questions`;
                 
-                document.getElementById('examFullscreenContainer').classList.remove('hidden');ner').classList.remove('hidden');
+                document.getElementById('examFullscreenContainer').classList.remove('hidden');
                 
                 renderFsGrid();
                 renderFsQuestion();
@@ -792,7 +788,11 @@
                     btnReview.style.background = 'white';
                     btnReview.style.borderColor = '#e2e8f0';
                     btnReview.style.color = '#475569';
-                    btnReview.innerHTML = '☆ Mark for Review';            window.openFsSubmitModal = function () {
+                    btnReview.innerHTML = '☆ Mark for Review';
+                }
+            }
+
+            window.openFsSubmitModal = function () {
                 const modal = document.getElementById('examSubmitConfirmModal');
                 if (modal) {
                     const btn = document.getElementById('btnConfirmFsSubmit');
