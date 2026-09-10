@@ -4089,6 +4089,60 @@ select.form-control { cursor: pointer; }
     box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.08);
 }
 
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+/* Single row unified filters for User Management, Placement Activities, and Recruitments */
+.filter-row-unified {
+    display: grid;
+    grid-template-columns: minmax(180px, 2.2fr) minmax(130px, 1.4fr) minmax(130px, 1.4fr) minmax(130px, 1.4fr) minmax(120px, 1.1fr) auto;
+    gap: 0.65rem;
+    align-items: flex-end;
+}
+.filter-row-unified > div {
+    min-width: 0;
+}
+.filter-row-unified .form-control {
+    height: 38px;
+}
+.filter-row-unified .btn {
+    white-space: nowrap;
+    height: 38px;
+    padding: 0.45rem 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+@media (max-width: 900px) {
+    .filter-row-unified {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 768px) {
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+    .filter-grid > div {
+        width: 100%;
+        max-width: none !important;
+    }
+    .filter-grid .btn {
+        width: 100%;
+    }
+    .filter-row-unified {
+        grid-template-columns: 1fr;
+    }
+    .filter-row-unified .btn {
+        width: 100%;
+    }
+}
+
 /* Student Info Grid */
 .student-info-grid {
     display: grid;

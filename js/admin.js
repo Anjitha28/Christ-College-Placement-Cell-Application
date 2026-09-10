@@ -115,41 +115,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     const userRoleEl = document.querySelector('.user-role');
     const userAvatarEl = document.querySelector('.user-avatar');
 
-    if (userRole === 'studentCoordinator') {
+    if (userRole === 'studentCoordinator' || userRole === 'teacherCoordinator' || userRole === 'placementCoordinator') {
+        const isEditAllowed = Permissions.can(userRole, 'edit_training_drives');
         if (sidebarBrand) {
             sidebarBrand.textContent = 'Coordinator Portal';
-            sidebarBrand.href = 'coordinator.html';
+            sidebarBrand.href = userRole === 'teacherCoordinator' ? 'teacher.html' : 'coordinator.html';
         }
         if (userNameEl) userNameEl.textContent = `Welcome, ${currentUser.name || 'Coordinator'}`;
-        if (userRoleEl) userRoleEl.textContent = 'Student Coordinator';
+        if (userRoleEl) userRoleEl.textContent = `Placement Coordinator (${isEditAllowed ? 'Edit' : 'Read-Only'})`;
         if (userAvatarEl) userAvatarEl.textContent = (currentUser.name || 'C')[0];
 
-        // Hide User Management link from sidebar
-        const userMgmtLink = document.querySelector('[data-tab="userManagement"]');
-        if (userMgmtLink) {
-            userMgmtLink.parentElement.style.display = 'none';
+        // Hide User Management link from sidebar if user cannot manage users
+        if (!Permissions.can(userRole, 'manage_users')) {
+            const userMgmtLink = document.querySelector('[data-tab="userManagement"]');
+            if (userMgmtLink) {
+                userMgmtLink.parentElement.style.display = 'none';
+            }
         }
-
-        // Hide add/create buttons
-        const addTrnBtn = document.getElementById('toggleAddTrainingBtn');
-        if (addTrnBtn) addTrnBtn.style.display = 'none';
-        const addPlcBtn = document.getElementById('toggleAddPlacementBtn');
-        if (addPlcBtn) addPlcBtn.style.display = 'none';
-        const addRecBtn = document.getElementById('toggleAddRecruitmentBtn');
-        if (addRecBtn) addRecBtn.style.display = 'none';
-        const addPhaseBtn = document.getElementById('addPhaseBtn');
-        if (addPhaseBtn) addPhaseBtn.style.display = 'none';
-
-        // Hide admin-only fields like Promote to Coordinator in modals
-        document.querySelectorAll('.admin-only-field').forEach(el => el.style.setProperty('display', 'none', 'important'));
-    } else if (userRole === 'teacherCoordinator') {
-        if (sidebarBrand) {
-            sidebarBrand.textContent = 'Teacher Coordinator Portal';
-            sidebarBrand.href = 'admin.html';
-        }
-        if (userNameEl) userNameEl.textContent = `Welcome, ${currentUser.name || 'Coordinator'}`;
-        if (userRoleEl) userRoleEl.textContent = 'Teacher Coordinator';
-        if (userAvatarEl) userAvatarEl.textContent = (currentUser.name || 'T')[0];
 
         // Hide Manage Teachers subtab button
         const teacherTabBtn = document.querySelector('[data-subtab="teachersSubTab"]');
@@ -157,9 +139,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         const addTeacherBtn = document.getElementById('toggleAddTeacherBtn');
         if (addTeacherBtn) addTeacherBtn.style.display = 'none';
 
-        // Show Teacher Portal link
-        const backLink = document.getElementById('teacherPortalBackLink');
-        if (backLink) backLink.classList.remove('hidden');
+        // Add/Create buttons based on edit permission
+        const addTrnBtn = document.getElementById('toggleAddTrainingBtn');
+        if (addTrnBtn) addTrnBtn.style.display = isEditAllowed ? '' : 'none';
+        const addPlcBtn = document.getElementById('toggleAddPlacementBtn');
+        if (addPlcBtn) addPlcBtn.style.display = isEditAllowed ? '' : 'none';
+        const addRecBtn = document.getElementById('toggleAddRecruitmentBtn');
+        if (addRecBtn) addRecBtn.style.display = isEditAllowed ? '' : 'none';
+        const addPhaseBtn = document.getElementById('addPhaseBtn');
+        if (addPhaseBtn) addPhaseBtn.style.display = isEditAllowed ? '' : 'none';
+
+        if (userRole === 'teacherCoordinator') {
+            const backLink = document.getElementById('teacherPortalBackLink');
+            if (backLink) backLink.classList.remove('hidden');
+        }
 
         // Hide admin-only fields like Promote to Coordinator in modals
         document.querySelectorAll('.admin-only-field').forEach(el => el.style.setProperty('display', 'none', 'important'));
@@ -324,7 +317,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             addStudentForm.reset();
             studentModalTitle.textContent = 'Add New Student';
             saveStudentBtn.textContent = 'Save Student Profile';
+            const sPermGrp = document.getElementById('sCoordPermGroup');
+            if (sPermGrp) sPermGrp.classList.add('hidden');
             openModal(studentModal);
+        });
+    }
+
+    const sIsCoordCheck = document.getElementById('sIsCoordinator');
+    const sCoordPermGrp = document.getElementById('sCoordPermGroup');
+    if (sIsCoordCheck && sCoordPermGrp) {
+        sIsCoordCheck.addEventListener('change', () => {
+            if (sIsCoordCheck.checked) sCoordPermGrp.classList.remove('hidden');
+            else sCoordPermGrp.classList.add('hidden');
         });
     }
 
@@ -353,6 +357,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
+            const isCoord = document.getElementById('sIsCoordinator') ? document.getElementById('sIsCoordinator').checked : false;
+            const coordPerm = (document.getElementById('sCoordPermission')?.value || 'read');
+
             const student = {
                 name: document.getElementById('sName').value.trim(),
                 registerNumber: document.getElementById('sRegNo').value.trim(),
@@ -364,8 +371,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 admissionYear: document.getElementById('sAdmnYear') ? document.getElementById('sAdmnYear').value.trim() : '',
                 gender: document.getElementById('sGender').value,
                 password: (document.getElementById('sPass').value || 'password').trim(),
-                isCoordinator: document.getElementById('sIsCoordinator') ? document.getElementById('sIsCoordinator').checked : false
+                isCoordinator: isCoord,
+                coordinatorPermission: isCoord ? coordPerm : null
             };
+
+            // Store in coordinator_permissions in localStorage
+            try {
+                const pMap = JSON.parse(localStorage.getItem('coordinator_permissions') || '{}');
+                if (isCoord) pMap[student.registerNumber] = coordPerm;
+                else delete pMap[student.registerNumber];
+                localStorage.setItem('coordinator_permissions', JSON.stringify(pMap));
+            } catch (e) {}
 
             if (editingRegNo) {
                 let students = db.getStudents();
@@ -374,6 +390,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const originalStudent = students[index];
                     if (!Permissions.can(userRole, 'manage_users')) {
                         student.isCoordinator = originalStudent.isCoordinator;
+                        student.coordinatorPermission = originalStudent.coordinatorPermission;
                     }
                     students[index] = { ...originalStudent, ...student };
                     const result = await db.saveStudents(students);
@@ -527,10 +544,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         filteredStudents.forEach(s => {
+            const isCoord = s.isCoordinator === true || s.isCoordinator === 'true';
+            let perm = s.coordinatorPermission;
+            if (!perm) {
+                try {
+                    const pMap = JSON.parse(localStorage.getItem('coordinator_permissions') || '{}');
+                    perm = pMap[s.registerNumber] || 'read';
+                } catch (e) { perm = 'read'; }
+            }
+            const coordBadge = isCoord ? `<span class="coord-badge" style="background: ${perm === 'edit' ? '#dcfce7' : '#fef3c7'}; color: ${perm === 'edit' ? '#166534' : '#92400e'};" title="Placement Coordinator (${perm === 'edit' ? 'Edit' : 'Read-Only'})">Placement Coord (${perm === 'edit' ? 'Edit' : 'Read'})</span>` : '';
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="font-weight: 400;">${s.registerNumber}</td>
-                <td>${s.name} ${s.isCoordinator === true || s.isCoordinator === 'true' ? '<span class="coord-badge">Coord</span>' : ''}</td>
+                <td>${s.name} ${coordBadge}</td>
                 <td>${s.phoneNumber}</td>
                 <td>${s.mailId}</td>
                 <td>${s.course}</td>
@@ -582,7 +609,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('sPass').value = s.password;
 
             if (document.getElementById('sIsCoordinator')) {
-                document.getElementById('sIsCoordinator').checked = s.isCoordinator === true || s.isCoordinator === 'true';
+                const isCoord = s.isCoordinator === true || s.isCoordinator === 'true';
+                document.getElementById('sIsCoordinator').checked = isCoord;
+                const pGrp = document.getElementById('sCoordPermGroup');
+                if (pGrp) {
+                    if (isCoord) pGrp.classList.remove('hidden');
+                    else pGrp.classList.add('hidden');
+                }
+                const pSel = document.getElementById('sCoordPermission');
+                if (pSel) {
+                    let perm = s.coordinatorPermission;
+                    if (!perm) {
+                        try {
+                            const pMap = JSON.parse(localStorage.getItem('coordinator_permissions') || '{}');
+                            perm = pMap[s.registerNumber] || 'read';
+                        } catch (e) { perm = 'read'; }
+                    }
+                    pSel.value = perm;
+                }
             }
 
             openModal(studentModal);
@@ -602,10 +646,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         const students = db.getStudents();
         const s = students.find(std => std.registerNumber === regNo);
         if (s) {
+            const isCoord = s.isCoordinator === true || s.isCoordinator === 'true';
+            let perm = s.coordinatorPermission;
+            if (!perm) {
+                try {
+                    const pMap = JSON.parse(localStorage.getItem('coordinator_permissions') || '{}');
+                    perm = pMap[s.registerNumber] || 'read';
+                } catch (e) { perm = 'read'; }
+            }
+
             const nameEl = document.getElementById('studentDetailModalName');
             const subEl = document.getElementById('studentDetailModalSub');
             if (nameEl) nameEl.textContent = s.name || 'Student Profile';
-            if (subEl) subEl.textContent = `Reg No: ${s.registerNumber || '—'}${s.isCoordinator === true || s.isCoordinator === 'true' ? ' • [Student Coordinator]' : ''}`;
+            if (subEl) subEl.textContent = `Reg No: ${s.registerNumber || '—'}${isCoord ? ` • [Placement Coordinator (${perm === 'edit' ? 'Edit' : 'Read-Only'})]` : ''}`;
 
             const container = document.getElementById('studentDetailContent');
             if (container) {
@@ -1788,7 +1841,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             addTeacherForm.reset();
             teacherModalTitle.textContent = 'Add New Teacher';
             saveTeacherBtn.textContent = 'Save Teacher';
+            const tPermGrp = document.getElementById('tCoordPermGroup');
+            if (tPermGrp) tPermGrp.classList.add('hidden');
             openModal(teacherModal);
+        });
+    }
+
+    const tIsCoordCheck = document.getElementById('tIsCoordinator');
+    const tCoordPermGrp = document.getElementById('tCoordPermGroup');
+    if (tIsCoordCheck && tCoordPermGrp) {
+        tIsCoordCheck.addEventListener('change', () => {
+            if (tIsCoordCheck.checked) tCoordPermGrp.classList.remove('hidden');
+            else tCoordPermGrp.classList.add('hidden');
         });
     }
 
@@ -1817,14 +1881,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
+            const isCoord = document.getElementById('tIsCoordinator') ? document.getElementById('tIsCoordinator').checked : false;
+            const coordPerm = (document.getElementById('tCoordPermission')?.value || 'read');
+
             const teacher = {
                 name: document.getElementById('tName').value.trim(),
                 phoneNumber: document.getElementById('tPhone').value.trim(),
                 mailId: document.getElementById('tMail').value.trim(),
                 department: document.getElementById('tDept').value.trim(),
                 password: (document.getElementById('tPass').value || 'password').trim(),
-                isCoordinator: document.getElementById('tIsCoordinator') ? document.getElementById('tIsCoordinator').checked : false
+                isCoordinator: isCoord,
+                coordinatorPermission: isCoord ? coordPerm : null
             };
+
+            // Store in coordinator_permissions in localStorage
+            try {
+                const pMap = JSON.parse(localStorage.getItem('coordinator_permissions') || '{}');
+                if (isCoord) pMap[teacher.phoneNumber] = coordPerm;
+                else delete pMap[teacher.phoneNumber];
+                localStorage.setItem('coordinator_permissions', JSON.stringify(pMap));
+            } catch (e) {}
 
             if (editingTeacherPhone) {
                 let teachers = db.getTeachers();
@@ -1833,6 +1909,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const originalTeacher = teachers[index];
                     if (!Permissions.can(userRole, 'manage_users')) {
                         teacher.isCoordinator = originalTeacher.isCoordinator;
+                        teacher.coordinatorPermission = originalTeacher.coordinatorPermission;
                     }
                     teachers[index] = { ...originalTeacher, ...teacher };
                     const result = await db.saveTeachers(teachers);
@@ -1904,9 +1981,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const canEdit = Permissions.can(userRole, 'edit_teachers');
         filteredTeachers.forEach(t => {
+            const isCoord = t.isCoordinator === true || t.isCoordinator === 'true';
+            let perm = t.coordinatorPermission;
+            if (!perm) {
+                try {
+                    const pMap = JSON.parse(localStorage.getItem('coordinator_permissions') || '{}');
+                    perm = pMap[t.phoneNumber] || 'read';
+                } catch (e) { perm = 'read'; }
+            }
+            const coordBadge = isCoord ? `<span class="coord-badge" style="background: ${perm === 'edit' ? '#dcfce7' : '#fef3c7'}; color: ${perm === 'edit' ? '#166534' : '#92400e'};" title="Placement Coordinator (${perm === 'edit' ? 'Edit' : 'Read-Only'})">Placement Coord (${perm === 'edit' ? 'Edit' : 'Read'})</span>` : '';
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><strong>${t.name}</strong> ${t.isCoordinator === true || t.isCoordinator === 'true' ? '<span class="coord-badge">Coord</span>' : ''}</td>
+                <td><strong>${t.name}</strong> ${coordBadge}</td>
                 <td>${t.phoneNumber}</td>
                 <td>${t.mailId}</td>
                 <td>${t.department}</td>
@@ -1948,7 +2035,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('tPass').value = t.password;
 
             if (document.getElementById('tIsCoordinator')) {
-                document.getElementById('tIsCoordinator').checked = t.isCoordinator === true || t.isCoordinator === 'true';
+                const isCoord = t.isCoordinator === true || t.isCoordinator === 'true';
+                document.getElementById('tIsCoordinator').checked = isCoord;
+                const pGrp = document.getElementById('tCoordPermGroup');
+                if (pGrp) {
+                    if (isCoord) pGrp.classList.remove('hidden');
+                    else pGrp.classList.add('hidden');
+                }
+                const pSel = document.getElementById('tCoordPermission');
+                if (pSel) {
+                    let perm = t.coordinatorPermission;
+                    if (!perm) {
+                        try {
+                            const pMap = JSON.parse(localStorage.getItem('coordinator_permissions') || '{}');
+                            perm = pMap[t.phoneNumber] || 'read';
+                        } catch (e) { perm = 'read'; }
+                    }
+                    pSel.value = perm;
+                }
             }
             
             openModal(teacherModal);
@@ -2990,7 +3094,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <span class="badge bg-primary" style="font-size: 10px; text-transform: capitalize; padding: 2px 7px; border-radius: 4px; font-weight: 600; white-space: nowrap;">Activity</span>
                             <strong style="color: #111827; font-size: 0.92rem;">${a.name}</strong>
                         </div>
-                        ${a.description ? `<div class="small text-muted" style="max-width: 320px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35;">${a.description}</div>` : ''}
                     `}
                 </td>
                 <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
@@ -3159,9 +3262,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Top 6 Metrics (animated count-up in exact sequence)
         // 1. Total Students -> 2. Registered Recruitments -> 3. Placed Students -> 4. Total Trainings -> 5. Placement Activities -> 6. Total Recruitments
+        const genuinelyPlacedStudents = students.filter(s => db.isStudentPlaced(s.registerNumber));
         window.animateCount('dashTotalStudents', students.length);
         window.animateCount('dashRegisteredRecruitments', registeredRecruitmentsCount);
-        window.animateCount('dashPlacedStudents', placedSet.size);
+        window.animateCount('dashPlacedStudents', genuinelyPlacedStudents.length);
         window.animateCount('dashTotalTrainings', programs.length);
         window.animateCount('dashTotalActivities', placementActivities.length);
         window.animateCount('dashTotalRecruitments', recruitmentActivities.length);
@@ -3174,11 +3278,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const courseFilter = document.getElementById('dashFilterCourse') ? document.getElementById('dashFilterCourse').value : '';
             const deptFilter = document.getElementById('dashFilterDept') ? document.getElementById('dashFilterDept').value : '';
 
-            let filteredStudents = students;
-            if (courseFilter) filteredStudents = filteredStudents.filter(s => s.course === courseFilter);
-            if (deptFilter) filteredStudents = filteredStudents.filter(s => s.department === deptFilter);
+            // STRICT FILTER: ONLY students who are genuinely placed!
+            let placedStudentsList = students.filter(s => db.isStudentPlaced(s.registerNumber));
+            if (courseFilter) placedStudentsList = placedStudentsList.filter(s => s.course === courseFilter);
+            if (deptFilter) placedStudentsList = placedStudentsList.filter(s => s.department === deptFilter);
 
-            const studentPlacementMap = {};
             const studentActivitiesCount = {};
             const studentRecruitmentsCount = {};
 
@@ -3190,19 +3294,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         studentActivitiesCount[reg] = (studentActivitiesCount[reg] || 0) + 1;
                     }
                 });
-                
-                if (a.phases && a.phases.length > 0) {
-                    const selPhase = window.getSelectedPhase(a);
-                    if (selPhase) {
-                        (selPhase.completions || []).forEach(reg => {
-                            if (!studentPlacementMap[reg]) studentPlacementMap[reg] = [];
-                            if (!studentPlacementMap[reg].includes(a.name)) studentPlacementMap[reg].push(a.name);
-                        });
-                    }
-                }
             });
 
-            let placedStudentsData = filteredStudents.filter(s => studentPlacementMap[s.registerNumber]).map(s => {
+            let placedStudentsData = placedStudentsList.map(s => {
+                const placedDrives = db.getStudentPlacementDetails(s.registerNumber);
+                const placedText = placedDrives.length > 0 ? placedDrives.join(', ') : 'Placed';
                 return {
                     name: s.name,
                     department: s.department,
@@ -3210,11 +3306,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     gender: s.gender,
                     activities: studentActivitiesCount[s.registerNumber] || 0,
                     recruitments: studentRecruitmentsCount[s.registerNumber] || 0,
-                    placedRecruitment: studentPlacementMap[s.registerNumber].join(', ')
+                    placedRecruitment: placedText
                 };
             });
 
-            const hasRealPlacements = Object.keys(studentPlacementMap).length > 0;
+            const hasRealPlacements = placedStudentsData.length > 0;
 
             tableBody.innerHTML = '';
             if (placedStudentsData.length === 0) {
@@ -3254,9 +3350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (hasRealPlacements) {
                 const courseGenderStats = {};
-                const placedStudentsRaw = students.filter(s => studentPlacementMap[s.registerNumber]);
-                
-                placedStudentsRaw.forEach(s => {
+                placedStudentsList.forEach(s => {
                     const course = s.course || 'Unknown';
                     const gender = (s.gender || 'Other').toLowerCase();
                     if (!courseGenderStats[course]) courseGenderStats[course] = { male: 0, female: 0, other: 0 };
@@ -4976,6 +5070,55 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch(e) {
         console.warn('Header user profile update error:', e);
+    }
+
+    // Bind Global Header Search Input to active tab views
+    try {
+        const topSearchInput = document.querySelector('.header-search-input');
+        if (topSearchInput) {
+            topSearchInput.addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+                const activeTab = document.querySelector('.tab-content:not(.hidden)');
+                const activeTabId = activeTab ? activeTab.id : '';
+
+                if (activeTabId === 'userManagementTab') {
+                    const teachersActive = !document.getElementById('teachersSubTab')?.classList.contains('hidden');
+                    if (teachersActive) {
+                        const tInput = document.getElementById('searchTeacher');
+                        if (tInput) { tInput.value = query; tInput.dispatchEvent(new Event('input')); }
+                    } else {
+                        const sInput = document.getElementById('searchStudent');
+                        if (sInput) { sInput.value = query; sInput.dispatchEvent(new Event('input')); }
+                    }
+                } else if (activeTabId === 'trainingTab') {
+                    const trnInput = document.getElementById('searchTraining');
+                    if (trnInput) { trnInput.value = query; trnInput.dispatchEvent(new Event('input')); }
+                } else if (activeTabId === 'placementTab') {
+                    const isRec = !document.getElementById('recruitmentSubTab')?.classList.contains('hidden');
+                    if (isRec) {
+                        const recInput = document.getElementById('recSearchStudent');
+                        if (recInput) { recInput.value = query; recInput.dispatchEvent(new Event('input')); }
+                    } else {
+                        const actInput = document.getElementById('actSearchStudent');
+                        if (actInput) { actInput.value = query; actInput.dispatchEvent(new Event('input')); }
+                    }
+                } else if (activeTabId === 'classTab') {
+                    const clsInput = document.getElementById('classSearchInput');
+                    if (clsInput) { clsInput.value = query; clsInput.dispatchEvent(new Event('input')); }
+                } else if (activeTabId === 'mcqTab') {
+                    const examInput = document.getElementById('searchExam');
+                    if (examInput) { examInput.value = query; examInput.dispatchEvent(new Event('input')); }
+                } else if (activeTabId === 'dashboardTab') {
+                    const rows = document.querySelectorAll('#dashboardPlacedTable tbody tr');
+                    rows.forEach(r => {
+                        const text = r.textContent.toLowerCase();
+                        r.style.display = (!query || text.includes(query.toLowerCase())) ? '' : 'none';
+                    });
+                }
+            });
+        }
+    } catch (e) {
+        console.warn('Global header search init error:', e);
     }
 
     try {

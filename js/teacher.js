@@ -803,6 +803,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     initGlobalTooltipSystem();
 
+    // Global Header Search functionality in Teacher Portal
+    try {
+        const teacherSearchInput = document.querySelector('.header-search-input');
+        if (teacherSearchInput) {
+            teacherSearchInput.addEventListener('input', (e) => {
+                const query = e.target.value.trim().toLowerCase();
+                const activeTab = document.querySelector('.tab-content:not(.hidden)');
+                const activeTabId = activeTab ? activeTab.id : '';
+
+                if (activeTabId === 'trainingTab') {
+                    const trnInput = document.getElementById('searchTraining');
+                    if (trnInput) { trnInput.value = query; trnInput.dispatchEvent(new Event('input')); }
+                } else if (activeTabId === 'classTab') {
+                    const clsInput = document.getElementById('classSearchInput');
+                    if (clsInput) { clsInput.value = query; clsInput.dispatchEvent(new Event('input')); }
+                } else if (activeTabId === 'mcqTab') {
+                    const examInput = document.getElementById('searchExam');
+                    if (examInput) { examInput.value = query; examInput.dispatchEvent(new Event('input')); }
+                } else if (activeTabId === 'dashboardTab') {
+                    const rows = document.querySelectorAll('#dashboardPlacedTable tbody tr');
+                    rows.forEach(r => {
+                        const text = r.textContent.toLowerCase();
+                        r.style.display = (!query || text.includes(query)) ? '' : 'none';
+                    });
+                }
+            });
+        }
+    } catch(e) {
+        console.warn('Teacher global search init error:', e);
+    }
+
     // Route UI after DB is ready
     try {
         handleRouting(false);

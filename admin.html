@@ -394,7 +394,7 @@
                 <div id="adminAlert" class="alert hidden mb-3"></div>
 
                 <!-- Filters Section -->
-                <div class="filter-grid mb-4">
+                <div class="filter-row-unified mb-4">
                     <div>
                         <label class="form-label" style="font-size: 0.75rem;">Search by Student Details</label>
                         <input type="text" id="searchStudent" class="form-control" placeholder="Search by name, reg no..." autocomplete="off">
@@ -929,7 +929,7 @@
                     </div>
 
                     <!-- Placement Activities Filters Section -->
-                    <div class="filter-grid mb-4">
+                    <div class="filter-row-unified mb-4">
                         <div>
                             <label class="form-label" style="font-size: 0.75rem;">Search by Student Details</label>
                             <input type="text" id="actSearchStudent" class="form-control" placeholder="Search by name, reg no..." autocomplete="off">
@@ -997,7 +997,7 @@
                     </div>
 
                     <!-- Recruitment Filters Section -->
-                    <div class="filter-grid mb-4">
+                    <div class="filter-row-unified mb-4">
                         <div>
                             <label class="form-label" style="font-size: 0.75rem;">Search by Student Details</label>
                             <input type="text" id="recSearchStudent" class="form-control" placeholder="Search by name, reg no..." autocomplete="off">
@@ -1613,9 +1613,18 @@
                                         <input type="password" id="sPass" class="form-control" placeholder="Leave empty for 'password'" style="background: #f9fafb; border-color: #e5e7eb;">
                                     </div>
                                 </div>
-                                <div class="admin-only-field mt-3 d-flex align-items-center gap-2" style="padding: 0.75rem 1rem; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px;">
-                                    <input type="checkbox" id="sIsCoordinator" style="width: 16px; height: 16px; cursor: pointer;">
-                                    <label for="sIsCoordinator" style="font-weight: 600; font-size: 0.85rem; color: #92400e; cursor: pointer; margin: 0;">⭐ Promote to Student Coordinator</label>
+                                <div class="admin-only-field mt-3" style="padding: 0.75rem 1rem; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input type="checkbox" id="sIsCoordinator" style="width: 16px; height: 16px; cursor: pointer;">
+                                        <label for="sIsCoordinator" style="font-weight: 600; font-size: 0.85rem; color: #92400e; cursor: pointer; margin: 0;">⭐ Promote to Placement Coordinator</label>
+                                    </div>
+                                    <div id="sCoordPermGroup" class="mt-2 pt-2 border-top hidden" style="border-color: #fde68a !important;">
+                                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: #78350f; margin-bottom: 0.25rem;">COORDINATOR PERMISSION</label>
+                                        <select id="sCoordPermission" class="form-control form-control-sm" style="background: #fff; border-color: #fcd34d; font-size: 0.82rem; font-weight: 600;">
+                                            <option value="read">Read-Only (View activities, trainings, recruitments)</option>
+                                            <option value="edit">Edit Permission (Can add/edit in training, placement & recruitments)</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                             <div class="premium-modal-footer">
@@ -1658,9 +1667,18 @@
                                         <input type="password" id="tPass" class="form-control" placeholder="Leave empty for 'password'" style="background: #f9fafb; border-color: #e5e7eb;">
                                     </div>
                                 </div>
-                                <div class="admin-only-field mt-3 d-flex align-items-center gap-2" style="padding: 0.75rem 1rem; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px;">
-                                    <input type="checkbox" id="tIsCoordinator" style="width: 16px; height: 16px; cursor: pointer;">
-                                    <label for="tIsCoordinator" style="font-weight: 600; font-size: 0.85rem; color: #92400e; cursor: pointer; margin: 0;">⭐ Promote to Teacher Coordinator</label>
+                                <div class="admin-only-field mt-3" style="padding: 0.75rem 1rem; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input type="checkbox" id="tIsCoordinator" style="width: 16px; height: 16px; cursor: pointer;">
+                                        <label for="tIsCoordinator" style="font-weight: 600; font-size: 0.85rem; color: #92400e; cursor: pointer; margin: 0;">⭐ Promote to Placement Coordinator</label>
+                                    </div>
+                                    <div id="tCoordPermGroup" class="mt-2 pt-2 border-top hidden" style="border-color: #fde68a !important;">
+                                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: #78350f; margin-bottom: 0.25rem;">COORDINATOR PERMISSION</label>
+                                        <select id="tCoordPermission" class="form-control form-control-sm" style="background: #fff; border-color: #fcd34d; font-size: 0.82rem; font-weight: 600;">
+                                            <option value="read">Read-Only (View activities, trainings, recruitments)</option>
+                                            <option value="edit">Edit Permission (Can add/edit in training, placement & recruitments)</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                             <div class="premium-modal-footer">

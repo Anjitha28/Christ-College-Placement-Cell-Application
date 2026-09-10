@@ -1825,6 +1825,26 @@
             }
             initGlobalTooltipSystem();
 
+            // Global Header Search in Student Portal
+            try {
+                const studentSearchInput = document.querySelector('.header-search-input');
+                if (studentSearchInput) {
+                    studentSearchInput.addEventListener('input', (e) => {
+                        const query = e.target.value.trim().toLowerCase();
+                        const activeTab = document.querySelector('.tab-content:not(.hidden)');
+                        if (activeTab) {
+                            const cards = activeTab.querySelectorAll('.training-card, .glass-card, tr');
+                            cards.forEach(card => {
+                                const text = card.textContent.toLowerCase();
+                                card.style.display = (!query || text.includes(query)) ? '' : 'none';
+                            });
+                        }
+                    });
+                }
+            } catch(e) {
+                console.warn('Student global search init error:', e);
+            }
+
             // Render current route data after DB initialization
             try {
                 handleRouting(false);
