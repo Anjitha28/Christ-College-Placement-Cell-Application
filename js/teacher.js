@@ -510,10 +510,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- Program Calendar Logic (Replicating Admin Calendar with Dept Scope) ---
-    const programColors = ['#4f46e5', '#059669', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#2563eb'];
+    // --- Program Calendar Logic (Replicating Admin Calendar with Dept Scope) ---
+    const programColors = ['#0D6EFC', '#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#f43f5e', '#f97316', '#06b6d4'];
     function getEventColor(id) {
+        if (!id) return programColors[0];
         let hash = 0;
-        for (let i = 0; i < (id || '').length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+        for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
         return programColors[Math.abs(hash) % programColors.length];
     }
 
@@ -525,7 +527,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!monthSelect || !yearSelect || !container) return;
 
         const allTrainings = (db.getTrainingPrograms() || []).filter(isItemForDept);
-        const allActivities = (db.getPlacementActivities() || []).filter(isItemForDept);
 
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         if (monthSelect.options.length === 0) {
@@ -557,60 +558,63 @@ document.addEventListener('DOMContentLoaded', async () => {
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-            let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:#e5e7eb;border:1px solid #e5e7eb;">';
-            
-            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            dayNames.forEach(d => {
-                html += `<div style="background:#f9fafb;padding:10px;text-align:center;font-weight:600;font-size:12px;color:#6b7280;">${d}</div>`;
-            });
+            let html = `
+                <div class="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #e5e7eb; border: 1px solid #e5e7eb;">
+                    <div class="cal-day-head" style="background: #f9fafb; padding: 10px; text-align: center; font-weight: 600; font-size: 0.8rem;">Sun</div>
+                    <div class="cal-day-head" style="background: #f9fafb; padding: 10px; text-align: center; font-weight: 600; font-size: 0.8rem;">Mon</div>
+                    <div class="cal-day-head" style="background: #f9fafb; padding: 10px; text-align: center; font-weight: 600; font-size: 0.8rem;">Tue</div>
+                    <div class="cal-day-head" style="background: #f9fafb; padding: 10px; text-align: center; font-weight: 600; font-size: 0.8rem;">Wed</div>
+                    <div class="cal-day-head" style="background: #f9fafb; padding: 10px; text-align: center; font-weight: 600; font-size: 0.8rem;">Thu</div>
+                    <div class="cal-day-head" style="background: #f9fafb; padding: 10px; text-align: center; font-weight: 600; font-size: 0.8rem;">Fri</div>
+                    <div class="cal-day-head" style="background: #f9fafb; padding: 10px; text-align: center; font-weight: 600; font-size: 0.8rem;">Sat</div>
+            `;
 
+            // Empty slots for preceding days
             for (let i = 0; i < firstDay; i++) {
-                html += `<div style="background:#fff;min-height:100px;"></div>`;
+                html += `<div style="background: #fff; min-height: 100px;"></div>`;
             }
 
+            let firstDateWithEvents = null;
+
+            // Render days
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 
-                // Collect programs/events matching this day
-                const dayTrainings = allTrainings.filter(p => {
-                    const start = p.startDate || p.date;
+                // Get Training Programs for this day
+                const dayPrograms = allTrainings.filter(p => {
+                    const start = p.date || p.startDate;
                     const end = p.endDate || p.date || p.startDate;
                     return dateStr >= start && dateStr <= end;
                 });
 
-                const dayActivities = allActivities.filter(p => {
-                    const start = p.startDate || p.date;
-                    const end = p.endDate || p.lastDate || p.date || p.startDate;
-                    return dateStr >= start && dateStr <= end;
-                });
+                if (dayPrograms.length > 0 && !firstDateWithEvents) {
+                    firstDateWithEvents = dateStr;
+                }
 
-                let eventsHtml = '';
-                dayTrainings.forEach(p => {
-                    const color = getEventColor(p.id);
-                    eventsHtml += `<div style="background:#eef2ff;color:${color};font-size:10px;font-weight:600;padding:2px 4px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid ${color};" title="${p.name}">📚 ${p.name}</div>`;
-                });
-                dayActivities.forEach(p => {
-                    const color = p.type === 'recruitment' ? '#059669' : '#0D6EFC';
-                    eventsHtml += `<div style="background:${p.type === 'recruitment' ? '#ecfdf5' : '#eff6ff'};color:${color};font-size:10px;font-weight:600;padding:2px 4px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid ${color};" title="${p.name}">💼 ${p.name}</div>`;
-                });
-
-                const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
-                const bg = isToday ? '#eff6ff' : '#fff';
-                
-                html += `<div style="background:${bg};min-height:100px;padding:8px;display:flex;flex-direction:column;cursor:pointer;transition:background 0.2s;" onclick="viewTeacherDateEvents('${dateStr}')" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='${bg}'">
-                    <div style="text-align:right;font-size:12px;color:${isToday ? '#2563eb' : '#374151'};font-weight:${isToday ? '700' : '500'};margin-bottom:4px;">${day}</div>
-                    <div style="flex:1;">${eventsHtml}</div>
-                </div>`;
+                html += `
+                    <div style="background: #fff; min-height: 100px; padding: 8px; border: 0.5px solid #f3f4f6; cursor: pointer; transition: background 0.2s;" onclick="viewTeacherDateEvents('${dateStr}')" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#fff'">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: #6b7280; margin-bottom: 8px;">${day}</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                            ${dayPrograms.map(p => `
+                                <div style="width: 14px; height: 14px; background: ${getEventColor(p.id)}; border-radius: 4px;" title="Program: ${p.name}"></div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
             }
 
             const totalCells = firstDay + daysInMonth;
             const remaining = (7 - (totalCells % 7)) % 7;
             for (let i = 0; i < remaining; i++) {
-                html += `<div style="background:#fff;min-height:100px;"></div>`;
+                html += `<div style="background: #f1f5f9; min-height: 100px;"></div>`;
             }
 
-            html += '</div>';
+            html += `</div>`;
             container.innerHTML = html;
+
+            // Automatically select the first date with events, or today
+            const todayStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+            viewTeacherDateEvents(firstDateWithEvents || todayStr);
         }
 
         drawCalendar();
@@ -622,47 +626,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!header || !list) return;
 
         const allTrainings = (db.getTrainingPrograms() || []).filter(isItemForDept);
-        const allActivities = (db.getPlacementActivities() || []).filter(isItemForDept);
 
         const dateObj = new Date(dateStr);
         const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
         header.textContent = `Programs on ${formattedDate}`;
 
-        const dayTrainings = allTrainings.filter(p => {
-            const start = p.startDate || p.date;
+        const dayPrograms = allTrainings.filter(p => {
+            const start = p.date || p.startDate;
             const end = p.endDate || p.date || p.startDate;
             return dateStr >= start && dateStr <= end;
         });
 
-        const dayActivities = allActivities.filter(p => {
-            const start = p.startDate || p.date;
-            const end = p.endDate || p.lastDate || p.date || p.startDate;
-            return dateStr >= start && dateStr <= end;
-        });
-
-        if (dayTrainings.length === 0 && dayActivities.length === 0) {
-            list.innerHTML = `<p class="text-muted small">No events scheduled for your department on this day.</p>`;
+        if (dayPrograms.length === 0) {
+            list.innerHTML = `<p class="text-muted small">No programs scheduled for this day.</p>`;
         } else {
             let html = '';
-            dayTrainings.forEach(p => {
+            dayPrograms.forEach(p => {
                 const color = getEventColor(p.id);
                 html += `
-                    <div style="background: #fff; border-left: 4px solid ${color}; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 8px;">
-                        <div style="font-size: 0.72rem; font-weight: 700; color: ${color}; text-transform: uppercase; margin-bottom: 4px;">Training Program</div>
-                        <h5 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 700; color: #111827;">${p.name}</h5>
-                        ${p.description ? `<div style="margin: 0 0 6px 0; font-size: 0.8rem; color: #4b5563; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${p.description}</div>` : ''}
-                        <div style="font-size: 0.75rem; color: #6b7280;">📅 ${p.date || p.startDate || '—'} ${p.endDate ? `to ${p.endDate}` : ''}</div>
-                    </div>
-                `;
-            });
-            dayActivities.forEach(p => {
-                const color = p.type === 'recruitment' ? '#059669' : '#0D6EFC';
-                html += `
-                    <div style="background: #fff; border-left: 4px solid ${color}; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 8px;">
-                        <div style="font-size: 0.72rem; font-weight: 700; color: ${color}; text-transform: uppercase; margin-bottom: 4px;">${p.type === 'recruitment' ? 'Recruitment Drive' : 'Placement Activity'}</div>
-                        <h5 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 700; color: #111827;">${p.name}</h5>
-                        ${p.description ? `<div style="margin: 0 0 6px 0; font-size: 0.8rem; color: #4b5563; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${p.description}</div>` : ''}
-                        <div style="font-size: 0.75rem; color: #6b7280;">📍 ${p.venue || 'Christ Campus'} | 📅 ${p.date || p.startDate || '—'}</div>
+                    <div style="background: #fff; border-left: 4px solid ${color}; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 12px;">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: ${color}; text-transform: uppercase; margin-bottom: 4px;">PROGRAM</div>
+                        <h5 style="margin: 0 0 4px 0; font-size: 1rem; color: #111827; font-weight: 700;">${p.name}</h5>
+                        ${p.description ? `<div style="margin: 0 0 8px 0; font-size: 0.85rem; color: #4b5563; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${p.description}</div>` : ''}
+                        <button class="btn btn-sm mt-2" style="border: 1px solid ${color}; color: ${color}; background: transparent; border-radius: 6px; font-weight: 600;" onclick="window.location.href='manage-training.html?id=${p.id}'">View Program</button>
                     </div>
                 `;
             });
