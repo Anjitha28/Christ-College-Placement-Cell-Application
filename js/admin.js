@@ -3103,6 +3103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <span class="badge bg-primary" style="font-size: 10px; text-transform: capitalize; padding: 2px 7px; border-radius: 4px; font-weight: 600; white-space: nowrap;">Activity</span>
                             <strong style="color: #111827; font-size: 0.92rem;">${a.name}</strong>
                         </div>
+                        ${a.description ? `<div class="small text-muted" style="max-width: 320px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35;">${a.description}</div>` : ''}
                     `}
                 </td>
                 <td style="text-align: center; vertical-align: middle; white-space: nowrap;">

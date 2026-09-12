@@ -90,7 +90,7 @@ const Permissions = {
             let perm = 'read';
             try {
                 const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
-                perm = user.coordinatorPermission || 'read';
+                perm = user.coordinatorPermission || (role === 'teacherCoordinator' ? 'edit' : 'read');
                 if (!user.coordinatorPermission) {
                     const map = JSON.parse(localStorage.getItem('coordinator_permissions') || '{}');
                     const uid = user.registerNumber || user.phoneNumber || user.id;
