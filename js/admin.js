@@ -2,6 +2,10 @@
 // Handles UI logic for Admin Dashboard
 
 document.addEventListener('DOMContentLoaded', async () => {
+    let currentActivityId = null;
+    let currentActivity = null;
+    let editingPhaseId = null;
+
     // 1. Route UI Synchronously before DB loads to prevent ANY dashboard flash
     try {
         handleRouting(true); 
@@ -248,13 +252,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         const parts = hash.split('/');
         const mainTabId = parts[0] || 'dashboard';
         
-        activateTab(mainTabId, uiOnly);
+        if (mainTabId === 'placement' && parts[1] === 'manage' && parts[2]) {
+            const activityId = decodeURIComponent(parts[2]);
+            const subTab = parts[3] || 'funnel';
+            const placementTab = document.querySelector('.tab[data-tab="placement"]');
+            if (placementTab && !placementTab.classList.contains('active')) {
+                activateTab('placement', uiOnly);
+            }
+            openManagePlacementView(activityId, subTab, false, uiOnly);
+        } else {
+            activateTab(mainTabId, uiOnly);
 
-        if (mainTabId === 'placement') {
-            if (parts[1] === 'manage' && parts[2]) {
-                const subTab = parts[3] || 'funnel';
-                openManagePlacementView(parts[2], subTab, false, uiOnly);
-            } else {
+            if (mainTabId === 'placement') {
                 if (typeof closeManagePlacementView === 'function' && !uiOnly) {
                     closeManagePlacementView(false);
                 }
@@ -3147,8 +3156,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let editingPlacementId = null;
     window.editPlacementActivity = (id) => {
-        const activities = db.getPlacementActivities();
-        const a = activities.find(item => item.id === id);
+        const activities = db.getPlacementActivities() || [];
+        const a = activities.find(item => String(item.id) === String(id) || item.id == id);
         if(a) {
             editingPlacementId = id;
             currentPlacementType = a.type || 'placement';
@@ -3609,17 +3618,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ==========================================
     // --- Manage Placement Sub-View Logic ---
     // ==========================================
-    let currentActivityId = null;
-    let currentActivity = null;
-    let editingPhaseId = null;
 
     function openManagePlacementView(id, subTab = 'funnel', updateHash = true, uiOnly = false) {
         currentActivityId = id;
         
         // Force the Manage view to be visible immediately to prevent fallback to list/dashboard
-        document.getElementById('placementListTabs').classList.add('hidden');
-        document.getElementById('placementListView').classList.add('hidden');
-        document.getElementById('placementManageView').classList.remove('hidden');
+        const listTabs = document.getElementById('placementListTabs');
+        const listView = document.getElementById('placementListView');
+        const manageView = document.getElementById('placementManageView');
+        if (listTabs) listTabs.classList.add('hidden');
+        if (listView) listView.classList.add('hidden');
+        if (manageView) manageView.classList.remove('hidden');
         
         // Reset all tabs UI immediately
         const mTabs = document.querySelectorAll('.m-sub-tab');
@@ -3638,25 +3647,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (uiOnly) return; // Skip data fetching if only UI state is requested
 
         const activities = db.getPlacementActivities() || [];
-        currentActivity = activities.find(a => a.id === id);
+        currentActivity = activities.find(a => String(a.id) === String(id) || a.id == id);
         
         if (!currentActivity) {
             console.warn("Placement activity not found in cache for ID:", id);
-            document.getElementById('manageActivityTitle').textContent = "Loading Activity...";
+            const titleElem = document.getElementById('manageActivityTitle');
+            if (titleElem) titleElem.textContent = "Loading Activity...";
             setTimeout(() => {
                 const refreshedActivities = db.getPlacementActivities() || [];
-                currentActivity = refreshedActivities.find(a => a.id === id);
+                currentActivity = refreshedActivities.find(a => String(a.id) === String(id) || a.id == id);
                 if (currentActivity) {
                     window.openManagePlacementView(id, subTab, updateHash, false);
                 } else {
-                    document.getElementById('manageActivityTitle').textContent = "Activity Not Found";
+                    if (titleElem) titleElem.textContent = "Activity Not Found";
                 }
-            }, 1000);
+            }, 500);
             return;
         }
 
-        document.getElementById('manageActivityTitle').textContent = currentActivity.name;
+        const titleElem = document.getElementById('manageActivityTitle');
+        if (titleElem) titleElem.textContent = currentActivity.name || 'Activity';
         
+        // Update breadcrumb and page title
+        const breadcrumb = document.querySelector('.breadcrumb');
+        const pageTitle = document.querySelector('.page-title');
+        if (breadcrumb && pageTitle) {
+            breadcrumb.textContent = `Portal / Placement Activities / Manage`;
+            pageTitle.textContent = `Manage: ${currentActivity.name}`;
+        }
+
         if (targetTab) {
             const targetTabId = targetTab.dataset.tab;
             if (targetTabId === 'funnel') renderFunnel();
@@ -3667,7 +3686,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (updateHash) {
             const newHash = `placement/manage/${id}/${targetTab.dataset.tab}`;
             if (window.location.hash !== `#${newHash}`) {
-                // Only push state if we want to change history, else replace
                 window.location.hash = newHash;
             }
         }
@@ -3675,11 +3693,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.openManagePlacementView = openManagePlacementView;
 
     window.closeManagePlacementView = (updateHash = true) => {
+        const targetSubTabId = (currentActivity && currentActivity.type === 'recruitment') ? 'recruitmentSubTab' : 'activitySubTab';
         currentActivityId = null;
         currentActivity = null;
-        document.getElementById('placementListTabs').classList.remove('hidden');
-        document.getElementById('placementListView').classList.remove('hidden');
-        document.getElementById('placementManageView').classList.add('hidden');
+
+        const listTabs = document.getElementById('placementListTabs');
+        const listView = document.getElementById('placementListView');
+        const manageView = document.getElementById('placementManageView');
+        if (listTabs) listTabs.classList.remove('hidden');
+        if (listView) listView.classList.remove('hidden');
+        if (manageView) manageView.classList.add('hidden');
+
+        // Restore appropriate subtab in list view
+        const actSub = document.getElementById('activitySubTab');
+        const recSub = document.getElementById('recruitmentSubTab');
+        const pTabs = document.querySelectorAll('.p-sub-tab');
+        pTabs.forEach(t => {
+            if (t.getAttribute('data-subtab') === targetSubTabId) {
+                t.classList.add('active');
+            } else {
+                t.classList.remove('active');
+            }
+        });
+        if (actSub) actSub.classList.toggle('hidden', targetSubTabId !== 'activitySubTab');
+        if (recSub) recSub.classList.toggle('hidden', targetSubTabId !== 'recruitmentSubTab');
+
+        // Restore breadcrumbs and page title
+        const breadcrumb = document.querySelector('.breadcrumb');
+        const pageTitle = document.querySelector('.page-title');
+        if (breadcrumb && pageTitle) {
+            breadcrumb.textContent = 'Portal / Placement Activities';
+            pageTitle.textContent = 'Placement Activities';
+        }
+
         renderPlacementActivities(); // Refresh list to reflect any changes
         
         if (updateHash && window.location.hash.includes('placement/manage')) {
@@ -3687,14 +3733,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Tab Logic for Manage View
+    // Tab Logic for Manage View (Seamless sub-navigation)
     const mTabs = document.querySelectorAll('.m-sub-tab');
     const mPages = document.querySelectorAll('.manage-sub-page');
     mTabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             e.preventDefault();
+            const tabId = tab.dataset.tab;
+
+            // Direct active state switch
+            mTabs.forEach(t => t.classList.remove('active'));
+            mPages.forEach(p => p.classList.add('hidden'));
+
+            tab.classList.add('active');
+            const targetPage = document.getElementById(`${tabId}Tab`);
+            if (targetPage) targetPage.classList.remove('hidden');
+
+            if (currentActivity) {
+                if (tabId === 'funnel') renderFunnel();
+                else if (tabId === 'phases') renderPhases();
+                else if (tabId === 'students') renderStudentTracking();
+            }
+
             if (currentActivityId) {
-                window.location.hash = `placement/manage/${currentActivityId}/${tab.dataset.tab}`;
+                const targetHash = `#placement/manage/${currentActivityId}/${tabId}`;
+                if (window.location.hash !== targetHash) {
+                    history.replaceState(null, '', targetHash);
+                }
             }
         });
     });
@@ -3750,7 +3815,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (result.success) {
                     // Update currentActivity explicitly from DB after success
                     const activities = db.getPlacementActivities() || [];
-                    currentActivity = activities.find(a => a.id === currentActivityId);
+                    currentActivity = activities.find(a => String(a.id) === String(currentActivityId) || a.id == currentActivityId);
                     
                     phaseForm.reset();
                     document.getElementById('phaseDesc').innerHTML = '';
@@ -3781,12 +3846,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.editPhase = (id) => {
         editingPhaseId = id;
-        const p = currentActivity.phases.find(phase => phase.id === id);
-        document.getElementById('phaseName').value = p.name;
+        const phases = (currentActivity && currentActivity.phases) || [];
+        const p = phases.find(phase => String(phase.id) === String(id) || phase.id == id);
+        if (!p) return;
+        document.getElementById('phaseName').value = p.name || '';
         document.getElementById('phaseDesc').innerHTML = p.description || '';
-        document.getElementById('phaseLastDate').value = p.lastDate;
+        document.getElementById('phaseLastDate').value = p.lastDate || '';
         const radios = document.querySelectorAll('input[name="phaseMode"]');
-        radios.forEach(r => { if(r.value === p.mode) r.checked = true; });
+        radios.forEach(r => { if(r.value === (p.mode || 'admin')) r.checked = true; });
 
         const selCb = document.getElementById('phaseIsSelectedPhase');
         if (selCb) {
@@ -3802,7 +3869,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const result = await db.deletePlacementPhase(currentActivityId, id);
                 if (result && result.success) {
-                    currentActivity = db.getPlacementActivities().find(a => a.id === currentActivityId);
+                    currentActivity = (db.getPlacementActivities() || []).find(a => String(a.id) === String(currentActivityId) || a.id == currentActivityId);
                     const activeTab = document.querySelector('.m-sub-tab.active');
                     if (activeTab) {
                         const tabId = activeTab.dataset.tab;
@@ -3823,34 +3890,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     window.openDeclaration = (phaseId) => {
-        const phase = currentActivity.phases.find(p => p.id === phaseId);
+        if (!currentActivity || !currentActivity.phases) return;
+        const phase = currentActivity.phases.find(p => String(p.id) === String(phaseId) || p.id == phaseId);
+        if (!phase) return;
         document.getElementById('declPhaseName').textContent = `Declare: ${phase.name}`;
         
-        const students = db.getStudents();
+        const students = db.getStudents() || [];
         const container = document.getElementById('declStudentList');
         container.innerHTML = '';
 
-        const phaseIdx = currentActivity.phases.findIndex(p => p.id === phaseId);
+        const phaseIdx = currentActivity.phases.findIndex(p => String(p.id) === String(phaseId) || p.id == phaseId);
         let pool = [];
+        const registrations = currentActivity.registrations || [];
         if (phaseIdx === 0) {
-            pool = students.filter(s => currentActivity.registrations.includes(s.registerNumber));
+            pool = students.filter(s => registrations.includes(s.registerNumber));
         } else {
             const prevPhase = currentActivity.phases[phaseIdx - 1];
-            pool = students.filter(s => prevPhase.completions.includes(s.registerNumber));
+            const prevCompletions = (prevPhase && prevPhase.completions) || [];
+            pool = students.filter(s => prevCompletions.includes(s.registerNumber));
         }
 
-        pool.forEach(s => {
-            const isChecked = phase.completions.includes(s.registerNumber);
-            container.innerHTML += `
-                <div class="d-flex align-items-center gap-3 p-2 border-bottom hover-bg-light">
-                    <input type="checkbox" name="declCheck" value="${s.registerNumber}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px;">
-                    <div>
-                        <div style="font-size: 13px; font-weight: 600;">${s.name}</div>
-                        <div class="text-muted" style="font-size: 11px;">${s.registerNumber} | ${s.course}</div>
-                    </div>
+        const phaseCompletions = phase.completions || [];
+        if (pool.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <p class="mb-0">No eligible students found for this phase.</p>
+                    <p class="small text-muted mb-0">${phaseIdx === 0 ? 'No students registered for this activity.' : 'No students cleared the previous phase yet.'}</p>
                 </div>
             `;
-        });
+        } else {
+            pool.forEach(s => {
+                const isChecked = phaseCompletions.includes(s.registerNumber);
+                container.innerHTML += `
+                    <div class="d-flex align-items-center gap-3 p-2 border-bottom hover-bg-light">
+                        <input type="checkbox" name="declCheck" value="${s.registerNumber}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
+                        <div>
+                            <div style="font-size: 13px; font-weight: 600; color: #111827;">${s.name}</div>
+                            <div class="text-muted" style="font-size: 11px;">${s.registerNumber} | ${s.course || '—'}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
 
         document.getElementById('saveDeclarationBtn').onclick = async () => {
             const selected = Array.from(document.querySelectorAll('input[name="declCheck"]:checked')).map(cb => cb.value);
@@ -3859,7 +3940,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (result.success) {
                 closeModal(document.getElementById('declarationModal'));
                 const activities = db.getPlacementActivities() || [];
-                currentActivity = activities.find(a => a.id === currentActivityId);
+                currentActivity = activities.find(a => String(a.id) === String(currentActivityId) || a.id == currentActivityId);
                 
                 const activeTab = document.querySelector('.m-sub-tab.active');
                 if (activeTab) {
@@ -3885,35 +3966,41 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alert("XLSX library not loaded!");
                 return;
             }
-            const students = db.getStudents();
+            if(!currentActivity) return;
+            const students = db.getStudents() || [];
             const reportData = [];
+            const phases = currentActivity.phases || [];
+            const registrations = currentActivity.registrations || [];
 
             const headers = ["Register No", "Name", "Course", "Department", "Registration Status"];
-            currentActivity.phases.forEach(p => headers.push(p.name));
+            phases.forEach(p => headers.push(p.name));
             reportData.push(headers);
 
-            const registered = students.filter(s => currentActivity.registrations.includes(s.registerNumber));
+            const registered = students.filter(s => registrations.includes(s.registerNumber));
             registered.forEach(s => {
                 const row = [s.registerNumber, s.name, s.course, s.department, "Registered"];
-                currentActivity.phases.forEach(p => {
-                    row.push(p.completions.includes(s.registerNumber) ? "QUALIFIED" : "PENDING/DROPPED");
+                phases.forEach(p => {
+                    const completions = p.completions || [];
+                    row.push(completions.includes(s.registerNumber) ? "QUALIFIED" : "PENDING/DROPPED");
                 });
                 reportData.push(row);
             });
 
             reportData.push([]);
             reportData.push(["PHASE DROPOUT SUMMARY"]);
-            currentActivity.phases.forEach((p, i) => {
+            phases.forEach((p, i) => {
                 reportData.push([`Students who DROPPED OUT at: ${p.name}`]);
                 let pool = [];
                 if (i === 0) {
                     pool = registered;
                 } else {
-                    const prevPhase = currentActivity.phases[i - 1];
-                    pool = registered.filter(s => prevPhase.completions.includes(s.registerNumber));
+                    const prevPhase = phases[i - 1];
+                    const prevCompletions = (prevPhase && prevPhase.completions) || [];
+                    pool = registered.filter(s => prevCompletions.includes(s.registerNumber));
                 }
                 
-                const dropped = pool.filter(s => !p.completions.includes(s.registerNumber));
+                const completions = p.completions || [];
+                const dropped = pool.filter(s => !completions.includes(s.registerNumber));
                 dropped.forEach(s => reportData.push([s.registerNumber, s.name, s.course]));
                 reportData.push([]);
             });
@@ -3921,7 +4008,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const ws = XLSX.utils.aoa_to_sheet(reportData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Placement Report");
-            XLSX.writeFile(wb, `${currentActivity.name.replace(/\s+/g, '_')}_Report.xlsx`);
+            XLSX.writeFile(wb, `${(currentActivity.name || 'Placement').replace(/\s+/g, '_')}_Report.xlsx`);
         };
     }
 
@@ -3930,13 +4017,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(!list) return;
         list.innerHTML = '';
 
-        if (!currentActivity.phases || currentActivity.phases.length === 0) {
+        if (!currentActivity || !currentActivity.phases || currentActivity.phases.length === 0) {
             list.innerHTML = '<div class="text-center text-muted py-5" style="background: #fff; border-radius: 8px; border: 1px dashed #e5e7eb;"><p class="mb-0">No selection phases defined yet. Click "Add New Phase" to start.</p></div>';
             return;
         }
 
         currentActivity.phases.forEach((p, idx) => {
             const isFinalSelected = window.isSelectedPhase(p);
+            const isAdminMode = p.mode !== 'self' && p.mode !== 'student';
             const card = document.createElement('div');
             card.className = 'phase-card-item';
             card.style.borderLeft = isFinalSelected ? '5px solid #10b981' : `5px solid ${idx % 2 === 0 ? '#0D6EFC' : '#6366f1'}`;
@@ -3957,7 +4045,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div>
                         <div style="font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 2px;">DECLARATION MODE</div>
                         <div>
-                            <span class="badge ${p.mode === 'admin' ? 'bg-secondary' : 'bg-success'}" style="font-weight: 500; font-size: 11px; padding: 4px 8px; border-radius: 6px;">${p.mode === 'admin' ? 'Admin Declared' : 'Self Declared'}</span>
+                            <span class="badge ${isAdminMode ? 'bg-secondary' : 'bg-success'}" style="font-weight: 500; font-size: 11px; padding: 4px 8px; border-radius: 6px;">${isAdminMode ? 'Admin Declared' : 'Self Declared'}</span>
                         </div>
                     </div>
                     
@@ -3975,7 +4063,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     <!-- Column 5: Actions -->
                     <div class="phase-card-col-actions d-flex gap-2 justify-content-end align-items-center">
-                        ${p.mode === 'admin' ? `<button class="btn btn-sm" style="background-color: #000080; color: white; font-weight: 600; font-size: 12px; padding: 6px 12px; white-space: nowrap; border-radius: 6px;" onclick="openDeclaration('${p.id}')">Declare Status</button>` : ''}
+                        ${isAdminMode ? `<button class="btn btn-sm" style="background-color: #000080; color: white; font-weight: 600; font-size: 12px; padding: 6px 12px; white-space: nowrap; border-radius: 6px;" onclick="openDeclaration('${p.id}')">Declare Status</button>` : ''}
                         ${Permissions.can(userRole, 'edit_training_drives') ? `
                         <button class="btn btn-light btn-sm" style="font-weight: 600; border: 1px solid #e5e7eb; font-size: 12px; padding: 6px 12px; border-radius: 6px;" onclick="editPhase('${p.id}')">Edit</button>
                         <button class="btn btn-danger btn-sm" onclick="deletePhase('${p.id}')" style="font-weight: 600; font-size: 12px; padding: 6px 10px; border-radius: 6px; border: none;" title="Delete Phase">✕</button>

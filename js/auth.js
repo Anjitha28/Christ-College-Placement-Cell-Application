@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    if (tabs) {
+    if (tabs && tabs.length > 0 && roleInput) {
         updateUsernameField(roleInput.value);
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {

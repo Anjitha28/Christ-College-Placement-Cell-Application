@@ -179,7 +179,11 @@ function toJSPlacementActivity(row) {
         type: row.type,
         target: row.target || { type: 'all' },
         registrations: row.registrations || [],
-        phases: row.phases || [],
+        phases: (row.phases || []).map(p => ({
+            ...p,
+            mode: (p.mode === 'self' || p.mode === 'student') ? 'self' : 'admin',
+            completions: p.completions || []
+        })),
         createdAt: row.created_at || row.createdAt || null
     };
 }
@@ -670,11 +674,11 @@ class Database {
     }
 
     async updatePhaseCompletions(activityId, phaseId, regNumbers) {
-        const index = this.cache.placementActivities.findIndex(a => a.id === activityId);
+        const index = this.cache.placementActivities.findIndex(a => String(a.id) === String(activityId) || a.id == activityId);
         if (index === -1) return { success: false, message: 'Activity not found.' };
         const activity = this.cache.placementActivities[index];
         activity.phases = activity.phases || [];
-        const phaseIndex = activity.phases.findIndex(p => p.id === phaseId);
+        const phaseIndex = activity.phases.findIndex(p => String(p.id) === String(phaseId) || p.id == phaseId);
         if (phaseIndex === -1) return { success: false, message: 'Phase not found.' };
         const phase = activity.phases[phaseIndex];
         
@@ -727,7 +731,11 @@ class Database {
     getPlacementActivities() {
         return sortByNewestFirst(this.cache.placementActivities.map(a => ({
             ...a,
-            phases: a.phases || [],
+            phases: (a.phases || []).map(p => ({
+                ...p,
+                mode: (p.mode === 'self' || p.mode === 'student') ? 'self' : 'admin',
+                completions: p.completions || []
+            })),
             registrations: a.registrations || [],
             target: a.target || { type: 'all' }
         })));
@@ -745,7 +753,7 @@ class Database {
     }
 
     async updatePlacementActivity(id, updatedData) {
-        const index = this.cache.placementActivities.findIndex(a => a.id === id);
+        const index = this.cache.placementActivities.findIndex(a => String(a.id) === String(id) || a.id == id);
         if (index !== -1) {
             this.cache.placementActivities[index] = { ...this.cache.placementActivities[index], ...updatedData };
             const res = await this.sync("Activity", this.cache.placementActivities[index]);
@@ -756,18 +764,19 @@ class Database {
     }
 
     async deletePlacementActivity(id) {
-        this.cache.placementActivities = this.cache.placementActivities.filter(a => a.id !== id);
+        this.cache.placementActivities = this.cache.placementActivities.filter(a => String(a.id) !== String(id) && a.id != id);
         const res = await this.deleteRecord("Activity", id);
         if (res.success) showToast('Placement activity deleted.', 'success');
         return res;
     }
 
     async addPlacementPhase(activityId, phase) {
-        const index = this.cache.placementActivities.findIndex(a => a.id === activityId);
+        const index = this.cache.placementActivities.findIndex(a => String(a.id) === String(activityId) || a.id == activityId);
         if (index === -1) return { success: false, message: 'Activity not found.' };
         
         phase.id = 'PHS' + Date.now();
         phase.completions = phase.completions || [];
+        phase.mode = (phase.mode === 'self' || phase.mode === 'student') ? 'self' : 'admin';
         
         const activity = this.cache.placementActivities[index];
         activity.phases = activity.phases || [];
@@ -787,17 +796,22 @@ class Database {
     }
 
     async updatePlacementPhase(activityId, phaseId, updatedData) {
-        const actIndex = this.cache.placementActivities.findIndex(a => a.id === activityId);
+        const actIndex = this.cache.placementActivities.findIndex(a => String(a.id) === String(activityId) || a.id == activityId);
         if (actIndex === -1) return { success: false, message: 'Activity not found.' };
         
         const activity = this.cache.placementActivities[actIndex];
-        const phIndex = activity.phases.findIndex(p => p.id === phaseId);
+        activity.phases = activity.phases || [];
+        const phIndex = activity.phases.findIndex(p => String(p.id) === String(phaseId) || p.id == phaseId);
         if (phIndex === -1) return { success: false, message: 'Phase not found.' };
+
+        if (updatedData.mode) {
+            updatedData.mode = (updatedData.mode === 'self' || updatedData.mode === 'student') ? 'self' : 'admin';
+        }
 
         // If updated phase is marked as Selected Phase, unmark others
         if (updatedData.isSelectedPhase) {
             activity.phases.forEach(p => {
-                if (p.id !== phaseId) p.isSelectedPhase = false;
+                if (String(p.id) !== String(phaseId)) p.isSelectedPhase = false;
             });
         }
         
@@ -809,12 +823,12 @@ class Database {
     }
 
     async deletePlacementPhase(activityId, phaseId) {
-        const actIndex = this.cache.placementActivities.findIndex(a => a.id === activityId);
+        const actIndex = this.cache.placementActivities.findIndex(a => String(a.id) === String(activityId) || a.id == activityId);
         if (actIndex === -1) return { success: false, message: 'Activity not found.' };
         
         const activity = this.cache.placementActivities[actIndex];
         activity.phases = activity.phases || [];
-        const phIndex = activity.phases.findIndex(p => p.id === phaseId);
+        const phIndex = activity.phases.findIndex(p => String(p.id) === String(phaseId) || p.id == phaseId);
         if (phIndex === -1) return { success: false, message: 'Phase not found.' };
         
         activity.phases.splice(phIndex, 1);
