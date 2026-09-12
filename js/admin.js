@@ -5205,54 +5205,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('Header user profile update error:', e);
     }
 
-    // Bind Global Header Search Input to active tab views
-    try {
-        const topSearchInput = document.querySelector('.header-search-input');
-        if (topSearchInput) {
-            topSearchInput.addEventListener('input', (e) => {
-                const query = e.target.value.trim();
-                const activeTab = document.querySelector('.tab-content:not(.hidden)');
-                const activeTabId = activeTab ? activeTab.id : '';
-
-                if (activeTabId === 'userManagementTab') {
-                    const teachersActive = !document.getElementById('teachersSubTab')?.classList.contains('hidden');
-                    if (teachersActive) {
-                        const tInput = document.getElementById('searchTeacher');
-                        if (tInput) { tInput.value = query; tInput.dispatchEvent(new Event('input')); }
-                    } else {
-                        const sInput = document.getElementById('searchStudent');
-                        if (sInput) { sInput.value = query; sInput.dispatchEvent(new Event('input')); }
-                    }
-                } else if (activeTabId === 'trainingTab') {
-                    const trnInput = document.getElementById('searchTraining');
-                    if (trnInput) { trnInput.value = query; trnInput.dispatchEvent(new Event('input')); }
-                } else if (activeTabId === 'placementTab') {
-                    const isRec = !document.getElementById('recruitmentSubTab')?.classList.contains('hidden');
-                    if (isRec) {
-                        const recInput = document.getElementById('recSearchStudent');
-                        if (recInput) { recInput.value = query; recInput.dispatchEvent(new Event('input')); }
-                    } else {
-                        const actInput = document.getElementById('actSearchStudent');
-                        if (actInput) { actInput.value = query; actInput.dispatchEvent(new Event('input')); }
-                    }
-                } else if (activeTabId === 'classTab') {
-                    const clsInput = document.getElementById('classSearchInput');
-                    if (clsInput) { clsInput.value = query; clsInput.dispatchEvent(new Event('input')); }
-                } else if (activeTabId === 'mcqTab') {
-                    const examInput = document.getElementById('searchExam');
-                    if (examInput) { examInput.value = query; examInput.dispatchEvent(new Event('input')); }
-                } else if (activeTabId === 'dashboardTab') {
-                    const rows = document.querySelectorAll('#dashboardPlacedTable tbody tr');
-                    rows.forEach(r => {
-                        const text = r.textContent.toLowerCase();
-                        r.style.display = (!query || text.includes(query.toLowerCase())) ? '' : 'none';
-                    });
-                }
-            });
-        }
-    } catch (e) {
-        console.warn('Global header search init error:', e);
-    }
+    // Global header search is managed centrally with intelligent categorization and cross-portal navigation by js/global-search.js
 
     try {
         handleRouting(false); // Render data now that DB is loaded

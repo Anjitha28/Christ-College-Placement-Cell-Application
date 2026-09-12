@@ -105,7 +105,16 @@
                 <!-- Global Search Bar -->
                 <div class="header-search-wrapper">
                     <svg class="header-search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                    <input type="text" id="studentGlobalSearch" class="header-search-input" placeholder="Search trainings, placement activities, exams...">
+                    <input type="search" class="header-search-input" id="globalPortalSearchInput" name="global_portal_search" placeholder="Search students, training, exams, placements..." autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other">
+                    <button type="button" class="header-search-clear hidden" id="globalSearchClearBtn" aria-label="Clear search">✕</button>
+                    <div class="global-search-dropdown hidden" id="globalSearchDropdown">
+                        <div class="global-search-results" id="globalSearchResults"></div>
+                        <div class="global-search-footer">
+                            <span class="search-tip"><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+                            <span class="search-tip"><kbd>↵</kbd> select</span>
+                            <span class="search-tip"><kbd>esc</kbd> close</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Header Right: Profile & Notifications -->
@@ -442,6 +451,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/db.js?v=4"></script>
     <script src="js/auth.js"></script>
+    <script src="js/global-search.js"></script>
     <script>
         checkAuth(['student', 'studentCoordinator']);
         
@@ -1825,25 +1835,7 @@
             }
             initGlobalTooltipSystem();
 
-            // Global Header Search in Student Portal
-            try {
-                const studentSearchInput = document.querySelector('.header-search-input');
-                if (studentSearchInput) {
-                    studentSearchInput.addEventListener('input', (e) => {
-                        const query = e.target.value.trim().toLowerCase();
-                        const activeTab = document.querySelector('.tab-content:not(.hidden)');
-                        if (activeTab) {
-                            const cards = activeTab.querySelectorAll('.training-card, .glass-card, tr');
-                            cards.forEach(card => {
-                                const text = card.textContent.toLowerCase();
-                                card.style.display = (!query || text.includes(query)) ? '' : 'none';
-                            });
-                        }
-                    });
-                }
-            } catch(e) {
-                console.warn('Student global search init error:', e);
-            }
+            // Global header search is managed centrally by js/global-search.js
 
             // Render current route data after DB initialization
             try {
