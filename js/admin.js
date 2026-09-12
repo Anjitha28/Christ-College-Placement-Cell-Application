@@ -21,9 +21,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const stSearch = document.getElementById('searchStudent');
     const tcSearch = document.getElementById('searchTeacher');
     const urSearch = document.getElementById('searchUserReport');
+    const actSearchEl = document.getElementById('actSearchStudent');
+    const recSearchEl = document.getElementById('recSearchStudent');
+    const ghSearchEl = document.getElementById('globalHeaderSearch') || document.querySelector('.header-search-input');
     if (stSearch) stSearch.value = '';
     if (tcSearch) tcSearch.value = '';
     if (urSearch) urSearch.value = '';
+    if (actSearchEl) actSearchEl.value = '';
+    if (recSearchEl) recSearchEl.value = '';
+    if (ghSearchEl) ghSearchEl.value = '';
 
     const userRole = sessionStorage.getItem('userRole') || 'admin';
     const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
@@ -2962,7 +2968,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         populatePlacementFilterDropdowns(students, activities);
 
-        const actSearch = (document.getElementById('actSearchStudent')?.value || '').toLowerCase().trim();
+        const actSearchInput = document.getElementById('actSearchStudent');
+        let actSearch = (actSearchInput?.value || '').toLowerCase().trim();
+        
+        // Guard against browser credential autofill injecting phone numbers like '9876555555'
+        if (actSearch && /^\d{7,12}$/.test(actSearch)) {
+            const hasPhoneMatch = students.some(s => s.phone === actSearch || s.registerNumber.toLowerCase() === actSearch);
+            if (!hasPhoneMatch) {
+                if (actSearchInput) actSearchInput.value = '';
+                actSearch = '';
+            }
+        }
+
         const actEligibility = document.getElementById('actFilterEligibility')?.value || '';
         const actCourse = document.getElementById('actFilterCourse')?.value || '';
         const actDept = document.getElementById('actFilterDept')?.value || '';
@@ -2984,13 +3001,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
         if (actEligibility) {
-            if (actEligibility === 'all_eligible') placementList = placementList.filter(a => a.target.type === 'all');
-            else if (actEligibility === 'targeted') placementList = placementList.filter(a => a.target.type !== 'all');
+            if (actEligibility === 'all_eligible') placementList = placementList.filter(a => (!a.target || a.target.type === 'all' || a.target === 'all'));
+            else if (actEligibility === 'targeted') placementList = placementList.filter(a => (a.target && a.target.type !== 'all' && a.target !== 'all'));
             else if (actEligibility === 'registered') placementList = placementList.filter(a => (a.registrations || []).length > 0);
         }
         if (actCourse) {
             placementList = placementList.filter(a => {
-                const targetMatch = a.target.type === 'all' || (a.target.type === 'course' && (a.target.courses || []).includes(actCourse));
+                const targetMatch = !a.target || a.target.type === 'all' || a.target === 'all' || (a.target.type === 'course' && (a.target.courses || []).includes(actCourse));
                 const regMatch = (a.registrations || []).some(reg => {
                     const st = students.find(s => s.registerNumber === reg);
                     return st && st.course === actCourse;
@@ -3000,7 +3017,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (actDept) {
             placementList = placementList.filter(a => {
-                const targetMatch = a.target.type === 'all' || (a.target.type === 'dept' && (a.target.depts || []).includes(actDept));
+                const targetMatch = !a.target || a.target.type === 'all' || a.target === 'all' || (a.target.type === 'dept' && (a.target.depts || []).includes(actDept));
                 const regMatch = (a.registrations || []).some(reg => {
                     const st = students.find(s => s.registerNumber === reg);
                     return st && st.department === actDept;
@@ -3016,7 +3033,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        const recSearch = (document.getElementById('recSearchStudent')?.value || '').toLowerCase().trim();
+        const recSearchInput = document.getElementById('recSearchStudent');
+        let recSearch = (recSearchInput?.value || '').toLowerCase().trim();
+        
+        if (recSearch && /^\d{7,12}$/.test(recSearch)) {
+            const hasPhoneMatch = students.some(s => s.phone === recSearch || s.registerNumber.toLowerCase() === recSearch);
+            if (!hasPhoneMatch) {
+                if (recSearchInput) recSearchInput.value = '';
+                recSearch = '';
+            }
+        }
+
         const recEligibility = document.getElementById('recFilterEligibility')?.value || '';
         const recCourse = document.getElementById('recFilterCourse')?.value || '';
         const recDept = document.getElementById('recFilterDept')?.value || '';
@@ -3038,13 +3065,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
         if (recEligibility) {
-            if (recEligibility === 'all_eligible') recruitmentList = recruitmentList.filter(a => a.target.type === 'all');
-            else if (recEligibility === 'targeted') recruitmentList = recruitmentList.filter(a => a.target.type !== 'all');
+            if (recEligibility === 'all_eligible') recruitmentList = recruitmentList.filter(a => (!a.target || a.target.type === 'all' || a.target === 'all'));
+            else if (recEligibility === 'targeted') recruitmentList = recruitmentList.filter(a => (a.target && a.target.type !== 'all' && a.target !== 'all'));
             else if (recEligibility === 'registered') recruitmentList = recruitmentList.filter(a => (a.registrations || []).length > 0);
         }
         if (recCourse) {
             recruitmentList = recruitmentList.filter(a => {
-                const targetMatch = a.target.type === 'all' || (a.target.type === 'course' && (a.target.courses || []).includes(recCourse));
+                const targetMatch = !a.target || a.target.type === 'all' || a.target === 'all' || (a.target.type === 'course' && (a.target.courses || []).includes(recCourse));
                 const regMatch = (a.registrations || []).some(reg => {
                     const st = students.find(s => s.registerNumber === reg);
                     return st && st.course === recCourse;
@@ -3054,7 +3081,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (recDept) {
             recruitmentList = recruitmentList.filter(a => {
-                const targetMatch = a.target.type === 'all' || (a.target.type === 'dept' && (a.target.depts || []).includes(recDept));
+                const targetMatch = !a.target || a.target.type === 'all' || a.target === 'all' || (a.target.type === 'dept' && (a.target.depts || []).includes(recDept));
                 const regMatch = (a.registrations || []).some(reg => {
                     const st = students.find(s => s.registerNumber === reg);
                     return st && st.department === recDept;
@@ -3096,15 +3123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return `
             <tr>
                 <td style="text-align: left; vertical-align: middle;">
-                    ${a.type === 'recruitment' ? `
-                        <strong style="color: #111827; font-size: 0.92rem;">${a.name}</strong>
-                    ` : `
-                        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                            <span class="badge bg-primary" style="font-size: 10px; text-transform: capitalize; padding: 2px 7px; border-radius: 4px; font-weight: 600; white-space: nowrap;">Activity</span>
-                            <strong style="color: #111827; font-size: 0.92rem;">${a.name}</strong>
-                        </div>
-                        ${a.description ? `<div class="small text-muted" style="max-width: 320px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35;">${a.description}</div>` : ''}
-                    `}
+                    <strong style="color: #111827; font-size: 0.92rem;">${a.name}</strong>
                 </td>
                 <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
                     <span class="text-danger fw-semibold" style="font-size: 0.85rem;">${a.date}</span>
@@ -3114,7 +3133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <span class="jobrole-pill" title="${a.venue || ''}">${a.venue || '—'}</span>
                 </td>` : ''}
                 <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
-                    <span class="small" style="color: #4b5563; font-weight: 500;">${a.target.type === 'all' ? 'All Students' : (a.target.type === 'course' ? (a.target.courses || []).length + ' Courses' : (a.target.type === 'dept' ? (a.target.depts || []).length + ' Depts' : (a.target.students || []).length + ' Students'))}</span>
+                    <span class="small" style="color: #4b5563; font-weight: 500;">${(!a.target || a.target.type === 'all' || a.target === 'all') ? 'All Students' : (a.target.type === 'course' ? (a.target.courses || []).length + ' Courses' : (a.target.type === 'dept' ? (a.target.depts || []).length + ' Depts' : (a.target.students || []).length + ' Students'))}</span>
                 </td>
                 <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
                     <span class="registered-count">${(a.registrations || []).length}</span>
@@ -3124,12 +3143,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </td>
                 <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
                     <div class="d-flex gap-1 align-items-center justify-content-center">
-                        <button class="btn btn-secondary btn-sm" onclick="openManagePlacementView('${a.id}')" title="Manage Activity" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">Manage</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openManagePlacementView('${a.id}')" title="Manage Activity" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">Manage</button>
                         ${Permissions.can(userRole, 'edit_training_drives') ? `
-                        <button class="btn btn-secondary btn-sm" onclick="editPlacementActivity('${a.id}')" title="Edit Info" style="padding: 0.35rem 0.5rem; display: inline-flex; align-items: center; justify-content: center;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); editPlacementActivity('${a.id}')" title="Edit Info" style="padding: 0.35rem 0.5rem; display: inline-flex; align-items: center; justify-content: center;">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="deletePlacementActivity('${a.id}')" title="Delete" style="padding: 0.35rem 0.5rem; border: none; display: inline-flex; align-items: center; justify-content: center;">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deletePlacementActivity('${a.id}')" title="Delete" style="padding: 0.35rem 0.5rem; border: none; display: inline-flex; align-items: center; justify-content: center;">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                         </button>
                         ` : ''}
@@ -3157,60 +3176,81 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let editingPlacementId = null;
     window.editPlacementActivity = (id) => {
-        const activities = db.getPlacementActivities() || [];
-        const a = activities.find(item => String(item.id) === String(id) || item.id == id);
-        if(a) {
-            editingPlacementId = id;
-            currentPlacementType = a.type || 'placement';
-            toggleFormFields(currentPlacementType);
-            document.getElementById('pName').value = a.name;
-            if (currentPlacementType === 'recruitment') {
-                document.getElementById('pVenue').value = a.venue || '';
-            }
-            document.getElementById('pDate').value = a.date;
-            document.getElementById('pDesc').innerHTML = a.description;
-            
-            // Set Target
-            const radios = document.querySelectorAll('input[name="pTargetType"]');
-            radios.forEach(r => {
-                if(r.value === a.target.type) r.checked = true;
-            });
-            
-            document.getElementById('pCourseListSection').classList.add('hidden');
-            document.getElementById('pDeptListSection').classList.add('hidden');
-            document.getElementById('pStudentListSection').classList.add('hidden');
-            if(a.target.type === 'course') {
-                document.getElementById('pCourseListSection').classList.remove('hidden');
-                populatePlacementFilters();
-                setTimeout(() => {
-                    (a.target.courses || []).forEach(c => {
-                        const cb = document.querySelector(`input[name="pCourses"][value="${c}"]`);
-                        if(cb) cb.checked = true;
-                    });
-                }, 100);
-            } else if(a.target.type === 'dept') {
-                document.getElementById('pDeptListSection').classList.remove('hidden');
-                populatePlacementFilters();
-                setTimeout(() => {
-                    (a.target.depts || []).forEach(d => {
-                        const cb = document.querySelector(`input[name="pDepts"][value="${d}"]`);
-                        if(cb) cb.checked = true;
-                    });
-                }, 100);
-            } else if(a.target.type === 'student') {
-                document.getElementById('pStudentListSection').classList.remove('hidden');
-                populatePlacementFilters();
-                setTimeout(() => {
-                    (a.target.students || []).forEach(s => {
-                        const cb = document.querySelector(`input[name="pStudentSelect"][value="${s}"]`);
-                        if(cb) cb.checked = true;
-                    });
-                }, 100);
-            }
+        try {
+            const activities = db.getPlacementActivities() || [];
+            const a = activities.find(item => String(item.id) === String(id) || item.id == id);
+            if(a) {
+                editingPlacementId = id;
+                currentPlacementType = a.type || 'placement';
+                toggleFormFields(currentPlacementType);
+                
+                const pNameEl = document.getElementById('pName');
+                if (pNameEl) pNameEl.value = a.name || '';
+                
+                const pVenueEl = document.getElementById('pVenue');
+                if (pVenueEl && currentPlacementType === 'recruitment') {
+                    pVenueEl.value = a.venue || '';
+                }
+                
+                const pDateEl = document.getElementById('pDate');
+                if (pDateEl) pDateEl.value = a.date || '';
+                
+                const pDescEl = document.getElementById('pDesc');
+                if (pDescEl) pDescEl.innerHTML = a.description || '';
+                
+                // Set Target safely
+                const targetType = a.target && typeof a.target === 'object' ? (a.target.type || 'all') : (typeof a.target === 'string' ? a.target : 'all');
+                const radios = document.querySelectorAll('input[name="pTargetType"]');
+                radios.forEach(r => {
+                    r.checked = (r.value === targetType);
+                });
+                
+                const courseSec = document.getElementById('pCourseListSection');
+                const deptSec = document.getElementById('pDeptListSection');
+                const studentSec = document.getElementById('pStudentListSection');
+                if (courseSec) courseSec.classList.add('hidden');
+                if (deptSec) deptSec.classList.add('hidden');
+                if (studentSec) studentSec.classList.add('hidden');
+                
+                if(targetType === 'course') {
+                    if (courseSec) courseSec.classList.remove('hidden');
+                    populatePlacementFilters();
+                    setTimeout(() => {
+                        (a.target?.courses || []).forEach(c => {
+                            const cb = document.querySelector(`input[name="pCourses"][value="${c}"]`);
+                            if(cb) cb.checked = true;
+                        });
+                    }, 100);
+                } else if(targetType === 'dept') {
+                    if (deptSec) deptSec.classList.remove('hidden');
+                    populatePlacementFilters();
+                    setTimeout(() => {
+                        (a.target?.depts || []).forEach(d => {
+                            const cb = document.querySelector(`input[name="pDepts"][value="${d}"]`);
+                            if(cb) cb.checked = true;
+                        });
+                    }, 100);
+                } else if(targetType === 'student') {
+                    if (studentSec) studentSec.classList.remove('hidden');
+                    populatePlacementFilters();
+                    setTimeout(() => {
+                        (a.target?.students || []).forEach(s => {
+                            const cb = document.querySelector(`input[name="pStudentSelect"][value="${s}"]`);
+                            if(cb) cb.checked = true;
+                        });
+                    }, 100);
+                }
 
-            openModal(placementModal);
-            placementModalTitle.textContent = 'Edit Placement Activity';
-            savePlacementBtn.textContent = 'Update Activity';
+                if (placementModal) openModal(placementModal);
+                if (placementModalTitle) {
+                    placementModalTitle.textContent = currentPlacementType === 'recruitment' ? 'Edit Recruitment Drive' : 'Edit Placement Activity';
+                }
+                if (savePlacementBtn) {
+                    savePlacementBtn.textContent = currentPlacementType === 'recruitment' ? 'Update Recruitment' : 'Update Activity';
+                }
+            }
+        } catch (err) {
+            console.error("Error opening edit placement modal:", err);
         }
     };
 
@@ -3679,15 +3719,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (targetTab) {
             const targetTabId = targetTab.dataset.tab;
-            if (targetTabId === 'funnel') renderFunnel();
-            else if (targetTabId === 'phases') renderPhases();
-            else if (targetTabId === 'students') renderStudentTracking();
+            try {
+                if (targetTabId === 'funnel') renderFunnel();
+                else if (targetTabId === 'phases') renderPhases();
+                else if (targetTabId === 'students') renderStudentTracking();
+            } catch (tabErr) {
+                console.warn(`Error rendering manage subtab ${targetTabId}:`, tabErr);
+            }
         }
 
-        if (updateHash) {
+        if (updateHash && targetTab && targetTab.dataset.tab) {
             const newHash = `placement/manage/${id}/${targetTab.dataset.tab}`;
             if (window.location.hash !== `#${newHash}`) {
-                window.location.hash = newHash;
+                history.replaceState(null, '', `#${newHash}`);
             }
         }
     }
@@ -3730,7 +3774,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderPlacementActivities(); // Refresh list to reflect any changes
         
         if (updateHash && window.location.hash.includes('placement/manage')) {
-            window.location.hash = 'placement';
+            history.replaceState(null, '', '#placement');
         }
     };
 

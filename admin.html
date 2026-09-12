@@ -128,7 +128,7 @@
                 <!-- Global Search Bar -->
                 <div class="header-search-wrapper">
                     <svg class="header-search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                    <input type="text" class="header-search-input" id="globalHeaderSearch" placeholder="Search students, courses, placements, trainings...">
+                    <input type="search" class="header-search-input" id="globalHeaderSearch" name="global_portal_search" placeholder="Search students, courses, placements, trainings..." autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other">
                 </div>
 
                 <!-- Header Right: Notifications & User Profile -->
@@ -932,7 +932,7 @@
                     <div class="filter-row-unified mb-4">
                         <div>
                             <label class="form-label" style="font-size: 0.75rem;">Search by Student Details</label>
-                            <input type="text" id="actSearchStudent" class="form-control" placeholder="Search by name, reg no..." autocomplete="off">
+                            <input type="search" id="actSearchStudent" name="act_search_student_details" class="form-control" placeholder="Search by name, reg no..." autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other">
                         </div>
                         <div>
                             <label class="form-label" style="font-size: 0.75rem;">All Students</label>
@@ -1000,7 +1000,7 @@
                     <div class="filter-row-unified mb-4">
                         <div>
                             <label class="form-label" style="font-size: 0.75rem;">Search by Student Details</label>
-                            <input type="text" id="recSearchStudent" class="form-control" placeholder="Search by name, reg no..." autocomplete="off">
+                            <input type="search" id="recSearchStudent" name="rec_search_student_details" class="form-control" placeholder="Search by name, reg no..." autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other">
                         </div>
                         <div>
                             <label class="form-label" style="font-size: 0.75rem;">All Students</label>
@@ -1610,7 +1610,7 @@
                                     </div>
                                     <div class="form-group mb-0" style="grid-column: span 2;">
                                         <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">PASSWORD (DEFAULTS TO 'password')</label>
-                                        <input type="password" id="sPass" class="form-control" placeholder="Leave empty for 'password'" style="background: #f9fafb; border-color: #e5e7eb;">
+                                        <input type="password" id="sPass" autocomplete="new-password" class="form-control" placeholder="Leave empty for 'password'" style="background: #f9fafb; border-color: #e5e7eb;">
                                     </div>
                                 </div>
                                 <div class="admin-only-field mt-3" style="padding: 0.75rem 1rem; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px;">
@@ -1664,7 +1664,7 @@
                                     </div>
                                     <div class="form-group mb-0" style="grid-column: span 2;">
                                         <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">ACCESS PASSWORD (DEFAULTS TO 'password')</label>
-                                        <input type="password" id="tPass" class="form-control" placeholder="Leave empty for 'password'" style="background: #f9fafb; border-color: #e5e7eb;">
+                                        <input type="password" id="tPass" autocomplete="new-password" class="form-control" placeholder="Leave empty for 'password'" style="background: #f9fafb; border-color: #e5e7eb;">
                                     </div>
                                 </div>
                                 <div class="admin-only-field mt-3" style="padding: 0.75rem 1rem; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px;">
@@ -1841,15 +1841,18 @@
         <div class="glass-card" style="width: 400px; max-width: 95vw; background: white;  border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
             <h3 class="mb-2" style="color: #1e3a8a; font-weight: 700;">Security Update</h3>
             <p class="text-muted small mb-4">Please set a new password for your account to continue.</p>
-            <div class="form-group">
-                <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">NEW PASSWORD</label>
-                <input type="password" id="newPass" class="form-control" placeholder="Enter new password" style="background: #f9fafb; border-color: #e5e7eb;">
-            </div>
-            <div class="form-group mt-3">
-                <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">CONFIRM PASSWORD</label>
-                <input type="password" id="confirmPass" class="form-control" placeholder="Confirm new password" style="background: #f9fafb; border-color: #e5e7eb;">
-            </div>
-            <button class="btn btn-primary w-100 mt-4" id="saveNewPassBtn" style="padding: 0.75rem; border-radius: 8px; font-weight: 600;">Update Password</button>
+            <form id="resetPassForm" autocomplete="off" onsubmit="return false;">
+                <input type="text" name="username" autocomplete="username" style="display:none !important;" aria-hidden="true" tabindex="-1">
+                <div class="form-group">
+                    <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">NEW PASSWORD</label>
+                    <input type="password" id="newPass" name="new_password" autocomplete="new-password" class="form-control" placeholder="Enter new password" style="background: #f9fafb; border-color: #e5e7eb;">
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #4b5563;">CONFIRM PASSWORD</label>
+                    <input type="password" id="confirmPass" name="confirm_password" autocomplete="new-password" class="form-control" placeholder="Confirm new password" style="background: #f9fafb; border-color: #e5e7eb;">
+                </div>
+                <button type="button" class="btn btn-primary w-100 mt-4" id="saveNewPassBtn" style="padding: 0.75rem; border-radius: 8px; font-weight: 600;">Update Password</button>
+            </form>
         </div>
     </div>
 
