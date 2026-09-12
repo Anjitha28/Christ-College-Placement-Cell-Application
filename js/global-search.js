@@ -77,7 +77,7 @@
         // Configure attributes
         searchInput.id = 'globalPortalSearchInput';
         searchInput.name = 'global_portal_search';
-        searchInput.placeholder = 'Search students, training, exams, placements...';
+        searchInput.placeholder = 'Search students, courses, placements, trainings...';
         searchInput.setAttribute('autocomplete', 'off');
         searchInput.setAttribute('autocorrect', 'off');
         searchInput.setAttribute('spellcheck', 'false');
@@ -280,14 +280,14 @@
             // Students
             const students = window.db.getStudents() || [];
             students.forEach(s => {
-                const score = calculateScore(s.name, s.registerNumber, [s.mailId, s.phoneNumber, s.course, s.department]);
+                const score = calculateScore(s.name, s.registerNumber, [s.mailId, s.phoneNumber, s.course, s.department, 'student']);
                 if (score > 0) {
                     candidates.push({
                         category: 'Students',
                         iconClass: 'search-icon-students',
                         icon: '🎓',
                         title: s.name,
-                        meta: `${s.registerNumber} • ${s.course || ''} (${s.department || ''})`,
+                        meta: `Student · ${s.course || 'General'} (${s.registerNumber})`,
                         badge: s.department || 'Student',
                         score: score + 10,
                         action: {
@@ -305,14 +305,14 @@
             // Teachers
             const teachers = window.db.getTeachers() || [];
             teachers.forEach(t => {
-                const score = calculateScore(t.name, t.phoneNumber, [t.mailId, t.department]);
+                const score = calculateScore(t.name, t.phoneNumber, [t.mailId, t.department, 'teacher', 'faculty', 'professor']);
                 if (score > 0) {
                     candidates.push({
                         category: 'Teachers',
                         iconClass: 'search-icon-teachers',
                         icon: '👨‍🏫',
                         title: t.name,
-                        meta: `${t.department || ''} • ${t.mailId || ''} • ${t.phoneNumber || ''}`,
+                        meta: `Faculty · ${t.department || 'Academic Department'}`,
                         badge: t.department || 'Faculty',
                         score: score + 5,
                         action: {
@@ -322,6 +322,34 @@
                             filterValue: t.name,
                             targetIdentifier: t.phoneNumber || t.name,
                             hint: 'Open Faculty'
+                        }
+                    });
+                }
+            });
+
+            // Courses
+            const courseSet = new Set();
+            students.forEach(s => s.course && courseSet.add(s.course));
+            const inchargesList = window.db.getClassIncharges() || [];
+            inchargesList.forEach(c => c.course && courseSet.add(c.course));
+            courseSet.forEach(crs => {
+                const score = calculateScore(crs, 'Course', ['degree', 'academics', 'program']);
+                if (score > 0) {
+                    candidates.push({
+                        category: 'Courses',
+                        iconClass: 'search-icon-classes',
+                        icon: '🏛️',
+                        title: crs,
+                        meta: `Course · Academic Degree Program`,
+                        badge: 'Course',
+                        score: score + 12,
+                        action: {
+                            tab: 'userManagement',
+                            subtab: 'studentsSubTab',
+                            inputSelector: '#searchStudent',
+                            filterValue: crs,
+                            targetIdentifier: crs,
+                            hint: 'Filter by Course'
                         }
                     });
                 }
@@ -337,7 +365,7 @@
                         iconClass: 'search-icon-training',
                         icon: '📚',
                         title: p.name,
-                        meta: `${p.venue ? p.venue + ' • ' : ''}Date: ${p.date || 'TBD'}`,
+                        meta: `Training · ${p.venue || 'Campus Venue'} (Date: ${p.date || 'TBD'})`,
                         badge: 'Training',
                         score: score + 8,
                         action: {
@@ -351,7 +379,7 @@
                 }
             });
 
-            // MCQ Exams
+            // MCQ Exams & Assessments
             const exams = window.db.getExams() || [];
             exams.forEach(e => {
                 const score = calculateScore(e.title, e.subject, [e.date, 'exam', 'mcq', 'test', 'quiz', 'assessment']);
@@ -361,7 +389,7 @@
                         iconClass: 'search-icon-mcq',
                         icon: '📝',
                         title: e.title,
-                        meta: `${e.subject ? e.subject + ' • ' : ''}Duration: ${e.durationMinutes || 30}m`,
+                        meta: `Assessment · ${e.subject || 'General'} (${e.durationMinutes || 30} mins)`,
                         badge: 'MCQ Exam',
                         score: score + 6,
                         action: {
@@ -386,7 +414,7 @@
                         iconClass: isRec ? 'search-icon-recruitment' : 'search-icon-placement',
                         icon: isRec ? '💼' : '🎯',
                         title: a.name,
-                        meta: `${isRec && a.venue ? a.venue + ' • ' : ''}Due: ${a.date || 'Upcoming'}`,
+                        meta: `${isRec ? 'Company · Recruitment Drive' : 'Placement · Preparatory Activity'} (Due: ${a.date || 'Upcoming'})`,
                         badge: isRec ? 'Recruitment' : 'Activity',
                         score: score + 9,
                         action: {
@@ -401,17 +429,46 @@
                 }
             });
 
+            // Companies & Recruiters (distinct list)
+            const companySet = new Set();
+            activities.forEach(a => {
+                if (a.company) companySet.add(a.company.trim());
+                if (a.type === 'recruitment' && a.name) companySet.add(a.name.trim());
+            });
+            companySet.forEach(comp => {
+                const score = calculateScore(comp, 'Company', ['recruiter', 'employer', 'hiring', 'partner']);
+                if (score > 0 && !candidates.some(c => c.title.toLowerCase() === comp.toLowerCase())) {
+                    candidates.push({
+                        category: 'Companies & Recruiters',
+                        iconClass: 'search-icon-recruitment',
+                        icon: '🏢',
+                        title: comp,
+                        meta: `Company · Recruitment Partner`,
+                        badge: 'Company',
+                        score: score + 14,
+                        action: {
+                            tab: 'placement',
+                            subtab: 'recruitmentSubTab',
+                            inputSelector: '#recSearchStudent',
+                            filterValue: comp,
+                            targetIdentifier: comp,
+                            hint: 'View Recruiter'
+                        }
+                    });
+                }
+            });
+
             // Classes & Incharges
             const incharges = window.db.getClassIncharges() || [];
             incharges.forEach(c => {
-                const score = calculateScore(c.course, c.department, [c.inchargeName, c.inchargeMail]);
+                const score = calculateScore(c.course, c.department, [c.inchargeName, c.inchargeMail, 'class', 'incharge']);
                 if (score > 0) {
                     candidates.push({
                         category: 'Classes & Incharges',
                         iconClass: 'search-icon-classes',
                         icon: '🏛️',
                         title: `${c.course} (${c.department})`,
-                        meta: `Incharge: ${c.inchargeName || 'Not Assigned'} • ${c.inchargeMail || ''}`,
+                        meta: `Class · Incharge: ${c.inchargeName || 'Not Assigned'}`,
                         badge: 'Class',
                         score: score + 2,
                         action: {
@@ -424,6 +481,42 @@
                     });
                 }
             });
+
+            // Reports
+            const reportScore = calculateScore('User Report', 'Placement Analytics', ['reports', 'analytics', 'statistics', 'export', 'summary']);
+            if (reportScore > 0) {
+                candidates.push({
+                    category: 'Reports',
+                    iconClass: 'search-icon-classes',
+                    icon: '📊',
+                    title: 'User Report & Analytics',
+                    meta: 'Report · Student & Placement Statistics',
+                    badge: 'Report',
+                    score: reportScore + 4,
+                    action: {
+                        tab: 'userReport',
+                        hint: 'Open Report'
+                    }
+                });
+            }
+
+            // Events & Program Calendar
+            const calScore = calculateScore('Program Calendar', 'Placement Events', ['calendar', 'events', 'schedule', 'dates', 'timeline']);
+            if (calScore > 0) {
+                candidates.push({
+                    category: 'Events & Calendar',
+                    iconClass: 'search-icon-training',
+                    icon: '📅',
+                    title: 'Program Calendar',
+                    meta: 'Event · Academic & Placement Timeline',
+                    badge: 'Calendar',
+                    score: calScore + 4,
+                    action: {
+                        tab: 'calendar',
+                        hint: 'Open Calendar'
+                    }
+                });
+            }
         }
 
         // --- 2. TEACHER PORTAL SEARCH DATA (Department Scoped) ---
@@ -647,8 +740,8 @@
             resultsContainer.innerHTML = `
                 <div class="search-empty-state">
                     <div class="search-empty-icon">🔍</div>
-                    <div class="search-empty-text">No results found for "${escapeHtml(query)}"</div>
-                    <div class="search-empty-subtext">Check your spelling or try a different keyword</div>
+                    <div class="search-empty-text">No results found</div>
+                    <div class="search-empty-subtext">Try searching for a student, course, company, placement, or training.</div>
                 </div>
             `;
             openDropdown();

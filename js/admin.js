@@ -3379,9 +3379,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </td>
                         <td><span style="color: #475569; font-weight: 500;">${s.department || '—'}</span></td>
                         <td><span style="color: #475569; font-weight: 500;">${s.course || '—'}</span></td>
-                        <td><span class="badge-pill-soft badge-soft-blue">${s.activities || 0}</span></td>
-                        <td><span class="badge-pill-soft badge-soft-blue">${s.recruitments || 0}</span></td>
-                        <td><span class="badge-pill-soft badge-soft-green">${s.placedRecruitment || 'Placed'}</span></td>
+                        <td style="text-align: center;"><span class="badge-pill-count">${s.activities || 0}</span></td>
+                        <td style="text-align: center;"><span class="badge-pill-count">${s.recruitments || 0}</span></td>
+                        <td><span class="badge-pill-placement">${s.placedRecruitment || 'Placed'}</span></td>
                         <td style="text-align: center;">
                             <button type="button" class="btn-action-more" data-tooltip="More Actions" title="More Actions" aria-label="More Actions for ${s.name}">
                                 <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
@@ -3567,9 +3567,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         const inProcessCount = inProcessSet.size;
         const unplacedCount = Math.max(0, totalStudents - placedCount - inProcessCount);
 
+        const welcomeHeading = document.getElementById('dashWelcomeHeading');
+        if (welcomeHeading) {
+            const user = (typeof auth !== 'undefined' && auth.getCurrentUser) ? auth.getCurrentUser() : null;
+            const name = (user && user.name) ? user.name.split(' ')[0] : 'Joseph';
+            welcomeHeading.textContent = `Welcome Back, ${name}!`;
+        }
+
         document.getElementById('dashPlacementTotalText').textContent = `Total: ${totalStudents}`;
         const placementPercent = totalStudents > 0 ? Math.round((placedCount / totalStudents) * 100) : 0;
         document.getElementById('placementPercentText').textContent = `${placementPercent}%`;
+
+        const elPlPlaced = document.getElementById('placementLegendPlaced');
+        if (elPlPlaced) elPlPlaced.textContent = placedCount;
+        const elPlProc = document.getElementById('placementLegendProcess');
+        if (elPlProc) elPlProc.textContent = inProcessCount;
+        const elPlUnpl = document.getElementById('placementLegendUnplaced');
+        if (elPlUnpl) elPlUnpl.textContent = unplacedCount;
 
         const pCtx = document.getElementById('placementStatusChart');
         if (window.placementChartInst) window.placementChartInst.destroy();
@@ -3628,6 +3642,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('dashTrainingTotalText').textContent = `Total: ${totalStudents}`;
         const trainingPercent = totalStudents > 0 ? Math.round((completedTrainCount / totalStudents) * 100) : 0;
         document.getElementById('trainingPercentText').textContent = `${trainingPercent}%`;
+
+        const elTrAtt = document.getElementById('trainingLegendAttending');
+        if (elTrAtt) elTrAtt.textContent = attendingTrainCount;
+        const elTrComp = document.getElementById('trainingLegendCompleted');
+        if (elTrComp) elTrComp.textContent = completedTrainCount;
+        const elTrNot = document.getElementById('trainingLegendNotAttending');
+        if (elTrNot) elTrNot.textContent = notAttendingCount;
 
         const tCtx = document.getElementById('trainingStatusChart');
         if (window.trainingChartInst) window.trainingChartInst.destroy();

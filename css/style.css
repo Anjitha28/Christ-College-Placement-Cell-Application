@@ -57,21 +57,25 @@ body {
 }
 
 .sidebar-brand-wrapper {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 0.65rem 0.9rem;
+    margin-bottom: 1.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1.25rem;
     width: 100%;
-    padding: 0 4px;
-    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transition: all 0.28s ease;
 }
 
 .sidebar-brand-logo {
     width: 100%;
-    max-width: 155px;
+    max-width: 145px;
     height: auto;
     object-fit: contain;
     transition: all 0.2s ease;
+    display: block;
 }
 
 .sidebar-brand-icon {
@@ -82,14 +86,7 @@ body {
 }
 
 .sidebar-brand {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #ffffff;
-    text-decoration: none;
-    text-align: center;
-    margin-bottom: 1.25rem;
-    letter-spacing: 0.3px;
-    display: block;
+    display: none !important;
 }
 
 .sidebar-nav {
@@ -164,29 +161,45 @@ body {
 
 /* Motivational Sidebar Banner (Track Learn Achieve) */
 .sidebar-motivational-card {
-    background: linear-gradient(135deg, #072255 0%, #0344a6 100%);
-    border-radius: 12px;
-    padding: 1.1rem 0.9rem;
+    background: linear-gradient(135deg, #052355 0%, #033a8a 100%);
+    border-radius: 14px;
+    padding: 1rem 0.95rem;
     margin: 1.25rem 0 0.85rem 0;
     color: #ffffff;
     position: relative;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+}
+
+.motivational-graphic {
+    width: 100%;
+    margin-bottom: 0.65rem;
+    display: flex;
+    justify-content: center;
+}
+
+.mountain-vector {
+    width: 100%;
+    max-width: 175px;
+    height: 72px;
+    display: block;
 }
 
 .sidebar-motivational-title {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 800;
     line-height: 1.25;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    text-transform: none;
     color: #ffffff;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.45rem;
 }
 
 .sidebar-motivational-subtitle {
-    font-size: 10.5px;
+    font-size: 11px;
     color: #93c5fd;
     font-weight: 500;
     line-height: 1.35;
@@ -214,21 +227,26 @@ body {
     font-size: 12.5px;
     font-weight: 600;
     border: none;
+    padding: 0.6rem 0.9rem;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     width: 100%;
-    background: rgba(239, 68, 68, 0.15);
-    color: #fca5a5 !important;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff !important;
     text-decoration: none !important;
     transition: all 0.2s ease;
 }
 
 .sidebar-logout-btn:hover {
-    background: #ef4444;
-    color: #ffffff !important;
+    background: rgba(239, 68, 68, 0.25);
+    border-color: rgba(239, 68, 68, 0.45);
+    color: #fca5a5 !important;
 }
 
 .sidebar-logout-btn svg {
@@ -239,16 +257,31 @@ body {
    COLLAPSED SIDEBAR STATE
    ========================================================================== */
 .app-container.collapsed .sidebar {
-    width: 72px;
-    padding: 1.25rem 0.4rem;
+    width: 76px;
+    padding: 1.25rem 0.5rem;
+}
+
+.app-container.collapsed .sidebar-brand-wrapper {
+    width: 48px;
+    height: 48px;
+    padding: 6px;
+    margin: 0 auto 1.25rem auto;
+    border-radius: 12px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .app-container.collapsed .sidebar-brand-logo {
-    display: none;
+    display: none !important;
 }
 
 .app-container.collapsed .sidebar-brand-icon {
-    display: block;
+    display: block !important;
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
 }
 
 .app-container.collapsed .sidebar-text,
@@ -261,9 +294,9 @@ body {
 
 .app-container.collapsed .sidebar-link {
     justify-content: center;
-    padding: 0.65rem 0;
-    width: 44px;
-    height: 44px;
+    padding: 0;
+    width: 46px;
+    height: 46px;
     margin: 0 auto;
     border-radius: 10px;
 }
@@ -275,8 +308,8 @@ body {
 }
 
 .app-container.collapsed .sidebar-logout-btn {
-    width: 44px;
-    height: 44px;
+    width: 46px;
+    height: 46px;
     margin: 0 auto;
     padding: 0;
     border-radius: 10px;
@@ -758,28 +791,22 @@ body {
    DASHBOARD WELCOME BANNER
    ========================================================================== */
 .welcome-banner {
-    background: linear-gradient(135deg, #f0f7ff 0%, #e8f2fe 50%, #dbeafe 100%);
+    background: linear-gradient(135deg, #e3effe 0%, #edf5ff 55%, #f1f7ff 100%);
     border-radius: 16px;
-    padding: 1.75rem 2rem;
+    padding: 1.75rem 2.2rem;
     margin-bottom: 1.75rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border: 1px solid #bfdbfe;
-    box-shadow: 0 2px 10px rgba(13, 110, 252, 0.05);
+    box-shadow: 0 2px 10px rgba(13, 110, 252, 0.04);
     position: relative;
     overflow: hidden;
 }
 
-.welcome-banner::after {
-    content: '';
-    position: absolute;
-    right: -20px;
-    bottom: -20px;
-    width: 220px;
-    height: 140px;
-    background: radial-gradient(circle, rgba(13, 110, 252, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
-    pointer-events: none;
+.welcome-text {
+    z-index: 2;
+    position: relative;
 }
 
 .welcome-text h1,
@@ -803,22 +830,37 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 0.35rem;
+    gap: 0.2rem;
+    z-index: 2;
+    position: relative;
 }
 
 .welcome-tag {
-    font-size: 1.05rem;
+    font-size: 1.15rem;
     font-weight: 800;
     color: #0D6EFC;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
 }
 
 .welcome-subtag {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #1e40af;
-    letter-spacing: 1px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0D6EFC;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 3px solid #0D6EFC;
+    padding-bottom: 2px;
+}
+
+.welcome-bg-silhouette {
+    position: absolute;
+    right: 220px;
+    bottom: 0;
+    height: 100%;
+    width: 320px;
+    pointer-events: none;
+    opacity: 0.25;
 }
 
 /* ==========================================================================
@@ -836,7 +878,7 @@ body {
     padding: 1.2rem 1.1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.65rem;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
     position: relative;
@@ -881,21 +923,21 @@ body {
     font-weight: 800;
     color: #0f172a;
     line-height: 1;
-    margin: 0.15rem 0 0.25rem 0;
+    margin: 0.1rem 0 0.15rem 0;
 }
 
 .stat-trend-badge {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.72rem;
+    font-weight: 700;
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    color: #15803d;
+    color: #10b981;
 }
 
 /* 6 Pastel Variants */
 .stat-card-blue {
-    background: #eef4ff;
+    background: #edf5ff;
     border: 1px solid #dbeafe;
 }
 .stat-card-blue .stat-icon-circle {
@@ -904,7 +946,7 @@ body {
 }
 
 .stat-card-emerald {
-    background: #ecfdf5;
+    background: #edfcf5;
     border: 1px solid #d1fae5;
 }
 .stat-card-emerald .stat-icon-circle {
@@ -913,7 +955,7 @@ body {
 }
 
 .stat-card-purple {
-    background: #f5f3ff;
+    background: #f5f1ff;
     border: 1px solid #ede9fe;
 }
 .stat-card-purple .stat-icon-circle {
@@ -922,7 +964,7 @@ body {
 }
 
 .stat-card-orange {
-    background: #fff7ed;
+    background: #fff7ee;
     border: 1px solid #ffedd5;
 }
 .stat-card-orange .stat-icon-circle {
@@ -931,7 +973,7 @@ body {
 }
 
 .stat-card-cyan {
-    background: #ecfeff;
+    background: #edfcff;
     border: 1px solid #cffafe;
 }
 .stat-card-cyan .stat-icon-circle {
@@ -940,7 +982,7 @@ body {
 }
 
 .stat-card-rose {
-    background: #fff1f2;
+    background: #fdf1f3;
     border: 1px solid #ffe4e6;
 }
 .stat-card-rose .stat-icon-circle {
@@ -971,62 +1013,88 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.25rem;
+    gap: 0.75rem;
 }
 
-.overview-chart-wrapper {
-    position: relative;
-    width: 100%;
-    height: 240px;
+.overview-header h4 {
+    white-space: nowrap;
+}
+
+.donut-chart-row {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 0.5rem 0;
 }
 
-.chart-center-text {
+.donut-chart-wrapper {
+    position: relative;
+    width: 170px;
+    height: 170px;
+    flex-shrink: 0;
+}
+
+.donut-center-text {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
     pointer-events: none;
-}
-
-.chart-center-text h2 {
-    margin: 0;
-    font-size: 2rem;
-    font-weight: 800;
-    color: #0f172a;
     line-height: 1;
 }
 
-.chart-center-text span {
-    font-size: 0.72rem;
+.donut-center-text h2 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+.donut-center-text span {
+    font-size: 0.68rem;
     font-weight: 700;
     color: #64748b;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
+    display: block;
+    margin-top: 2px;
 }
 
-.overview-legend {
+.donut-legend-col {
+    flex: 1;
     display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    margin-top: 1.25rem;
+    flex-direction: column;
+    gap: 0.85rem;
 }
 
-.legend-item {
+.donut-legend-item {
     display: flex;
     align-items: center;
-    gap: 0.45rem;
+    justify-content: space-between;
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 500;
+    color: #334155;
 }
 
-.legend-item .dot {
+.donut-legend-left {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.donut-legend-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.donut-legend-val {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 0.95rem;
 }
 
 /* ==========================================================================
@@ -1072,6 +1140,34 @@ body {
 }
 
 /* Placed Student Initials Avatar */
+.badge-pill-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    color: #0D6EFC;
+    font-weight: 700;
+    font-size: 0.8rem;
+    min-width: 28px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 12px;
+}
+
+.badge-pill-placement {
+    display: inline-block;
+    background: #edfcf5;
+    border: 1px solid #a7f3d0;
+    color: #059669;
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+
 .avatar-initials-badge {
     width: 34px;
     height: 34px;
