@@ -891,14 +891,14 @@ body {
 
 .welcome-hero-img {
     position: absolute;
-    right: 85px;
+    right: 15px;
     top: 0;
     bottom: 0;
     height: 100%;
-    width: 62%;
-    max-width: 850px;
+    width: 65%;
+    max-width: 900px;
     object-fit: cover;
-    object-position: 72% bottom;
+    object-position: 75% 26%;
     -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 15%, black 35%, black 85%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 15%, black 35%, black 85%, transparent 100%);
     pointer-events: none;
