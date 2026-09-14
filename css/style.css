@@ -824,7 +824,7 @@ body {
    DASHBOARD WELCOME BANNER
    ========================================================================== */
 .welcome-banner {
-    background: linear-gradient(135deg, #e3effe 0%, #edf5ff 55%, #f1f7ff 100%);
+    background: linear-gradient(180deg, #bfe2fc 0%, #daf0fe 55%, #f2f8fe 100%);
     border-radius: 16px;
     padding: 1.75rem 2.2rem;
     margin-bottom: 1.75rem;
@@ -891,18 +891,18 @@ body {
 
 .welcome-hero-img {
     position: absolute;
-    right: 215px;
+    right: 85px;
+    top: 0;
     bottom: 0;
     height: 100%;
-    max-height: 125px;
-    width: auto;
-    max-width: 480px;
-    object-fit: contain;
-    object-position: bottom right;
+    width: 62%;
+    max-width: 850px;
+    object-fit: cover;
+    object-position: 72% bottom;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 15%, black 35%, black 85%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 15%, black 35%, black 85%, transparent 100%);
     pointer-events: none;
     z-index: 1;
-    opacity: 0.95;
-    mix-blend-mode: multiply;
     transition: opacity 0.3s ease;
 }
 
@@ -918,9 +918,9 @@ body {
 
 @media (max-width: 1200px) {
     .welcome-hero-img {
-        right: 180px;
-        max-height: 105px;
-        max-width: 380px;
+        right: 60px;
+        width: 65%;
+        object-position: 70% bottom;
     }
 }
 
@@ -930,8 +930,9 @@ body {
     }
     .welcome-hero-img {
         opacity: 0.35;
-        right: 140px;
-        max-height: 85px;
+        right: 0;
+        width: 60%;
+        object-position: 72% bottom;
     }
 }
 
