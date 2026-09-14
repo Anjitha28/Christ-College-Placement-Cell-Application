@@ -17,13 +17,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn("Early UI routing failed:", e);
     }
 
-    await db.ready;
-
     checkAuth(['teacher', 'teacherCoordinator']);
     const user = JSON.parse(sessionStorage.getItem('currentUser'));
     const userRole = sessionStorage.getItem('userRole');
 
     if (!user || (userRole !== 'teacher' && userRole !== 'teacherCoordinator')) return;
+
+    // Immediate Header and Banner Greeting logic (Zero latency)
+    try {
+        const teacherNameEl = document.getElementById('teacherName');
+        if (teacherNameEl) teacherNameEl.textContent = `Welcome, ${user.name || 'Teacher'}`;
+        const teacherWelcomeHeading = document.getElementById('teacherWelcomeHeading');
+        if (teacherWelcomeHeading && user && user.name) {
+            const words = user.name.trim().split(/\s+/);
+            const titlePrefixes = ['dr.', 'dr', 'prof.', 'prof', 'mr.', 'mr', 'ms.', 'ms', 'mrs.', 'mrs'];
+            let displayName = words[0];
+            if (words.length > 1 && titlePrefixes.includes(words[0].toLowerCase())) {
+                displayName = `${words[0]} ${words[1]}`;
+            }
+            teacherWelcomeHeading.textContent = `Welcome Back, ${displayName}!`;
+        }
+        const headerUserName = document.querySelector('.header-user-name');
+        if (headerUserName && user && user.name) {
+            headerUserName.textContent = user.name;
+        }
+        const headerUserAvatar = document.querySelector('.header-user-avatar');
+        if (headerUserAvatar && user && user.name) {
+            const parts = user.name.trim().split(/\s+/);
+            headerUserAvatar.textContent = parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase();
+        }
+        const userRoleEl = document.querySelector('.user-role');
+        const isCoord = userRole === 'teacherCoordinator' || user.isCoordinator === true || user.isCoordinator === 'true';
+        if (userRoleEl) userRoleEl.textContent = isCoord ? 'Teacher Coordinator' : 'Teacher Portal';
+        if (isCoord) {
+            const coordLink = document.getElementById('coordPortalLink');
+            if (coordLink) coordLink.classList.remove('hidden');
+        }
+    } catch(e) {
+        console.warn('Immediate teacher header render error:', e);
+    }
+
+    await db.ready;
 
     // Check for forced password reset
     const teachers = db.getTeachers();
@@ -54,17 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Header logic
-    const teacherNameEl = document.getElementById('teacherName');
-    if (teacherNameEl) teacherNameEl.textContent = `Welcome, ${user.name}`;
-    const userRoleEl = document.querySelector('.user-role');
-    const isCoord = userRole === 'teacherCoordinator' || user.isCoordinator === true || user.isCoordinator === 'true';
-    if (userRoleEl) userRoleEl.textContent = isCoord ? 'Teacher Coordinator' : 'Teacher Portal';
 
-    if (isCoord) {
-        const coordLink = document.getElementById('coordPortalLink');
-        if (coordLink) coordLink.classList.remove('hidden');
-    }
 
     // Fill Profile Modal
     const pDeptEl = document.getElementById('pDept');

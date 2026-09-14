@@ -826,7 +826,7 @@ body {
 .welcome-banner {
     background: linear-gradient(180deg, #bfe2fc 0%, #daf0fe 55%, #f2f8fe 100%);
     border-radius: 16px;
-    padding: 1.75rem 2.2rem;
+    padding: 1.5rem 2.2rem;
     margin-bottom: 1.75rem;
     display: flex;
     justify-content: space-between;
@@ -835,7 +835,7 @@ body {
     box-shadow: 0 2px 10px rgba(13, 110, 252, 0.04);
     position: relative;
     overflow: hidden;
-    min-height: 125px;
+    min-height: 120px;
 }
 
 .welcome-text {
@@ -866,13 +866,13 @@ body {
     flex-direction: column;
     align-items: flex-end;
     gap: 0.2rem;
-    z-index: 2;
+    z-index: 3;
     position: relative;
     flex-shrink: 0;
 }
 
 .welcome-tag {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 800;
     color: #0D6EFC;
     letter-spacing: 0.5px;
@@ -880,7 +880,7 @@ body {
 }
 
 .welcome-subtag {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 800;
     color: #0D6EFC;
     letter-spacing: 0.5px;
@@ -891,16 +891,16 @@ body {
 
 .welcome-hero-img {
     position: absolute;
-    right: 15px;
+    right: 50px;
     top: 0;
     bottom: 0;
     height: 100%;
-    width: 65%;
-    max-width: 900px;
-    object-fit: cover;
-    object-position: 75% 26%;
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 15%, black 35%, black 85%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 15%, black 35%, black 85%, transparent 100%);
+    width: auto;
+    max-width: none;
+    object-fit: contain;
+    object-position: right bottom;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 12%, black 28%, black 100%);
+    mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 12%, black 28%, black 100%);
     pointer-events: none;
     z-index: 1;
     transition: opacity 0.3s ease;
@@ -918,9 +918,8 @@ body {
 
 @media (max-width: 1200px) {
     .welcome-hero-img {
-        right: 60px;
-        width: 65%;
-        object-position: 70% bottom;
+        right: 20px;
+        opacity: 0.85;
     }
 }
 
@@ -931,8 +930,6 @@ body {
     .welcome-hero-img {
         opacity: 0.35;
         right: 0;
-        width: 60%;
-        object-position: 72% bottom;
     }
 }
 

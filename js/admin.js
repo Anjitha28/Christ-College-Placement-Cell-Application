@@ -3570,7 +3570,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const welcomeHeading = document.getElementById('dashWelcomeHeading');
         if (welcomeHeading) {
             const user = (typeof auth !== 'undefined' && auth.getCurrentUser) ? auth.getCurrentUser() : null;
-            const name = (user && user.name) ? user.name.split(' ')[0] : 'Joseph';
+            const name = (user && user.name) ? user.name.split(' ')[0] : 'Admin';
             welcomeHeading.textContent = `Welcome Back, ${name}!`;
         }
 
@@ -5218,6 +5218,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (headerAvatarEl) headerAvatarEl.textContent = initials;
             const welcomeHeading = document.getElementById('dashWelcomeHeading');
             if (welcomeHeading) welcomeHeading.textContent = `Welcome Back, ${names[0]}!`;
+        } else {
+            if (headerUserNameEl) headerUserNameEl.textContent = 'Admin';
+            if (headerAvatarEl) headerAvatarEl.textContent = 'AD';
+            const welcomeHeading = document.getElementById('dashWelcomeHeading');
+            if (welcomeHeading) welcomeHeading.textContent = 'Welcome Back, Admin!';
         }
         if (headerUserRoleEl && userRole) {
             headerUserRoleEl.textContent = userRole === 'admin' ? 'Administrator' : userRole;

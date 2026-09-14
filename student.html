@@ -477,6 +477,25 @@
                 console.warn("Early UI routing failed:", e);
             }
 
+            // Immediate student profile and header render
+            try {
+                const immediateUser = JSON.parse(sessionStorage.getItem('currentUser'));
+                if (immediateUser && (immediateUser.name || immediateUser.username)) {
+                    const sName = immediateUser.name || immediateUser.username;
+                    const sTitle = document.getElementById('studentName');
+                    if (sTitle) sTitle.textContent = `Welcome, ${sName}`;
+                    const hStudentName = document.getElementById('headerStudentName');
+                    if (hStudentName) hStudentName.textContent = sName;
+                    const hAvatar = document.getElementById('headerAvatar');
+                    if (hAvatar) {
+                        const parts = sName.trim().split(/\s+/);
+                        hAvatar.textContent = parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase();
+                    }
+                }
+            } catch(e) {
+                console.warn('Immediate student header error:', e);
+            }
+
             await db.ready;
 
             const user = JSON.parse(sessionStorage.getItem('currentUser'));
@@ -528,8 +547,10 @@
 
                 document.getElementById('studentName').textContent = `Welcome, ${user.name}`;
                 const avatar = user.name.charAt(0).toUpperCase();
-                const avatars = document.querySelectorAll('.user-avatar, #pModalAvatar');
+                const avatars = document.querySelectorAll('.user-avatar, #pModalAvatar, #headerAvatar');
                 avatars.forEach(el => el.textContent = avatar);
+                const hStudentName = document.getElementById('headerStudentName');
+                if (hStudentName) hStudentName.textContent = user.name;
 
                 // Populate Profile Modal
                 document.getElementById('pModalStudentName').textContent = user.name;
