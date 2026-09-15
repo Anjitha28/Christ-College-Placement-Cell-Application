@@ -115,11 +115,8 @@
                     </div>
                 </div>
 
-                <!-- Header Right: Profile & Notifications -->
+                <!-- Header Right: User Profile -->
                 <div class="header-right">
-                    <button type="button" class="header-notification-btn" data-tooltip="Notifications" title="Notifications" aria-label="Notifications">
-                        <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
-                    </button>
                     <div class="header-user-pill" onclick="openStudentProfile()" data-tooltip="Student Profile" title="My Profile" style="cursor: pointer;">
                         <div class="header-user-avatar" id="headerAvatar">S</div>
                         <div class="header-user-info">
@@ -132,6 +129,21 @@
             </div>
 
             <div class="content-body">
+                <!-- Modern Welcome Banner -->
+                <div class="welcome-banner">
+                    <div class="welcome-text">
+                        <h2 id="studentWelcomeHeading">Welcome, Student!</h2>
+                        <p id="studentWelcomeQuote">Here's what's happening with your campus placement journey today.</p>
+                    </div>
+                    <!-- Right Composition: Hero Illustration + Slogan Tag Box -->
+                    <div class="welcome-right-group">
+                        <img src="top bar image.png" alt="Graduates and Campus Skyline" class="welcome-hero-img">
+                        <div class="welcome-tag-box">
+                            <div class="welcome-tag">STAY ON TRACK,</div>
+                            <div class="welcome-subtag">GET PLACED.</div>
+                        </div>
+                    </div>
+                </div>
                 <!-- Profile Tab -->
                 <!-- Profile Modal -->
                 <div id="studentProfileModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1001; backdrop-filter: blur(10px);">
@@ -484,6 +496,8 @@
                     const sName = immediateUser.name || immediateUser.username;
                     const sTitle = document.getElementById('studentName');
                     if (sTitle) sTitle.textContent = `Welcome, ${sName}`;
+                    const sWelcome = document.getElementById('studentWelcomeHeading');
+                    if (sWelcome) sWelcome.textContent = `Welcome, ${sName}!`;
                     const hStudentName = document.getElementById('headerStudentName');
                     if (hStudentName) hStudentName.textContent = sName;
                     const hAvatar = document.getElementById('headerAvatar');
@@ -546,6 +560,8 @@
                 };
 
                 document.getElementById('studentName').textContent = `Welcome, ${user.name}`;
+                const sWelcomeHeading = document.getElementById('studentWelcomeHeading');
+                if (sWelcomeHeading) sWelcomeHeading.textContent = `Welcome, ${user.name}!`;
                 const avatar = user.name.charAt(0).toUpperCase();
                 const avatars = document.querySelectorAll('.user-avatar, #pModalAvatar, #headerAvatar');
                 avatars.forEach(el => el.textContent = avatar);
