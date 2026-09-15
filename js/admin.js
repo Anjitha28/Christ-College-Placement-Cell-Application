@@ -3569,8 +3569,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const welcomeHeading = document.getElementById('dashWelcomeHeading');
         if (welcomeHeading) {
-            const user = (typeof auth !== 'undefined' && auth.getCurrentUser) ? auth.getCurrentUser() : null;
-            const name = (user && user.name) ? user.name.split(' ')[0] : 'Admin';
+            let userName = sessionStorage.getItem('userName');
+            if (!userName) {
+                try {
+                    const u = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+                    userName = u.name || u.username;
+                } catch(e) {}
+            }
+            const role = sessionStorage.getItem('userRole');
+            const defaultName = (role === 'studentCoordinator' || role === 'teacherCoordinator') ? 'Coordinator' : 'Admin';
+            const name = userName ? userName.split(' ')[0] : defaultName;
             welcomeHeading.textContent = `Welcome Back, ${name}!`;
         }
 
